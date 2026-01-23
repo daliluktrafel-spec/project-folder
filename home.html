@@ -30,7 +30,7 @@ body {
 
 .container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(2, 1fr); /* 2 كروت في السطر على الكمبيوتر */
     gap: 20px;
     padding: 20px;
 }
@@ -42,11 +42,14 @@ body {
     text-align: center;
     box-shadow: 0 8px 20px rgba(0,0,0,0.2);
     cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
 }
 
 .product-img {
     width: 100%;
-    aspect-ratio: 1 / 1; /* الصورة مربعة */
+    aspect-ratio: 1 / 1; /* مربع */
     border-radius: 12px;
     background-size: contain; /* يظهر كامل محتوى الصورة */
     background-position: center;
@@ -54,13 +57,12 @@ body {
     margin-bottom: 10px;
 }
 
-.product-name { font-weight: bold; font-size: 18px; }
-.product-price { color: #e53935; font-weight: bold; }
-.product-store { color: #1e88e5; font-size: 14px; }
-.product-status { color: #6a1b9a; font-size: 14px; }
+.product-name { font-weight: bold; font-size: 16px; margin-bottom: 5px; }
+.product-price { color: #e53935; font-weight: bold; margin-bottom: 5px; }
+.product-store { color: #1e88e5; font-size: 14px; margin-bottom: 5px; }
+.product-status { color: #6a1b9a; font-size: 14px; margin-bottom: 10px; }
 
 .btn-order {
-    margin-top: 10px;
     width: 100%;
     padding: 10px;
     border: none;
@@ -96,14 +98,22 @@ body {
     color: white;
 }
 
-/* تعديل الجوال فقط: 3 منتجات في السطر */
+/* الجوال: 2 كروت في السطر والكرت أكبر قليلًا */
 @media (max-width: 600px) {
     .container {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        padding: 15px;
     }
 
     .card {
-        padding: 10px;
+        padding: 15px;
+    }
+
+    .product-img {
+        height: 0;
+        padding-bottom: 100%; /* يحافظ على نسبة مربعة أكبر */
+        background-size: contain; /* يظهر كامل محتوى الصورة */
     }
 }
 </style>
