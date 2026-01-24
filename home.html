@@ -23,6 +23,7 @@ body {
     position: relative;
 }
 
+/* أيقونة المفضلة */
 .fav-top {
     position: absolute;
     left: 15px;
@@ -52,7 +53,6 @@ body {
     cursor: pointer;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
 }
 
 .product-img {
@@ -99,20 +99,6 @@ body {
 .btn-fav.active {
     background: #ffe5e5;
     color: #e53935;
-}
-
-.empty-placeholder {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: #fff;
-    border-radius: 15px;
-    height: 150px;
-    margin: 0 auto;
-}
-.empty-placeholder img {
-    max-width: 50%;
-    max-height: 50%;
 }
 
 .tabs {
@@ -168,39 +154,32 @@ body {
 <div id="stores" class="container" style="display:none;"></div>
 
 <div class="tabs">
-    <div class="tab active" onclick="showAllProducts(this)">كل البضائع</div>
-    <div class="tab" onclick="showAvailable(this)">المتوفر</div>
-    <div class="tab" onclick="showStores(this)">المتاجر</div>
+    <div class="tab active" onclick="showSection('all',this)">كل البضائع</div>
+    <div class="tab" onclick="showSection('available',this)">المتوفر</div>
+    <div class="tab" onclick="showSection('stores',this)">المتاجر</div>
 </div>
 
 <script src="products.js"></script>
 <script>
 const userName = localStorage.getItem("userName") || "مستخدم";
 const userRegion = localStorage.getItem("userRegion") || "";
-document.getElementById("welcome").childNodes[0].nodeValue = `مرحبًا ${userName} من ${userRegion}`;
+document.getElementById("welcome").childNodes[0].nodeValue =
+`مرحبًا ${userName} من ${userRegion}`;
 
 let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
 saveFav();
+
 function saveFav(){
     localStorage.setItem("favorites", JSON.stringify(favorites));
     document.getElementById("favCount").innerText = favorites.length;
 }
 
-const allProductsOriginal = [...products]; // حفظ جميع المنتجات الأصلية
+const storesList = [...new Set(products.map(p => p.store))];
 
-// عرض المنتجات مع إمكانية فلترة
 function renderProducts(containerId, filter = () => true){
     const c = document.getElementById(containerId);
     c.innerHTML = "";
-    const filtered = allProductsOriginal.filter(filter);
-    if(filtered.length === 0){
-        const empty = document.createElement("div");
-        empty.className = "empty-placeholder";
-        empty.innerHTML = `<img src="الشعار.png" alt="شعار">`;
-        c.appendChild(empty);
-        return;
-    }
-    filtered.forEach(p=>{
+    products.filter(filter).forEach(p=>{
         const favActive = favorites.includes(p.id);
         const d = document.createElement("div");
         d.className = "card";
@@ -220,34 +199,23 @@ function renderProducts(containerId, filter = () => true){
     });
 }
 
-// عرض المتاجر
 function renderStores(){
     const c = document.getElementById("stores");
     c.innerHTML = "";
-    const storesList = [...new Set(products.map(p=>p.store))];
-    if(storesList.length === 0){
-        const empty = document.createElement("div");
-        empty.className = "empty-placeholder";
-        empty.innerHTML = `<img src="الشعار.png" alt="شعار">`;
-        c.appendChild(empty);
-        return;
-    }
-    storesList.forEach(store => {
-        const d = document.createElement("div");
-        d.className = "card";
-        d.innerText = store;
-        d.onclick = () => {
-            showSection("all");
-            renderProducts("all", p => p.store === store); // فقط فلترة مؤقتة
-        };
-        c.appendChild(d);
+    storesList.forEach(s => {
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerText = s;
+        div.onclick = () => renderProducts("stores", p => p.store === s);
+        c.appendChild(div);
     });
 }
 
-// الوظائف الأخرى
 function toggleFav(id,e){
     e.stopPropagation();
-    favorites = favorites.includes(id) ? favorites.filter(f=>f!==id) : [id,...favorites];
+    favorites = favorites.includes(id)
+        ? favorites.filter(f=>f!==id)
+        : [id, ...favorites];
     saveFav();
     renderProducts("all");
 }
@@ -263,54 +231,66 @@ function order(name,price,store,e){
     window.open(`https://wa.me/967774257557?text=${msg}`,"_blank");
 }
 
-function showSection(id){
+function showSection(id,el){
     ["favorites","all","available","stores"].forEach(s=>{
         document.getElementById(s).style.display="none";
     });
     document.getElementById(id).style.display="grid";
-}
-
-// تبويب كل المنتجات
-function showAllProducts(el){
-    renderProducts("all"); // عرض جميع المنتجات بدون فلترة
-    showSection("all");
     document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-    el.classList.add("active");
+    if(el) el.classList.add("active");
+
+    // إذا اخترنا قسم المتاجر نعرض المتاجر
+    if(id === "stores") renderStores();
+    // إذا اخترنا أي قسم منتجات نعيد كل المنتجات بشكل كامل
+    else if(id === "all") renderProducts("all");
+    else if(id === "available") renderProducts("available", p => p.status === "متوفر");
+    else if(id === "favorites") renderProducts("favorites", p => favorites.includes(p.id));
 }
 
-// تبويب المتوفر
-function showAvailable(el){
-    renderProducts("all", p=>p.status==="متوفر");
-    showSection("available");
-    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-    el.classList.add("active");
+function normalizeArabic(text) {
+    return text.toLowerCase()
+        .replace(/أ|إ|آ/g, "ا")
+        .replace(/ة/g, "ه")
+        .replace(/ى/g, "ي")
+        .replace(/ؤ|ئ/g, "و")
+        .replace(/[^ء-ي0-9\s]/g, "");
 }
 
-// تبويب المتاجر
-function showStores(el){
-    renderStores();
-    showSection("stores");
-    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-    el.classList.add("active");
-}
+function smartSearch() {
+    const q = normalizeArabic(document.getElementById("searchInput").value);
+    const visibleSection = document.querySelector('.container[style*="display: grid"]')?.id || "all";
 
-function smartSearch(){
-    const q = document.getElementById("searchInput").value.toLowerCase();
-    if(!q){
-        renderProducts("all");
+    if (!q) {
+        // عرض كامل حسب القسم
+        showSection(visibleSection);
         return;
     }
-    renderProducts("all", p =>
-        p.name.toLowerCase().includes(q) ||
-        p.store.toLowerCase().includes(q) ||
-        p.price.toLowerCase().includes(q)
-    );
+
+    if(visibleSection === "stores") {
+        // تصفية المتاجر حسب الاسم
+        const c = document.getElementById("stores");
+        c.innerHTML = "";
+        storesList.filter(s => normalizeArabic(s).includes(q)).forEach(s => {
+            const div = document.createElement("div");
+            div.className = "card";
+            div.innerText = s;
+            div.onclick = () => renderProducts("stores", p => p.store === s);
+            c.appendChild(div);
+        });
+    } else {
+        const containerId = visibleSection;
+        renderProducts(containerId, p =>
+            normalizeArabic(p.name).includes(q) ||
+            normalizeArabic(p.store).includes(q) ||
+            normalizeArabic(p.price).includes(q)
+        );
+    }
 }
 
-// أول تحميل
+// عرض المنتجات الافتراضية عند التحميل
 renderProducts("all");
-renderProducts("available", p => p.status==="متوفر");
-renderStores();
+renderProducts("available", p => p.status === "متوفر");
+
 </script>
 
 </body>
