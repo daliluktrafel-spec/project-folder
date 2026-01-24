@@ -9,13 +9,7 @@
 body {
     margin: 0;
     font-family: "Segoe UI", Tahoma, Arial, sans-serif;
-    background: linear-gradient(
-        to bottom,
-        #f2f2f2 0%,
-        #4a6cf7 25%,
-        #6a1b9a 75%,
-        #f2f2f2 100%
-    );
+    background: linear-gradient(to bottom,#f2f2f2 0%,#4a6cf7 25%,#6a1b9a 75%,#f2f2f2 100%);
     color: #333;
 }
 
@@ -26,11 +20,26 @@ body {
     font-size: 24px;
     font-weight: bold;
     color: white;
+    position: relative;
+}
+
+/* أيقونة المفضلة */
+.fav-top {
+    position: absolute;
+    left: 15px;
+    top: 15px;
+    background: white;
+    color: #e53935;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
 
 .container {
     display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 2 كروت في السطر على الكمبيوتر */
+    grid-template-columns: repeat(2, 1fr);
     gap: 20px;
     padding: 20px;
 }
@@ -44,33 +53,52 @@ body {
     cursor: pointer;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
 }
 
 .product-img {
     width: 100%;
-    aspect-ratio: 1 / 1; /* مربع */
+    aspect-ratio: 1 / 1;
     border-radius: 12px;
-    background-size: contain; /* يظهر كامل محتوى الصورة */
+    background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
     margin-bottom: 10px;
 }
 
-.product-name { font-weight: bold; font-size: 16px; margin-bottom: 5px; }
-.product-price { color: #e53935; font-weight: bold; margin-bottom: 5px; }
-.product-store { color: #1e88e5; font-size: 14px; margin-bottom: 5px; }
-.product-status { color: #6a1b9a; font-size: 14px; margin-bottom: 10px; }
+.product-name { font-weight: bold; font-size: 16px; }
+.product-price { color: #e53935; font-weight: bold; }
+.product-store { color: #1e88e5; font-size: 14px; }
+.product-status { color: #6a1b9a; font-size: 14px; }
+
+.actions {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+}
 
 .btn-order {
-    width: 100%;
+    flex: 1;
     padding: 10px;
     border: none;
     border-radius: 10px;
-    background: linear-gradient(45deg, #6a1b9a, #3949ab);
+    background: linear-gradient(45deg,#6a1b9a,#3949ab);
     color: white;
     font-weight: bold;
     cursor: pointer;
+}
+
+.btn-fav {
+    width: 45px;
+    border: none;
+    border-radius: 10px;
+    background: #eee;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.btn-fav.active {
+    background: #ffe5e5;
+    color: #e53935;
 }
 
 .tabs {
@@ -98,22 +126,11 @@ body {
     color: white;
 }
 
-/* الجوال: 2 كروت في السطر والكرت أكبر قليلًا */
 @media (max-width: 600px) {
     .container {
         grid-template-columns: repeat(2, 1fr);
         gap: 15px;
         padding: 15px;
-    }
-
-    .card {
-        padding: 15px;
-    }
-
-    .product-img {
-        height: 0;
-        padding-bottom: 100%; /* يحافظ على نسبة مربعة أكبر */
-        background-size: contain; /* يظهر كامل محتوى الصورة */
     }
 }
 </style>
@@ -121,127 +138,97 @@ body {
 
 <body>
 
-<div class="header" id="welcome">مرحبا بك</div>
-
-<div style="padding:15px;text-align:center;">
-    <input
-        type="text"
-        id="searchInput"
-        placeholder="🔍 ابحث عن منتج أو متجر..."
-        onkeyup="smartSearch()"
-        style="
-            width:90%;
-            max-width:400px;
-            padding:12px;
-            border-radius:12px;
-            border:1px solid #ccc;
-            font-size:16px;
-        "
-    >
+<div class="header" id="welcome">
+    مرحبا بك
+    <div class="fav-top" onclick="showFavorites()">❤️ <span id="favCount">0</span></div>
 </div>
 
+<div style="padding:15px;text-align:center;">
+    <input type="text" id="searchInput" placeholder="🔍 ابحث عن منتج أو متجر..." onkeyup="smartSearch()"
+    style="width:90%;max-width:400px;padding:12px;border-radius:12px;border:1px solid #ccc;font-size:16px;">
+</div>
+
+<div id="favorites" class="container" style="display:none;"></div>
 <div id="all" class="container"></div>
 <div id="available" class="container" style="display:none;"></div>
 <div id="stores" class="container" style="display:none;"></div>
 
 <div class="tabs">
-    <div class="tab active" onclick="showSection('all', this)">كل البضائع</div>
-    <div class="tab" onclick="showSection('available', this)">المتوفر</div>
-    <div class="tab" onclick="showSection('stores', this)">المتاجر</div>
+    <div class="tab active" onclick="showSection('all',this)">كل البضائع</div>
+    <div class="tab" onclick="showSection('available',this)">المتوفر</div>
+    <div class="tab" onclick="showSection('stores',this)">المتاجر</div>
 </div>
 
 <script src="products.js"></script>
 <script>
 const userName = localStorage.getItem("userName") || "مستخدم";
 const userRegion = localStorage.getItem("userRegion") || "";
-document.getElementById("welcome").innerText =
-    `مرحبًا ${userName} من ${userRegion}`;
+document.getElementById("welcome").childNodes[0].nodeValue =
+`مرحبًا ${userName} من ${userRegion}`;
 
-const storesList = [...new Set(products.map(p => p.store))];
+let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
 
-function renderProducts(containerId, filter = () => true) {
-    const container = document.getElementById(containerId);
-    container.innerHTML = "";
-    products.filter(filter).forEach(p => {
-        const card = document.createElement("div");
-        card.className = "card";
-        card.onclick = () => {
-            window.location.href = `product.html?productId=${p.id}`;
-        };
-        card.innerHTML = `
+function saveFav(){
+    localStorage.setItem("favorites", JSON.stringify(favorites));
+    document.getElementById("favCount").innerText = favorites.length;
+}
+
+saveFav();
+
+function renderProducts(containerId, filter = () => true){
+    const c = document.getElementById(containerId);
+    c.innerHTML = "";
+    products.filter(filter).forEach(p=>{
+        const favActive = favorites.includes(p.id);
+        const d = document.createElement("div");
+        d.className = "card";
+        d.onclick = ()=>location.href=`product.html?productId=${p.id}`;
+        d.innerHTML = `
             <div class="product-img" style="background-image:url('${p.image}')"></div>
             <div class="product-name">${p.name}</div>
             <div class="product-price">${p.price}</div>
             <div class="product-store">${p.store}</div>
             <div class="product-status">${p.status}</div>
-            <button class="btn-order"
-              onclick="order('${p.name}','${p.price}','${p.store}',event)">
-              اطلب الآن
-            </button>
+            <div class="actions">
+                <button class="btn-order" onclick="order('${p.name}','${p.price}','${p.store}',event)">اطلب</button>
+                <button class="btn-fav ${favActive?'active':''}" onclick="toggleFav(${p.id},event)">❤️</button>
+            </div>
         `;
-        container.appendChild(card);
-    });
-}
-
-function renderStores() {
-    const c = document.getElementById("stores");
-    c.innerHTML = "";
-    storesList.forEach(s => {
-        const d = document.createElement("div");
-        d.className = "card";
-        d.innerText = s;
-        d.onclick = () => renderProducts("stores", p => p.store === s);
         c.appendChild(d);
     });
 }
 
-function order(name, price, store, e) {
+function toggleFav(id,e){
     e.stopPropagation();
-    const msg =
-        `الاسم: ${userName}%0Aالمنطقة: ${userRegion}%0A` +
-        `المنتج: ${name}%0Aالسعر: ${price}%0Aالمتجر: ${store}`;
-    window.open(`https://wa.me/967774257557?text=${msg}`, "_blank");
+    favorites = favorites.includes(id)
+        ? favorites.filter(f=>f!==id)
+        : [id, ...favorites];
+    saveFav();
+    renderProducts("all");
 }
 
-function showSection(id, el) {
-    ["all","available","stores"].forEach(s =>
-        document.getElementById(s).style.display = "none"
-    );
-    document.getElementById(id).style.display = "grid";
-    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-    el.classList.add("active");
-    if (id === "stores") renderStores();
+function showFavorites(){
+    showSection("favorites");
+    renderProducts("favorites", p=>favorites.includes(p.id));
 }
 
-function normalizeArabic(text) {
-    return text.toLowerCase()
-        .replace(/أ|إ|آ/g, "ا")
-        .replace(/ة/g, "ه")
-        .replace(/ى/g, "ي")
-        .replace(/ؤ|ئ/g, "و")
-        .replace(/[^ء-ي0-9\s]/g, "");
+function order(name,price,store,e){
+    e.stopPropagation();
+    const msg=`الاسم:${userName}%0Aالمنطقة:${userRegion}%0Aالمنتج:${name}%0Aالسعر:${price}%0Aالمتجر:${store}`;
+    window.open(`https://wa.me/967774257557?text=${msg}`,"_blank");
 }
 
-function smartSearch() {
-    const q = normalizeArabic(
-        document.getElementById("searchInput").value
-    );
-
-    if (!q) {
-        renderProducts("all");
-        return;
-    }
-
-    renderProducts("all", p =>
-        normalizeArabic(p.name).includes(q) ||
-        normalizeArabic(p.store).includes(q) ||
-        normalizeArabic(p.price).includes(q)
-    );
+function showSection(id,el){
+    ["favorites","all","available","stores"].forEach(s=>{
+        document.getElementById(s).style.display="none";
+    });
+    document.getElementById(id).style.display="grid";
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+    if(el) el.classList.add("active");
 }
 
 renderProducts("all");
-renderProducts("available", p => p.status === "متوفر");
-renderStores();
+renderProducts("available",p=>p.status==="متوفر");
 </script>
 
 </body>
