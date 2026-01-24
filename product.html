@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>تفاصيل المنتج</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 body { 
     margin: 0; 
@@ -34,15 +35,39 @@ body {
     align-items: center;
 }
 
+.img-wrapper{
+    position: relative;
+    width:100%;
+}
+
 .product-img { 
     width: 100%; 
-    aspect-ratio: 1 / 1; /* يجعلها مربعة */
+    aspect-ratio: 1 / 1;
     border-radius: 15px; 
     margin-bottom: 20px; 
     background-color: #eee; 
-    background-size: contain; /* يظهر كل محتوى الصورة */
+    background-size: contain;
     background-position: center; 
     background-repeat: no-repeat;
+}
+
+/* زر المفضلة */
+.favorite-btn {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.favorite-btn.active {
+    color: red;
 }
 
 .product-name { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
@@ -58,7 +83,6 @@ body {
     border-radius: 12px; 
     font-weight: bold; 
     cursor: pointer; 
-    transition: 0.3s; 
 }
 
 .btn-order { 
@@ -66,34 +90,32 @@ body {
     color: white; 
 }
 
-.btn-order:hover { opacity: 0.9; }
-
 .btn-back { background: #eee; color: #333; }
-.btn-back:hover { background: #ddd; }
 
-/* الجوال: الكرت أكبر قليلًا والصورة مربعة أكبر */
 @media (max-width: 600px) {
     .product-container {
         max-width: 95%;
-        padding: 20px;
-    }
-
-    .product-img {
-        aspect-ratio: 1 / 1;
     }
 }
 </style>
 </head>
+
 <body>
 
 <div class="header">تفاصيل المنتج</div>
 
 <div class="product-container">
-    <div class="product-img" id="product-img"></div>
+
+    <div class="img-wrapper">
+        <button class="favorite-btn" id="favBtn">♡</button>
+        <div class="product-img" id="product-img"></div>
+    </div>
+
     <div class="product-name" id="product-name"></div>
     <div class="product-price" id="product-price"></div>
     <div class="product-store" id="product-store"></div>
     <div class="product-status" id="product-status"></div>
+
     <button class="btn-order" id="order-btn">اطلب الآن</button>
     <button class="btn-back" onclick="window.history.back();">عودة</button>
 </div>
@@ -102,8 +124,10 @@ body {
 <script>
 const userName = localStorage.getItem("userName") || "مستخدم";
 const userRegion = localStorage.getItem("userRegion") || "";
+
 const urlParams = new URLSearchParams(window.location.search);
 const productId = parseInt(urlParams.get('productId'));
+
 const product = products.find(p => p.id === productId) || products[0];
 
 document.getElementById("product-name").innerText = product.name;
@@ -112,10 +136,47 @@ document.getElementById("product-store").innerText = product.store;
 document.getElementById("product-status").innerText = product.status;
 document.getElementById("product-img").style.backgroundImage = `url('${product.image}')`;
 
+/* الطلب */
 document.getElementById("order-btn").onclick = () => {
-    const msg = `الاسم: ${userName}%0Aالمنطقة: ${userRegion}%0Aالمنتج: ${product.name}%0Aالسعر: ${product.price}%0Aالمتجر: ${product.store}`;
+    const msg =
+        `الاسم: ${userName}%0A` +
+        `المنطقة: ${userRegion}%0A` +
+        `المنتج: ${product.name}%0A` +
+        `السعر: ${product.price}%0A` +
+        `المتجر: ${product.store}`;
     window.open(`https://wa.me/967774257557?text=${msg}`, '_blank');
 };
+
+/* المفضلة */
+const favBtn = document.getElementById("favBtn");
+let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
+
+function isFav(id){
+    return favorites.includes(id);
+}
+
+function updateFavBtn(){
+    if(isFav(product.id)){
+        favBtn.innerText = "❤";
+        favBtn.classList.add("active");
+    }else{
+        favBtn.innerText = "♡";
+        favBtn.classList.remove("active");
+    }
+}
+
+favBtn.onclick = (e) => {
+    e.stopPropagation();
+    if(isFav(product.id)){
+        favorites = favorites.filter(f => f !== product.id);
+    }else{
+        favorites.push(product.id);
+    }
+    localStorage.setItem("favorites", JSON.stringify(favorites));
+    updateFavBtn();
+};
+
+updateFavBtn();
 </script>
 
 </body>
