@@ -23,7 +23,6 @@ body {
     position: relative;
 }
 
-/* أيقونة المفضلة */
 .fav-top {
     position: absolute;
     left: 15px;
@@ -34,7 +33,6 @@ body {
     border-radius: 20px;
     font-weight: bold;
     cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
 
 .container {
@@ -47,7 +45,7 @@ body {
 .card {
     background: white;
     border-radius: 15px;
-    padding: 15px;
+    padding: 12px;
     text-align: center;
     box-shadow: 0 8px 20px rgba(0,0,0,0.2);
     cursor: pointer;
@@ -62,44 +60,13 @@ body {
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
-.product-name { font-weight: bold; font-size: 16px; }
+.product-name { font-weight: bold; font-size: 15px; line-height: 1.3; }
 .product-price { color: #e53935; font-weight: bold; }
 .product-store { color: #1e88e5; font-size: 14px; }
-.product-status { color: #6a1b9a; font-size: 14px; }
-
-.actions {
-    display: flex;
-    gap: 8px;
-    margin-top: auto;
-}
-
-.btn-order {
-    flex: 1;
-    padding: 10px;
-    border: none;
-    border-radius: 10px;
-    background: linear-gradient(45deg,#6a1b9a,#3949ab);
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.btn-fav {
-    width: 45px;
-    border: none;
-    border-radius: 10px;
-    background: #eee;
-    font-size: 20px;
-    cursor: pointer;
-}
-
-.btn-fav.active {
-    background: #ffe5e5;
-    color: #e53935;
-}
+.product-status { color: #6a1b9a; font-size: 13px; }
 
 .tabs {
     display: flex;
@@ -117,22 +84,10 @@ body {
     border-radius: 12px;
     border: 2px solid #6a1b9a;
     font-weight: bold;
-    cursor: pointer;
     background: #f2f2f2;
 }
 
-.tab.active {
-    background: #6a1b9a;
-    color: white;
-}
-
-@media (max-width: 600px) {
-    .container {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 15px;
-        padding: 15px;
-    }
-}
+.tab.active { background: #6a1b9a; color: white; }
 </style>
 </head>
 
@@ -144,8 +99,7 @@ body {
 </div>
 
 <div style="padding:15px;text-align:center;">
-    <input type="text" id="searchInput" placeholder="🔍 ابحث عن منتج أو متجر..." onkeyup="smartSearch()"
-    style="width:90%;max-width:400px;padding:12px;border-radius:12px;border:1px solid #ccc;font-size:16px;">
+    <input type="text" id="searchInput" placeholder="🔍 ابحث عن منتج أو متجر..." style="width:90%;max-width:400px;padding:12px;border-radius:12px;">
 </div>
 
 <div id="favorites" class="container" style="display:none;"></div>
@@ -164,10 +118,13 @@ body {
 const userName = localStorage.getItem("userName") || "مستخدم";
 const userRegion = localStorage.getItem("userRegion") || "";
 document.getElementById("welcome").childNodes[0].nodeValue =
-`مرحبًا ${userName} من ${userRegion}`;
+`مرحبًا ${userName} ${userRegion}`;
 
 let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
 saveFav();
+
+// دالة لتقصير الاسم للكرت فقط
+function shortName(text, max = 45){ return text.length > max ? text.slice(0,max) + "…" : text; }
 
 function saveFav(){
     localStorage.setItem("favorites", JSON.stringify(favorites));
@@ -176,61 +133,45 @@ function saveFav(){
 
 const storesList = [...new Set(products.map(p => p.store))];
 
+// عرض المنتجات
 function renderProducts(containerId, filter = () => true){
     const c = document.getElementById(containerId);
     c.innerHTML = "";
     products.filter(filter).forEach(p=>{
-        const favActive = favorites.includes(p.id);
         const d = document.createElement("div");
         d.className = "card";
         d.onclick = ()=>location.href=`product.html?productId=${p.id}`;
         d.innerHTML = `
             <div class="product-img" style="background-image:url('${p.image}')"></div>
-            <div class="product-name">${p.name}</div>
+            <div class="product-name">${shortName(p.name)}</div>
             <div class="product-price">${p.price}</div>
             <div class="product-store">${p.store}</div>
             <div class="product-status">${p.status}</div>
-            <div class="actions">
-                <button class="btn-order" onclick="order('${p.name}','${p.price}','${p.store}',event)">اطلب</button>
-                <button class="btn-fav ${favActive?'active':''}" onclick="toggleFav(${p.id},event)">❤️</button>
-            </div>
         `;
         c.appendChild(d);
     });
 }
 
+// عرض المتاجر
 function renderStores(){
     const c = document.getElementById("stores");
     c.innerHTML = "";
-    storesList.forEach(s => {
-        const div = document.createElement("div");
-        div.className = "card";
-        div.innerText = s;
-        div.onclick = () => renderProducts("stores", p => p.store === s);
-        c.appendChild(div);
+    storesList.forEach(s=>{
+        const d = document.createElement("div");
+        d.className = "card";
+        d.innerText = s;
+        d.onclick = ()=>renderProducts("stores", p=>p.store===s);
+        c.appendChild(d);
     });
 }
 
-function toggleFav(id,e){
-    e.stopPropagation();
-    favorites = favorites.includes(id)
-        ? favorites.filter(f=>f!==id)
-        : [id, ...favorites];
-    saveFav();
-    renderProducts("all");
-}
-
+// المفضلة
 function showFavorites(){
     showSection("favorites");
     renderProducts("favorites", p=>favorites.includes(p.id));
 }
 
-function order(name,price,store,e){
-    e.stopPropagation();
-    const msg=`الاسم:${userName}%0Aالمنطقة:${userRegion}%0Aالمنتج:${name}%0Aالسعر:${price}%0Aالمتجر:${store}`;
-    window.open(`https://wa.me/967774257557?text=${msg}`,"_blank");
-}
-
+// التنقل بين الأقسام
 function showSection(id,el){
     ["favorites","all","available","stores"].forEach(s=>{
         document.getElementById(s).style.display="none";
@@ -239,58 +180,28 @@ function showSection(id,el){
     document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
     if(el) el.classList.add("active");
 
-    // إذا اخترنا قسم المتاجر نعرض المتاجر
-    if(id === "stores") renderStores();
-    // إذا اخترنا أي قسم منتجات نعيد كل المنتجات بشكل كامل
-    else if(id === "all") renderProducts("all");
-    else if(id === "available") renderProducts("available", p => p.status === "متوفر");
-    else if(id === "favorites") renderProducts("favorites", p => favorites.includes(p.id));
+    if(id==="stores") renderStores();
+    else if(id==="all") renderProducts("all");
+    else if(id==="available") renderProducts("available",p=>p.status==="متوفر");
+    else if(id==="favorites") renderProducts("favorites", p=>favorites.includes(p.id));
 }
 
-function normalizeArabic(text) {
-    return text.toLowerCase()
-        .replace(/أ|إ|آ/g, "ا")
-        .replace(/ة/g, "ه")
-        .replace(/ى/g, "ي")
-        .replace(/ؤ|ئ/g, "و")
-        .replace(/[^ء-ي0-9\s]/g, "");
-}
-
-function smartSearch() {
-    const q = normalizeArabic(document.getElementById("searchInput").value);
-    const visibleSection = document.querySelector('.container[style*="display: grid"]')?.id || "all";
-
-    if (!q) {
-        // عرض كامل حسب القسم
+// ⭐ البحث المحسن: اسم المنتج + اسم المتجر
+document.getElementById("searchInput").addEventListener("input", function(){
+    const q = this.value.trim().toLowerCase();
+    if(!q){
+        // إعادة عرض كامل حسب القسم الحالي
+        const visibleSection = document.querySelector('.container[style*="display: grid"]')?.id || "all";
         showSection(visibleSection);
         return;
     }
+    renderProducts("all", p => 
+        p.name.toLowerCase().includes(q) || p.store.toLowerCase().includes(q)
+    );
+});
 
-    if(visibleSection === "stores") {
-        // تصفية المتاجر حسب الاسم
-        const c = document.getElementById("stores");
-        c.innerHTML = "";
-        storesList.filter(s => normalizeArabic(s).includes(q)).forEach(s => {
-            const div = document.createElement("div");
-            div.className = "card";
-            div.innerText = s;
-            div.onclick = () => renderProducts("stores", p => p.store === s);
-            c.appendChild(div);
-        });
-    } else {
-        const containerId = visibleSection;
-        renderProducts(containerId, p =>
-            normalizeArabic(p.name).includes(q) ||
-            normalizeArabic(p.store).includes(q) ||
-            normalizeArabic(p.price).includes(q)
-        );
-    }
-}
-
-// عرض المنتجات الافتراضية عند التحميل
+// عرض المنتجات عند التحميل
 renderProducts("all");
-renderProducts("available", p => p.status === "متوفر");
-
 </script>
 
 </body>
