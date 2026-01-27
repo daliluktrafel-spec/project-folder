@@ -134,8 +134,13 @@ body {
     <div class="fav-top" onclick="showFavorites()">❤️ <span id="favCount">0</span></div>
 </div>
 
-<!-- ===== التصنيفات ستولد تلقائيًا من JS ===== -->
-<div id="categories" class="categories"></div>
+<div id="categories" class="categories">
+    <div class="category-btn" onclick="filterByCategory('حذ')">👟 أحذية</div>
+    <div class="category-btn" onclick="filterByCategory('شنط')">👜 شنط</div>
+    <div class="category-btn" onclick="filterByCategory('لعبة')">🎲 ألعاب</div>
+    <div class="category-btn" onclick="filterByCategory('صاب')">💄 عناية</div>
+    <div class="category-btn" onclick="filterByCategory('طوق')">👕 ملابس</div>
+</div>
 
 <div style="padding:15px;text-align:center;">
     <input
@@ -170,7 +175,7 @@ document.getElementById("favCount").innerText = favorites.length;
 
 function filterByCategory(key){
     showSection("all");
-    renderProducts("all", p => p.category === key);
+    renderProducts("all", p => p.name.includes(key));
 }
 
 function shortName(text, max = 45){
@@ -265,23 +270,6 @@ function smartSearch(){
     );
 }
 
-// ===== تعديل التصنيفات لتظهر فقط حسب JS =====
-function renderCategories() {
-    const categoriesDiv = document.getElementById("categories");
-    categoriesDiv.innerHTML = "";
-
-    const categoriesList = [...new Set(products.map(p => p.category).filter(c => c))];
-
-    categoriesList.forEach(cat => {
-        const btn = document.createElement("div");
-        btn.className = "category-btn";
-        btn.innerText = cat;
-        btn.onclick = () => filterByCategory(cat);
-        categoriesDiv.appendChild(btn);
-    });
-}
-
-renderCategories();
 renderProducts("all");
 </script>
 
