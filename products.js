@@ -1,11 +1,12 @@
 const products = [
-    // ===== متجر نور (أحدث منتجات) =====
+    // ===== متجر نور =====
     {
         id: 37,
         name: "شنط يد و كتف وااااسعة مع محفظة صغيرة",
         price: "13500 ر.ي",
         store: "متجر نور",
         status: "متوفر",
+        category: "شنط",
         image: "كسع 2.jpeg"
     },
     {
@@ -14,6 +15,7 @@ const products = [
         price: "13000 ر.ي",
         store: "متجر نور",
         status: "متوفر",
+        category: "شنط",
         image: "كسعه.jpeg"
     },
     {
@@ -22,6 +24,7 @@ const products = [
         price: "7500 ر.ي",
         store: "متجر نور",
         status: "متوفر",
+        category: "منزل",
         image: "السليمود.jpeg"
     },
     {
@@ -30,6 +33,7 @@ const products = [
         price: "8500 ر.ي",
         store: "متجر نور",
         status: "متبقي المقاسات 39 و 41",
+        category: "أحذية",
         image: "جزمات.jpeg"
     },
     {
@@ -38,6 +42,7 @@ const products = [
         price: "29000 ر.ي",
         store: "متجر نور",
         status: "متبقي كمية محدودة",
+        category: "منزل",
         image: "غلاية.jpeg"
     },
     {
@@ -46,6 +51,7 @@ const products = [
         price: "11500 ر.ي",
         store: "متجر نور",
         status: "غير متوفر",
+        category: "شنط",
         image: "ali.jpeg"
     },
     {
@@ -54,6 +60,7 @@ const products = [
         price: "4500 ر.ي",
         store: "متجر نور",
         status: "غير متوفر",
+        category: "أحذية",
         image: "ali2.jpeg"
     },
     {
@@ -62,6 +69,7 @@ const products = [
         price: "60 ر.س",
         store: "متجر نور",
         status: "متوفر",
+        category: "عطور",
         image: "https://via.placeholder.com/200x120?text=عطر"
     },
 
@@ -72,6 +80,7 @@ const products = [
         price: "7000 ر.ي",
         store: "ميم",
         status: "متوفر (المتبقي 5 حبات)",
+        category: "منزل",
         image: "ali 10.jpeg"
     },
     {
@@ -80,6 +89,7 @@ const products = [
         price: "400 ر.ي",
         store: "ميم",
         status: "متوفر",
+        category: "ألعاب",
         image: "ali 9.jpeg"
     },
     {
@@ -88,6 +98,7 @@ const products = [
         price: "20000 ر.ي",
         store: "ميم",
         status: "متوفر",
+        category: "ألعاب",
         image: "ali 8.jpeg"
     },
     {
@@ -96,6 +107,7 @@ const products = [
         price: "4000 ر.ي",
         store: "ميم",
         status: "متوفر",
+        category: "ألعاب",
         image: "ali 7.jpeg"
     },
     {
@@ -104,6 +116,7 @@ const products = [
         price: "4000 ر.ي",
         store: "ميم",
         status: "متوفر",
+        category: "ألعاب",
         image: "ali 6.jpeg"
     },
     {
@@ -112,6 +125,7 @@ const products = [
         price: "3500 ر.ي",
         store: "ميم",
         status: "متوفر",
+        category: "ألعاب",
         image: "ali 5.jpeg"
     },
     {
@@ -120,27 +134,28 @@ const products = [
         price: "5000 ر.ي",
         store: "ميم",
         status: "متوفر",
+        category: "ألعاب",
         image: "ali 4.jpeg"
     },
 
     // ===== متجر حكاية غرزة =====
-    { id:27, name:"حافظ نظارة بشكل كرتوني", price:"3500 ر.ي", store:"حكاية غرزة", status:"متوفر", image:"حافظ للنظارة بشكل كرتوني.jpeg" },
-    { id:26, name:"حافظ نظارة بشكل ميدالية", price:"3000 ر.ي", store:"حكاية غرزة", status:"متوفر", image:"حافظ للنضارة بشكل ميدالية .jpeg" },
-    { id:25, name:"قفازات شكل قطة", price:"4500 ر.ي", store:"حكاية غرزة", status:"متوفر", image:"قفازات شكل قطة .jpeg" },
-    { id:24, name:"شباصات ورد", price:"2500 ر.ي", store:"حكاية غرزة", status:"متوفر", image:"شباصات ورد.jpeg" },
-    { id:23, name:"تاج", price:"2500 ر.ي", store:"حكاية غرزة", status:"متوفر", image:"تاج.jpeg" },
-    { id:22, name:"بندانة", price:"3500 ر.ي", store:"حكاية غرزة", status:"متوفر", image:"بندانة.jpeg" },
-    { id:21, name:"طوق شعر وتوكات", price:"4500 ر.ي", store:"حكاية غرزة", status:"متوفر", image:"طوق شعر.jpeg" },
-    { id:20, name:"غلاف مصحف", price:"7500 ر.ي", store:"حكاية غرزة", status:"متوفر", image:"غلاف مصحف.jpeg" },
-    { id:19, name:"مفرش الورد", price:"1500 ر.ي", store:"حكاية غرزة", status:"متوفر", image:"مفرش الورد.jpeg" },
-    { id:18, name:"شال ميكاسا", price:"20500 ر.ي", store:"حكاية غرزة", status:"متوفر", image:"شال.jpeg" },
-    { id:17, name:"جراب لقارورة الحليب (وسط)", price:"2500 ر.ي", store:"حكاية غرزة", status:"متوفر", image:"شراب لقارورة الحليب.jpeg" },
-    { id:16, name:"احذية للمواليد", price:"8500 ر.ي", store:"حكاية غرزة", status:"متوفر", image:"احذية مواليد .jpeg" },
-    { id:15, name:"جرابات للمواليد", price:"2500 ر.ي", store:"حكاية غرزة", status:"متوفر", image:"جرابات صغيرة.jpeg" },
-    { id:14, name:"طواقي صلاة (أولاد / رجال)", price:"الأولاد 5500 – الرجال 6500 ر.ي", store:"حكاية غرزة", status:"متوفر", image:"طاقية اولاد ورجال.jpeg" },
-    { id:13, name:"ايس كاب للمواليد", price:"3500 ر.ي", store:"حكاية غرزة", status:"متوفر", image:"كاوفى ولادية .jpeg" },
-    { id:12, name:"غطاء لفناجين العدة (طقم)", price:"4500 ر.ي", store:"حكاية غرزة", status:"متوفر", image:"العدة.jpeg" },
-    { id:11, name:"جراب للزمزمية", price:"4000 ر.ي", store:"حكاية غرزة", status:"متوفر", image:"جراب للزمزمية.jpeg" },
+    { id:27, name:"حافظ نظارة بشكل كرتوني", price:"3500 ر.ي", store:"حكاية غرزة", status:"متوفر", category:"إكسسوارات", image:"حافظ للنظارة بشكل كرتوني.jpeg" },
+    { id:26, name:"حافظ نظارة بشكل ميدالية", price:"3000 ر.ي", store:"حكاية غرزة", status:"متوفر", category:"إكسسوارات", image:"حافظ للنضارة بشكل ميدالية .jpeg" },
+    { id:25, name:"قفازات شكل قطة", price:"4500 ر.ي", store:"حكاية غرزة", status:"متوفر", category:"إكسسوارات", image:"قفازات شكل قطة .jpeg" },
+    { id:24, name:"شباصات ورد", price:"2500 ر.ي", store:"حكاية غرزة", status:"متوفر", category:"إكسسوارات", image:"شباصات ورد.jpeg" },
+    { id:23, name:"تاج", price:"2500 ر.ي", store:"حكاية غرزة", status:"متوفر", category:"إكسسوارات", image:"تاج.jpeg" },
+    { id:22, name:"بندانة", price:"3500 ر.ي", store:"حكاية غرزة", status:"متوفر", category:"إكسسوارات", image:"بندانة.jpeg" },
+    { id:21, name:"طوق شعر وتوكات", price:"4500 ر.ي", store:"حكاية غرزة", status:"متوفر", category:"إكسسوارات", image:"طوق شعر.jpeg" },
+    { id:20, name:"غلاف مصحف", price:"7500 ر.ي", store:"حكاية غرزة", status:"متوفر", category:"إكسسوارات", image:"غلاف مصحف.jpeg" },
+    { id:19, name:"مفرش الورد", price:"1500 ر.ي", store:"حكاية غرزة", status:"متوفر", category:"منزل", image:"مفرش الورد.jpeg" },
+    { id:18, name:"شال ميكاسا", price:"20500 ر.ي", store:"حكاية غرزة", status:"متوفر", category:"ملابس", image:"شال.jpeg" },
+    { id:17, name:"جراب لقارورة الحليب (وسط)", price:"2500 ر.ي", store:"حكاية غرزة", status:"متوفر", category:"إكسسوارات", image:"شراب لقارورة الحليب.jpeg" },
+    { id:16, name:"احذية للمواليد", price:"8500 ر.ي", store:"حكاية غرزة", status:"متوفر", category:"أحذية", image:"احذية مواليد .jpeg" },
+    { id:15, name:"جرابات للمواليد", price:"2500 ر.ي", store:"حكاية غرزة", status:"متوفر", category:"ملابس", image:"جرابات صغيرة.jpeg" },
+    { id:14, name:"طواقي صلاة (أولاد / رجال)", price:"الأولاد 5500 – الرجال 6500 ر.ي", store:"حكاية غرزة", status:"متوفر", category:"ملابس", image:"طاقية اولاد ورجال.jpeg" },
+    { id:13, name:"ايس كاب للمواليد", price:"3500 ر.ي", store:"حكاية غرزة", status:"متوفر", category:"ملابس", image:"كاوفى ولادية .jpeg" },
+    { id:12, name:"غطاء لفناجين العدة (طقم)", price:"4500 ر.ي", store:"حكاية غرزة", status:"متوفر", category:"منزل", image:"العدة.jpeg" },
+    { id:11, name:"جراب للزمزمية", price:"4000 ر.ي", store:"حكاية غرزة", status:"متوفر", category:"إكسسوارات", image:"جراب للزمزمية.jpeg" },
 
     // ===== متجر لولو سكراب =====
     {
@@ -149,6 +164,7 @@ const products = [
         price: "—",
         store: "لولو سكراب",
         status: "متوفر",
+        category: "تعريفي",
         image: "ali1.jpeg"
     },
 
@@ -159,6 +175,7 @@ const products = [
         price: "1800 ر.ي",
         store: "متجر الجمال",
         status: "متوفر",
+        category: "عناية",
         image: "مورد الشفائف.jpeg"
     },
     {
@@ -167,6 +184,7 @@ const products = [
         price: "1300 ر.ي",
         store: "متجر الجمال",
         status: "متوفر",
+        category: "عناية",
         image: "بودرة.jpeg"
     },
     {
@@ -175,6 +193,7 @@ const products = [
         price: "3500 ر.ي",
         store: "متجر الجمال",
         status: "متوفر",
+        category: "عناية",
         image: "الزيت ابو 3.jpeg"
     },
     {
@@ -183,6 +202,7 @@ const products = [
         price: "2000 ر.ي",
         store: "متجر الجمال",
         status: "متوفر",
+        category: "عناية",
         image: "ابتسامة.jpeg"
     },
     {
@@ -191,6 +211,7 @@ const products = [
         price: "3800 ر.ي",
         store: "متجر الجمال",
         status: "متوفر",
+        category: "عناية",
         image: "الخلطة الثالثة .jpeg"
     },
     {
@@ -199,6 +220,7 @@ const products = [
         price: "3800 ر.ي",
         store: "متجر الجمال",
         status: "متوفر",
+        category: "عناية",
         image: "الخلطة الثانية.jpeg"
     },
     {
@@ -207,6 +229,7 @@ const products = [
         price: "3800 ر.ي",
         store: "متجر الجمال",
         status: "متوفر",
+        category: "عناية",
         image: "الخلطة الاولى.jpeg"
     },
 
@@ -217,6 +240,7 @@ const products = [
         price: "التواصل 774257557",
         store: "حسان شي ان",
         status: "متوفر",
+        category: "إكسسوارات",
         image: "شي ان.jpeg"
     },
     {
@@ -225,6 +249,7 @@ const products = [
         price: "27200 ر.ي",
         store: "حسان شي ان",
         status: "متوفر",
+        category: "أحذية",
         image: "شي ان 1.jpeg"
     },
     {
@@ -233,7 +258,7 @@ const products = [
         price: "22000 ر.ي",
         store: "حسان شي ان",
         status: "متوفر",
+        category: "أحذية",
         image: "شي ان 2.jpeg"
     }
-
 ].sort((a, b) => b.id - a.id);
