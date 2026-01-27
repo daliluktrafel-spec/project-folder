@@ -9,17 +9,23 @@
 body {
     margin: 0;
     font-family: "Segoe UI", Tahoma, Arial, sans-serif;
-    background: linear-gradient(to bottom,#f2f2f2 0%,#4a6cf7 25%,#6a1b9a 75%,#f2f2f2 100%);
-    color: #333;
+    background: linear-gradient(
+        to bottom,
+        #f7f6f2 0%,
+        #2c2f4a 25%,
+        #1b1e33 75%,
+        #f7f6f2 100%
+    );
+    color: #2b2b2b;
 }
 
 .header {
-    background: #6a1b9a;
+    background: linear-gradient(45deg,#c9b36a,#b89b4a,#e6d38a);
     padding: 20px;
     text-align: center;
     font-size: 24px;
     font-weight: bold;
-    color: white;
+    color: #1b1e33;
     position: relative;
 }
 
@@ -28,7 +34,7 @@ body {
     left: 15px;
     top: 15px;
     background: white;
-    color: #e53935;
+    color: #b89b4a;
     padding: 6px 12px;
     border-radius: 20px;
     font-weight: bold;
@@ -46,17 +52,18 @@ body {
     flex: 0 0 auto;
     min-width: 110px;
     background: white;
-    border: 2px solid #6a1b9a;
+    border: 2px solid #b89b4a;
     border-radius: 12px;
     padding: 10px;
     font-weight: bold;
     font-size: 15px;
     cursor: pointer;
     white-space: nowrap;
+    color: #1b1e33;
 }
 .category-btn:hover {
-    background: #6a1b9a;
-    color: white;
+    background: linear-gradient(45deg,#c9b36a,#b89b4a);
+    color: #1b1e33;
 }
 
 @media (max-width: 600px) {
@@ -96,9 +103,9 @@ body {
 }
 
 .product-name { font-weight: bold; font-size: 15px; }
-.product-price { color: #e53935; font-weight: bold; }
-.product-store { color: #1e88e5; font-size: 14px; }
-.product-status { color: #6a1b9a; font-size: 13px; }
+.product-price { color: #b89b4a; font-weight: bold; }
+.product-store { color: #3f4a7a; font-size: 14px; }
+.product-status { color: #7a6a3a; font-size: 13px; }
 
 .tabs {
     display: flex;
@@ -114,15 +121,16 @@ body {
 .tab {
     padding: 10px 20px;
     border-radius: 12px;
-    border: 2px solid #6a1b9a;
+    border: 2px solid #b89b4a;
     font-weight: bold;
-    background: #f2f2f2;
+    background: #f7f6f2;
     cursor: pointer;
+    color: #1b1e33;
 }
 
 .tab.active {
-    background: #6a1b9a;
-    color: white;
+    background: linear-gradient(45deg,#c9b36a,#b89b4a);
+    color: #1b1e33;
 }
 </style>
 </head>
