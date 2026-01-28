@@ -5,6 +5,9 @@
 <title>الدخول</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- استدعاء خط كوفي -->
+<link href="https://fonts.googleapis.com/css2?family=Lateef&display=swap" rel="stylesheet">
+
 <style>
 body {
     margin: 0;
@@ -34,9 +37,21 @@ body {
 
 .box h2 {
     margin-bottom: 28px;
-    color: #bfa14a;
     font-weight: bold;
     letter-spacing: 1px;
+}
+
+.welcome-line1 {
+    font-size: 22px;
+    color: #bfa14a;
+}
+
+.welcome-line2 {
+    font-family: 'Lateef', cursive; /* خط الكوفي */
+    font-size: 30px;
+    color: #d4af37; /* لون ذهبي فخم */
+    font-weight: bold;
+    margin-top: 6px;
 }
 
 input {
@@ -79,7 +94,10 @@ button:hover {
 <body>
 
 <div class="box">
-    <h2>مرحباً بك</h2>
+    <h2>
+        <div class="welcome-line1">مرحباً بك في</div>
+        <div class="welcome-line2">متاجر البلاد</div>
+    </h2>
     <input type="text" id="name" placeholder="الاسم">
     <input type="text" id="region" placeholder="المنطقة">
     <button onclick="go()">دخول</button>
