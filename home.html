@@ -142,7 +142,6 @@ body {
     <div class="fav-top" onclick="showFavorites()">❤️ <span id="favCount">0</span></div>
 </div>
 
-<!-- ===== التصنيفات ستولد تلقائيًا من JS ===== -->
 <div id="categories" class="categories"></div>
 
 <div style="padding:15px;text-align:center;">
@@ -167,6 +166,8 @@ body {
 </div>
 
 <script src="products.js"></script>
+<script src="search-dictionary.js"></script>
+
 <script>
 const userName = localStorage.getItem("userName") || "مستخدم";
 const userRegion = localStorage.getItem("userRegion") || "";
@@ -264,16 +265,27 @@ function showSection(id,el){
     else if(id==="available") renderProducts("available",p=>p.status==="متوفر");
 }
 
+/* ===== البحث الذكي (التعديل الوحيد) ===== */
 function smartSearch(){
-    const q = document.getElementById("searchInput").value.trim().toLowerCase();
+    const input = document.getElementById("searchInput").value;
+    if(!input){
+        renderProducts("all");
+        return;
+    }
+
+    const keywords = getSmartKeywords(input);
+
     showSection("all");
-    renderProducts("all", p =>
-        p.name.toLowerCase().includes(q) ||
-        p.store.toLowerCase().includes(q)
-    );
+
+    renderProducts("all", p => {
+        const text = normalizeArabic(
+            p.name + " " + p.store + " " + (p.category || "")
+        );
+        return keywords.some(k => text.includes(k));
+    });
 }
 
-// ===== تعديل التصنيفات لتظهر فقط حسب JS =====
+/* ===== التصنيفات ===== */
 function renderCategories() {
     const categoriesDiv = document.getElementById("categories");
     categoriesDiv.innerHTML = "";
