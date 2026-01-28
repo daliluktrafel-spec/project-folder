@@ -46,12 +46,36 @@ body {
     color: #bfa14a;
 }
 
+/* ===== كلمة متاجر البلاد مع تأثير فاخر ===== */
 .welcome-line2 {
     font-family: 'Lateef', cursive; /* خط الكوفي */
-    font-size: 30px;
-    color: #d4af37; /* لون ذهبي فخم */
+    font-size: 32px;
     font-weight: bold;
     margin-top: 6px;
+    background: linear-gradient(90deg, #d4af37, #f5e06b, #d4af37);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shine 3s infinite;
+    display: inline-block;
+}
+
+/* تأثير الحركة واللمعان */
+@keyframes shine {
+    0% {
+        background-position: -200% 0;
+        opacity: 0;
+        transform: translateY(-20px) scale(0.9);
+    }
+    50% {
+        background-position: 200% 0;
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    100% {
+        background-position: 200% 0;
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 input {
