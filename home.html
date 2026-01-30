@@ -165,7 +165,9 @@ body {
     <div class="tab" onclick="showSection('stores',this)">المتاجر</div>
 </div>
 
+<!-- ملفات البيانات والبحث -->
 <script src="products.js"></script>
+<script src="dictionary.js"></script>
 <script src="search-dictionary.js"></script>
 
 <script>
@@ -263,26 +265,6 @@ function showSection(id,el){
     if(id==="stores") renderStores();
     else if(id==="all") renderProducts("all");
     else if(id==="available") renderProducts("available",p=>p.status==="متوفر");
-}
-
-/* ===== البحث الذكي (التعديل الوحيد) ===== */
-function smartSearch(){
-    const input = document.getElementById("searchInput").value;
-    if(!input){
-        renderProducts("all");
-        return;
-    }
-
-    const keywords = getSmartKeywords(input);
-
-    showSection("all");
-
-    renderProducts("all", p => {
-        const text = normalizeArabic(
-            p.name + " " + p.store + " " + (p.category || "")
-        );
-        return keywords.some(k => text.includes(k));
-    });
 }
 
 /* ===== التصنيفات ===== */
