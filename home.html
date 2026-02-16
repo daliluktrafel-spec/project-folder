@@ -63,7 +63,6 @@ body {
 }
 .category-btn:hover {
     background: linear-gradient(45deg,#c9b36a,#b89b4a);
-    color: #1b1e33;
 }
 
 @media (max-width: 600px) {
@@ -130,7 +129,6 @@ body {
 
 .tab.active {
     background: linear-gradient(45deg,#c9b36a,#b89b4a);
-    color: #1b1e33;
 }
 </style>
 </head>
@@ -159,13 +157,14 @@ body {
 <div id="available" class="container" style="display:none;"></div>
 <div id="stores" class="container" style="display:none;"></div>
 
+<!-- ✅ فقط أضفنا تبويب رابع -->
 <div class="tabs">
     <div class="tab active" onclick="showSection('all',this)">كل البضائع</div>
     <div class="tab" onclick="showSection('available',this)">المتوفر</div>
     <div class="tab" onclick="showSection('stores',this)">المتاجر</div>
+    <div class="tab" onclick="openAddProduct()">إضافة منتج</div>
 </div>
 
-<!-- ملفات البيانات والبحث -->
 <script src="products.js"></script>
 <script src="dictionary.js"></script>
 <script src="search-dictionary.js"></script>
@@ -184,16 +183,9 @@ function filterByCategory(key){
     renderProducts("all", p => p.category === key);
 }
 
-/* ===============================
-   AVAILABILITY LOGIC (متوفر)
-================================ */
 function isAvailable(product) {
     const status = normalizeArabic(product.status || "");
-
-    // فقط "غير متوفر" يتم استبعاده
     if (status.includes("غير متوفر")) return false;
-
-    // متوفر + كمية محدودة + متبقي = متوفر
     return true;
 }
 
@@ -244,6 +236,7 @@ function renderProducts(containerId, filter = () => true){
     });
 }
 
+/* ✅ رجّعنا سلوك المتاجر كما كان */
 function renderStores(){
     const c = document.getElementById("stores");
     c.innerHTML = "";
@@ -278,15 +271,17 @@ function showSection(id,el){
     if(id==="stores") renderStores();
     else if(id==="all") renderProducts("all");
     else if(id==="available")
-    renderProducts("available", p => isAvailable(p));
-
+        renderProducts("available", p => isAvailable(p));
 }
 
-/* ===== التصنيفات ===== */
+/* ✅ تبويب إضافة منتج فقط */
+function openAddProduct(){
+    window.location.href = "stores.html";
+}
+
 function renderCategories() {
     const categoriesDiv = document.getElementById("categories");
     categoriesDiv.innerHTML = "";
-
     const categoriesList = [...new Set(products.map(p => p.category).filter(c => c))];
 
     categoriesList.forEach(cat => {
@@ -300,6 +295,29 @@ function renderCategories() {
 
 renderCategories();
 renderProducts("all");
+</script>
+<!-- Firebase App (core) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<!-- Firebase Realtime Database -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+  // بيانات مشروعك
+  const firebaseConfig = {
+    apiKey: "AIzaSyAMEoUTIMAS0mh06_SxrM2T_efDxEmEoxg",
+    authDomain: "wafaseiyunshop.firebaseapp.com",
+    databaseURL: "https://wafaseiyunshop-default-rtdb.firebaseio.com",
+    projectId: "wafaseiyunshop",
+    storageBucket: "wafaseiyunshop.firebasestorage.app",
+    messagingSenderId: "101115796279",
+    appId: "1:101115796279:web:3753efad2a443c9b6098b2"
+  };
+
+  // تهيئة Firebase
+  firebase.initializeApp(firebaseConfig);
+
+  // إنشاء متغير للاتصال بقاعدة البيانات
+  const database = firebase.database();
 </script>
 
 </body>
