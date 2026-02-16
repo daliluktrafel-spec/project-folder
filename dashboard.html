@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة التحكم</title>
+
+<style>
+body{
+    margin:0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(to bottom,#f7f6f2,#e6d38a,#b89b4a);
+}
+
+/* الهيدر */
+.header{
+    background: linear-gradient(45deg,#c9b36a,#b89b4a,#e6d38a);
+    padding:20px;
+    text-align:center;
+    font-size:22px;
+    font-weight:bold;
+    color:#1b1e33;
+}
+
+/* المحتوى */
+.container{
+    max-width:600px;
+    margin:20px auto 120px;
+    background:white;
+    padding:20px;
+    border-radius:16px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.25);
+}
+
+/* الحقول */
+input, select{
+    width:100%;
+    padding:10px;
+    margin:8px 0;
+    border-radius:10px;
+    border:1px solid #ccc;
+    font-size:15px;
+}
+
+/* زر */
+button{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:12px;
+    font-weight:bold;
+    cursor:pointer;
+    font-size:15px;
+}
+
+/* قائمة المنتجات */
+.product-row{
+    padding:12px;
+    border:1px solid #ddd;
+    border-radius:12px;
+    margin:8px 0;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+/* التبويبات السفلية */
+.bottom-tabs{
+    position:fixed;
+    bottom:0;
+    width:100%;
+    display:flex;
+}
+
+.tab-add{
+    flex:1;
+    background:#d4b04f;
+    color:#1b1e33;
+    text-align:center;
+    padding:14px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.tab-edit{
+    flex:1;
+    background:#111;
+    color:white;
+    text-align:center;
+    padding:14px;
+    font-weight:bold;
+    cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header" id="title"></div>
+
+<div class="container" id="content"></div>
+
+<div class="bottom-tabs">
+    <div class="tab-add" onclick="showAdd()">إضافة منتج</div>
+    <div class="tab-edit" onclick="showEdit()">تعديل منتج</div>
+</div>
+
+<script src="products.js"></script>
+
+<script>
+const store = localStorage.getItem("selectedStore");
+if(!store){ location.href="home.html"; }
+
+document.getElementById("title").innerText =
+"لوحة تحكم — " + store;
+
+/* ===== بيانات محلية للتجربة ===== */
+let localProducts = JSON.parse(localStorage.getItem("localProducts")||"[]");
+
+/* دمج المنتجات الأصلية + المحلية */
+function getStoreProducts(){
+    return [...products, ...localProducts]
+        .filter(p => p.store === store);
+}
+
+/* =========================
+   إضافة منتج
+========================= */
+function showAdd(){
+document.getElementById("content").innerHTML = `
+<h3>إضافة منتج</h3>
+
+<input id="name" placeholder="اسم المنتج">
+<input id="price" placeholder="السعر">
+<input id="status" placeholder="الحالة">
+<input id="image" placeholder="رابط الصورة">
+<input id="category" placeholder="التصنيف">
+
+<input value="${store}" disabled>
+
+<button onclick="addProduct()">حفظ المنتج</button>
+`;
+}
+
+function addProduct(){
+    const p = {
+        id: Date.now(),
+        name: name.value,
+        price: price.value,
+        status: status.value,
+        image: image.value,
+        category: category.value,
+        store: store
+    };
+
+    localProducts.push(p);
+    localStorage.setItem("localProducts",
+        JSON.stringify(localProducts));
+
+    alert("تمت الإضافة ✅");
+}
+
+/* =========================
+   تعديل منتج — قائمة
+========================= */
+function showEdit(){
+    const list = getStoreProducts();
+
+    let html = "<h3>اختر منتج للتعديل</h3>";
+
+    list.forEach(p=>{
+        html += `
+        <div class="product-row"
+            onclick="editProduct(${p.id})">
+            ${p.name}
+        </div>`;
+    });
+
+    document.getElementById("content").innerHTML = html;
+}
+
+/* =========================
+   نموذج تعديل
+========================= */
+function editProduct(id){
+    const p = getStoreProducts().find(x=>x.id==id);
+    if(!p) return;
+
+document.getElementById("content").innerHTML = `
+<h3>تعديل منتج</h3>
+
+<input id="name" value="${p.name}">
+<input id="price" value="${p.price}">
+<input id="status" value="${p.status}">
+<input id="image" value="${p.image}">
+<input id="category" value="${p.category}">
+<input value="${store}" disabled>
+
+<button onclick="saveEdit(${id})">حفظ التعديل</button>
+`;
+}
+
+function saveEdit(id){
+    const idx = localProducts.findIndex(p=>p.id==id);
+    if(idx>=0){
+        localProducts[idx] = {
+            ...localProducts[idx],
+            name:name.value,
+            price:price.value,
+            status:status.value,
+            image:image.value,
+            category:category.value
+        };
+        localStorage.setItem("localProducts",
+            JSON.stringify(localProducts));
+        alert("تم التعديل ✅");
+    } else {
+        alert("هذا المنتج من الملف الأساسي — عدله في products.js");
+    }
+}
+
+/* ابدأ على الإضافة */
+showAdd();
+</script>
+<!-- Firebase App (core) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<!-- Firebase Realtime Database -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+  // بيانات مشروعك
+  const firebaseConfig = {
+    apiKey: "AIzaSyAMEoUTIMAS0mh06_SxrM2T_efDxEmEoxg",
+    authDomain: "wafaseiyunshop.firebaseapp.com",
+    databaseURL: "https://wafaseiyunshop-default-rtdb.firebaseio.com",
+    projectId: "wafaseiyunshop",
+    storageBucket: "wafaseiyunshop.firebasestorage.app",
+    messagingSenderId: "101115796279",
+    appId: "1:101115796279:web:3753efad2a443c9b6098b2"
+  };
+
+  // تهيئة Firebase
+  firebase.initializeApp(firebaseConfig);
+
+  // إنشاء متغير للاتصال بقاعدة البيانات
+  const database = firebase.database();
+</script>
+
+</body>
+</html>
