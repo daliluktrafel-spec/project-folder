@@ -5,19 +5,13 @@
 <title>الدخول</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- استدعاء خط كوفي -->
 <link href="https://fonts.googleapis.com/css2?family=Lateef&display=swap" rel="stylesheet">
 
 <style>
 body {
     margin: 0;
     font-family: "Segoe UI", Tahoma, Arial, sans-serif;
-    background: linear-gradient(
-        to bottom,
-        #f6f4ee 0%,
-        #2c2f4a 50%,
-        #1c1f33 100%
-    );
+    background: linear-gradient(to bottom,#f6f4ee 0%,#2c2f4a 50%,#1c1f33 100%);
     height: 100vh;
     display: flex;
     justify-content: center;
@@ -35,82 +29,43 @@ body {
     border: 1px solid #e6d8a8;
 }
 
-.box h2 {
-    margin-bottom: 28px;
-    font-weight: bold;
-    letter-spacing: 1px;
-}
+.welcome-line1 { font-size:22px; color:#bfa14a; }
 
-.welcome-line1 {
-    font-size: 22px;
-    color: #bfa14a;
-}
-
-/* ===== كلمة متاجر البلاد مع تأثير فاخر ===== */
 .welcome-line2 {
-    font-family: 'Lateef', cursive; /* خط الكوفي */
+    font-family: 'Lateef', cursive;
     font-size: 32px;
     font-weight: bold;
     margin-top: 6px;
-    background: linear-gradient(90deg, #d4af37, #f5e06b, #d4af37);
+    background: linear-gradient(90deg,#d4af37,#f5e06b,#d4af37);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     animation: shine 3s infinite;
-    display: inline-block;
 }
 
-/* تأثير الحركة واللمعان */
 @keyframes shine {
-    0% {
-        background-position: -200% 0;
-        opacity: 0;
-        transform: translateY(-20px) scale(0.9);
-    }
-    50% {
-        background-position: 200% 0;
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-    100% {
-        background-position: 200% 0;
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
+    0% {opacity:0; transform:translateY(-20px) scale(.9);}
+    50% {opacity:1; transform:translateY(0) scale(1);}
+    100% {opacity:1;}
 }
 
 input {
-    width: 100%;
-    padding: 13px;
-    margin-bottom: 16px;
-    border-radius: 12px;
-    border: 1px solid #e0d6b8;
-    font-size: 16px;
-}
-
-input:focus {
-    outline: none;
-    border-color: #bfa14a;
+    width:100%;
+    padding:13px;
+    margin-bottom:16px;
+    border-radius:12px;
+    border:1px solid #e0d6b8;
+    font-size:16px;
 }
 
 button {
-    width: 100%;
-    padding: 14px;
-    border: none;
-    border-radius: 16px;
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
-    background: linear-gradient(
-        45deg,
-        #c9b36a,
-        #b08d2f,
-        #e6d38a
-    );
-    color: #1c1f33;
-}
-
-button:hover {
-    opacity: 0.93;
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:16px;
+    font-size:18px;
+    font-weight:bold;
+    cursor:pointer;
+    background:linear-gradient(45deg,#c9b36a,#b08d2f,#e6d38a);
 }
 </style>
 </head>
@@ -128,16 +83,23 @@ button:hover {
 </div>
 
 <script>
-function go() {
-    const name = document.getElementById("name").value;
-    const region = document.getElementById("region").value;
-    if (!name || !region) {
+/* ✅ تحسين تجربة المستخدم — تخطي تلقائي */
+if(localStorage.getItem("userName") && localStorage.getItem("introShown")==="true"){
+    location.href = "home.html";
+}
+
+function go(){
+    const name = document.getElementById("name").value.trim();
+    const region = document.getElementById("region").value.trim();
+
+    if(!name || !region){
         alert("يرجى إدخال الاسم والمنطقة");
         return;
     }
+
     localStorage.setItem("userName", name);
     localStorage.setItem("userRegion", region);
-    window.location.href = "intro.html";
+    location.href = "intro.html";
 }
 </script>
 
