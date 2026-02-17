@@ -147,7 +147,7 @@ body {
         type="text"
         id="searchInput"
         placeholder="🔍 ابحث عن منتج أو متجر..."
-        onkeyup="smartSearch()"
+        onchange="smartSearch()"
         style="width:90%;max-width:400px;padding:12px;border-radius:12px;"
     >
 </div>
@@ -157,7 +157,6 @@ body {
 <div id="available" class="container" style="display:none;"></div>
 <div id="stores" class="container" style="display:none;"></div>
 
-<!-- ✅ فقط أضفنا تبويب رابع -->
 <div class="tabs">
     <div class="tab active" onclick="showSection('all',this)">كل البضائع</div>
     <div class="tab" onclick="showSection('available',this)">المتوفر</div>
@@ -165,14 +164,42 @@ body {
     <div class="tab" onclick="openAddProduct()">إضافة منتج</div>
 </div>
 
-<script src="products.js"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+ apiKey: "AIzaSyAMEoUTIMAS0mh06_SxrM2T_efDxEmEoxg",
+ authDomain: "wafaseiyunshop.firebaseapp.com",
+ databaseURL: "https://wafaseiyunshop-default-rtdb.firebaseio.com",
+ projectId: "wafaseiyunshop",
+ storageBucket: "wafaseiyunshop.firebasestorage.app",
+ messagingSenderId: "101115796279",
+ appId: "1:101115796279:web:3753efad2a443c9b6098b2"
+};
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+let products = [];
+
+database.ref("products").on("value", snap => {
+    const data = snap.val() || {};
+    products = Object.values(data);
+
+    renderCategories();
+    renderProducts("all");
+});
+
+</script>
+
+
 <script src="dictionary.js"></script>
 <script src="search-dictionary.js"></script>
 
 <script>
 const userName = localStorage.getItem("userName") || "مستخدم";
 const userRegion = localStorage.getItem("userRegion") || "";
-document.getElementById("welcome").firstChild.nodeValue =
+document.getElementById("welcome").childNodes[0].nodeValue =
 `مرحبًا ${userName} ${userRegion}`;
 
 let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
@@ -193,11 +220,14 @@ function shortName(text, max = 45){
     return text.length > max ? text.slice(0, max) + "…" : text;
 }
 
-const storesList = [...new Set(products.map(p => p.store))];
+function getStoresList(){
+    return [...new Set(products.map(p => p.store))];
+}
 
 function renderProducts(containerId, filter = () => true){
     const c = document.getElementById(containerId);
     c.innerHTML = "";
+
     products.filter(filter).forEach(p=>{
         const d = document.createElement("div");
         d.className = "card";
@@ -208,8 +238,8 @@ function renderProducts(containerId, filter = () => true){
             <div class="product-price">${p.price}</div>
             <div class="product-store">${p.store}</div>
             <div class="product-status">${p.status}</div>
-            <button class="fav-btn" style="margin-top:5px;padding:5px;border:none;border-radius:10px;cursor:pointer;">
-                ❤️ ${favorites.includes(p.id) ? 'إزالة من المفضلة' : 'أضف للمفضلة'}
+            <button class="fav-btn">
+                ❤️ ${favorites.includes(Number(p.id)) ? 'إزالة من المفضلة' : 'أضف للمفضلة'}
             </button>
         `;
 
@@ -219,14 +249,15 @@ function renderProducts(containerId, filter = () => true){
             }
         };
 
-        const btn = d.querySelector(".fav-btn");
-        btn.onclick = (e)=>{
+        d.querySelector(".fav-btn").onclick = (e)=>{
             e.stopPropagation();
-            if(favorites.includes(p.id)){
-                favorites = favorites.filter(fid=>fid!==p.id);
-            } else {
-                favorites.push(p.id);
-            }
+            const id = Number(p.id);
+
+            if(favorites.includes(id))
+                favorites = favorites.filter(fid=>fid!==id);
+            else
+                favorites.push(id);
+
             localStorage.setItem("favorites", JSON.stringify(favorites));
             document.getElementById("favCount").innerText = favorites.length;
             renderProducts(containerId, filter);
@@ -236,11 +267,11 @@ function renderProducts(containerId, filter = () => true){
     });
 }
 
-/* ✅ رجّعنا سلوك المتاجر كما كان */
 function renderStores(){
     const c = document.getElementById("stores");
     c.innerHTML = "";
-    storesList.forEach(s=>{
+
+    getStoresList().forEach(s=>{
         const d = document.createElement("div");
         d.className = "card";
         d.innerText = s;
@@ -251,22 +282,23 @@ function renderStores(){
 
 function showFavorites(){
     showSection("favorites");
-    renderProducts("favorites", p=>favorites.includes(p.id));
+    renderProducts("favorites", p=>favorites.includes(Number(p.id)));
 }
 
 function showSection(id,el){
     ["favorites","all","available","stores"].forEach(s=>{
         document.getElementById(s).style.display="none";
     });
+
     document.getElementById(id).style.display="grid";
+
     document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
     if(el) el.classList.add("active");
 
-    if(id === "stores"){
+    if(id === "stores")
         document.getElementById("categories").style.display = "none";
-    } else {
+    else
         document.getElementById("categories").style.display = "flex";
-    }
 
     if(id==="stores") renderStores();
     else if(id==="all") renderProducts("all");
@@ -274,7 +306,6 @@ function showSection(id,el){
         renderProducts("available", p => isAvailable(p));
 }
 
-/* ✅ تبويب إضافة منتج فقط */
 function openAddProduct(){
     window.location.href = "stores.html";
 }
@@ -282,6 +313,7 @@ function openAddProduct(){
 function renderCategories() {
     const categoriesDiv = document.getElementById("categories");
     categoriesDiv.innerHTML = "";
+
     const categoriesList = [...new Set(products.map(p => p.category).filter(c => c))];
 
     categoriesList.forEach(cat => {
@@ -292,32 +324,12 @@ function renderCategories() {
         categoriesDiv.appendChild(btn);
     });
 }
+/* عرض أولي آمن */
+setTimeout(()=>{
+    renderCategories();
+    renderProducts("all");
+},500);
 
-renderCategories();
-renderProducts("all");
-</script>
-<!-- Firebase App (core) -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<!-- Firebase Realtime Database -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-<script>
-  // بيانات مشروعك
-  const firebaseConfig = {
-    apiKey: "AIzaSyAMEoUTIMAS0mh06_SxrM2T_efDxEmEoxg",
-    authDomain: "wafaseiyunshop.firebaseapp.com",
-    databaseURL: "https://wafaseiyunshop-default-rtdb.firebaseio.com",
-    projectId: "wafaseiyunshop",
-    storageBucket: "wafaseiyunshop.firebasestorage.app",
-    messagingSenderId: "101115796279",
-    appId: "1:101115796279:web:3753efad2a443c9b6098b2"
-  };
-
-  // تهيئة Firebase
-  firebase.initializeApp(firebaseConfig);
-
-  // إنشاء متغير للاتصال بقاعدة البيانات
-  const database = firebase.database();
 </script>
 
 </body>
