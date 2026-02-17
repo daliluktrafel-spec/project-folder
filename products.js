@@ -15,5 +15,5 @@ function loadProductsFromFirebase() {
     });
 }
 
-// استدعاء الدالة عند تشغيل الصفحة
+// استدعا الدالة عند تشغيل الصفحة
 loadProductsFromFirebase();
