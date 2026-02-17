@@ -51,7 +51,6 @@ body {
     background-repeat: no-repeat;
 }
 
-/* زر المفضلة */
 .favorite-btn {
     position: absolute;
     top: 10px;
@@ -143,63 +142,89 @@ body {
     <button class="btn-back" onclick="window.history.back();">عودة</button>
 </div>
 
-<script src="products.js"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
 <script>
+const firebaseConfig = {
+ apiKey: "AIzaSyAMEoUTIMAS0mh06_SxrM2T_efDxEmEoxg",
+ authDomain: "wafaseiyunshop.firebaseapp.com",
+ databaseURL: "https://wafaseiyunshop-default-rtdb.firebaseio.com",
+ projectId: "wafaseiyunshop",
+ storageBucket: "wafaseiyunshop.firebasestorage.app",
+ messagingSenderId: "101115796279",
+ appId: "1:101115796279:web:3753efad2a443c9b6098b2"
+};
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
 const userName = localStorage.getItem("userName") || "مستخدم";
 const userRegion = localStorage.getItem("userRegion") || "";
 
 const urlParams = new URLSearchParams(window.location.search);
-const productId = parseInt(urlParams.get('productId'));
+const productId = urlParams.get('productId');
 
-const product = products.find(p => p.id === productId) || products[0];
+let product = null;
 
-document.getElementById("product-name").innerText = product.name;
-document.getElementById("product-price").innerText = product.price;
-document.getElementById("product-store").innerText = product.store;
-document.getElementById("product-status").innerText = product.status;
-document.getElementById("product-img").style.backgroundImage = `url('${product.image}')`;
+// جلب المنتج من Firebase
+database.ref("products").once("value").then(snapshot => {
+    const data = snapshot.val() || {};
+    const products = Object.values(data);
 
-/* الطلب */
-document.getElementById("order-btn").onclick = () => {
-    const msg =
-        `الاسم: ${userName}%0A` +
-        `المنطقة: ${userRegion}%0A` +
-        `المنتج: ${product.name}%0A` +
-        `السعر: ${product.price}%0A` +
-        `المتجر: ${product.store}`;
-    window.open(`https://wa.me/967774257557?text=${msg}`, '_blank');
-};
+    // تحويل كل شيء إلى string للمطابقة الدقيقة
+    product = products.find(p => String(p.id) === String(productId));
 
-/* المفضلة */
-const favBtn = document.getElementById("favBtn");
-let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
+    if(!product) return;
 
-function isFav(id){
-    return favorites.includes(id);
-}
+    document.getElementById("product-name").innerText = product.name;
+    document.getElementById("product-price").innerText = product.price;
+    document.getElementById("product-store").innerText = product.store;
+    document.getElementById("product-status").innerText = product.status;
 
-function updateFavBtn(){
-    if(isFav(product.id)){
-        favBtn.innerText = "❤";
-        favBtn.classList.add("active");
-    }else{
-        favBtn.innerText = "♡";
-        favBtn.classList.remove("active");
+   // إذا product.image هو كائن مع خاصية Value
+const imgSrc = (product.image && product.image.Value) ? product.image.Value : product.image;
+document.getElementById("product-img").style.backgroundImage = `url('${imgSrc}')`;
+
+    // الطلب على واتساب
+    document.getElementById("order-btn").onclick = () => {
+        const msg =
+            `الاسم: ${userName}%0A` +
+            `المنطقة: ${userRegion}%0A` +
+            `المنتج: ${product.name}%0A` +
+            `السعر: ${product.price}%0A` +
+            `المتجر: ${product.store}`;
+        window.open(`https://wa.me/967774257557?text=${msg}`, '_blank');
+    };
+
+    // المفضلة
+    const favBtn = document.getElementById("favBtn");
+    let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+
+    function isFav(id){ return favorites.includes(Number(id)); }
+    function updateFavBtn(){
+        if(isFav(product.id)){
+            favBtn.innerText = "❤";
+            favBtn.classList.add("active");
+        } else {
+            favBtn.innerText = "♡";
+            favBtn.classList.remove("active");
+        }
     }
-}
 
-favBtn.onclick = (e) => {
-    e.stopPropagation();
-    if(isFav(product.id)){
-        favorites = favorites.filter(f => f !== product.id);
-    }else{
-        favorites.push(product.id);
-    }
-    localStorage.setItem("favorites", JSON.stringify(favorites));
+    favBtn.onclick = (e) => {
+        e.stopPropagation();
+        if(isFav(product.id)){
+            favorites = favorites.filter(f => f !== Number(product.id));
+        } else {
+            favorites.push(Number(product.id));
+        }
+        localStorage.setItem("favorites", JSON.stringify(favorites));
+        updateFavBtn();
+    };
+
     updateFavBtn();
-};
-
-updateFavBtn();
+});
 </script>
 
 </body>
