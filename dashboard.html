@@ -136,14 +136,22 @@ firebase.initializeApp(firebaseConfig);
 const database=firebase.database();
 
 const store = localStorage.getItem("selectedStore");
+
+if(!store){
+    alert("خطأ: لم يتم اختيار متجر — ارجع واختر المتجر أولاً");
+    location.href = "stores.html";
+}
+
 document.getElementById("title").innerText = "لوحة تحكم — " + store;
 document.getElementById("store").value = store;
+
 
 let products = [];
 
 // تحميل منتجات المتجر
 function loadProducts() {
-    database.ref("products").once("value", snap => {
+    database.ref("products").off(); // يمنع التكرار
+    database.ref("products").on("value", snap => {
         const data = snap.val() || {};
         products = Object.values(data).filter(p => p.store === store);
         renderEditProducts();
@@ -164,7 +172,7 @@ function renderEditProducts(){
             <input value="${p.name}" id="name-${p.id}">
             <input value="${p.price}" id="price-${p.id}">
             <input value="${p.status}" id="status-${p.id}">
-            <input value="${p.image}" id="image-${p.id}">
+            <input value="${p.image || ''}" id="image-${p.id}">
             <input value="${p.category}" id="category-${p.id}">
             <input value="${p.store}" readonly>
             <button onclick="saveEdit(${p.id})">تعديل</button>
@@ -175,19 +183,46 @@ function renderEditProducts(){
 
 // إضافة منتج جديد
 function add(){
+    const nameInput = document.getElementById("name");
+    const priceInput = document.getElementById("price");
+    const statusInput = document.getElementById("status");
+    const imageInput = document.getElementById("image");
+    const categoryInput = document.getElementById("category");
+
+    if(!store){
+        alert("لا يوجد متجر محدد");
+        return;
+    }
+
+    if(!nameInput.value || !priceInput.value){
+        alert("أدخل الاسم والسعر");
+        return;
+    }
+
     database.ref("products").push({
         id:Date.now(),
-        name:name.value,
-        price:price.value,
-        status:status.value,
-        image:image.value,
-        category:category.value,
+        name:nameInput.value,
+price:priceInput.value,
+status:statusInput.value,
+image:imageInput.value,
+category:categoryInput.value,
         store:store
-    }).then(()=>alert("تم الحفظ ✅"));
+    }).then(()=>{
+    alert("تم الحفظ ✅");
+
+    nameInput.value="";
+priceInput.value="";
+statusInput.value="";
+imageInput.value="";
+categoryInput.value="";
+    loadProducts();
+});
+
 }
 
 // حفظ التعديلات
 function saveEdit(id){
+
     const updated = {
         name: document.getElementById("name-"+id).value,
         price: document.getElementById("price-"+id).value,
@@ -196,9 +231,20 @@ function saveEdit(id){
         category: document.getElementById("category-"+id).value,
         store: store
     };
-    database.ref("products").orderByChild("id").equalTo(id).once("value", snap=>{
+
+    // ✅ هنا المكان الصحيح
+    if(!updated.name || !updated.price){
+        alert("الاسم والسعر مطلوبان");
+        return;
+    }
+
+    database.ref("products")
+      .orderByChild("id")
+      .equalTo(id)
+      .once("value", snap=>{
         snap.forEach(child=>{
-            child.ref.update(updated).then(()=>alert("تم التعديل ✅"));
+            child.ref.update(updated)
+            .then(()=>alert("تم التعديل ✅"));
         });
     });
 }
