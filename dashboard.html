@@ -4,245 +4,218 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>لوحة التحكم</title>
-
 <style>
-body{
-    margin:0;
-    font-family: Arial, sans-serif;
-    background: linear-gradient(to bottom,#f7f6f2,#e6d38a,#b89b4a);
+body {
+    margin: 0;
+    font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+    background: #f7f6f2;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
-/* الهيدر */
-.header{
-    background: linear-gradient(45deg,#c9b36a,#b89b4a,#e6d38a);
-    padding:20px;
-    text-align:center;
-    font-size:22px;
-    font-weight:bold;
-    color:#1b1e33;
+header {
+    text-align: center;
+    padding: 20px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #1b1e33;
 }
 
-/* المحتوى */
-.container{
-    max-width:600px;
-    margin:20px auto 120px;
-    background:white;
-    padding:20px;
-    border-radius:16px;
-    box-shadow:0 10px 25px rgba(0,0,0,0.25);
+#content {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 20px;
+    flex-wrap: wrap;
 }
 
-/* الحقول */
-input, select{
-    width:100%;
-    padding:10px;
-    margin:8px 0;
-    border-radius:10px;
-    border:1px solid #ccc;
-    font-size:15px;
+.box {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    width: 100%;
+    max-width: 450px;
 }
 
-/* زر */
-button{
-    width:100%;
-    padding:12px;
-    border:none;
-    border-radius:12px;
-    font-weight:bold;
-    cursor:pointer;
-    font-size:15px;
+.box h3 {
+    color: #bfa14a;
+    margin-bottom: 12px;
 }
 
-/* قائمة المنتجات */
-.product-row{
-    padding:12px;
-    border:1px solid #ddd;
-    border-radius:12px;
-    margin:8px 0;
-    cursor:pointer;
-    font-weight:bold;
+input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
 }
 
-/* التبويبات السفلية */
-.bottom-tabs{
-    position:fixed;
-    bottom:0;
-    width:100%;
-    display:flex;
+button {
+    padding: 10px;
+    width: 100%;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    background: linear-gradient(45deg,#c9b36a,#b08d2f);
+    color: #1b1e33;
+    font-size: 16px;
 }
 
-.tab-add{
-    flex:1;
-    background:#d4b04f;
-    color:#1b1e33;
-    text-align:center;
-    padding:14px;
-    font-weight:bold;
-    cursor:pointer;
+/* المربع الذهبي أسفل الصفحة */
+.footer-box {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 15px;
+    background: #bfa14a;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
 }
 
-.tab-edit{
-    flex:1;
-    background:#111;
-    color:white;
-    text-align:center;
-    padding:14px;
-    font-weight:bold;
-    cursor:pointer;
+.footer-box button {
+    flex: 1;
+    padding: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 12px;
+    color: #1b1e33;
+    background: linear-gradient(45deg,#fff200,#bfa14a);
 }
 </style>
 </head>
 
 <body>
 
-<div class="header" id="title"></div>
+<header id="title"></header>
 
-<div class="container" id="content"></div>
+<div id="content">
+    <!-- حقل الإضافة -->
+    <div class="box" id="add-box">
+        <h3>إضافة منتج</h3>
+        <input id="name" placeholder="الاسم" style="color:gold; font-weight:bold;">
+        <input id="price" placeholder="السعر" style="color:black;">
+        <input id="status" placeholder="الحالة" style="color:gold; font-weight:bold;">
+        <input id="image" placeholder="رابط الصورة" style="color:black;">
+        <input id="category" placeholder="التصنيف" style="color:gold; font-weight:bold;">
+        <input id="store" placeholder="المتجر" style="color:black;" readonly>
+        <button onclick="add()">حفظ</button>
+    </div>
 
-<div class="bottom-tabs">
-    <div class="tab-add" onclick="showAdd()">إضافة منتج</div>
-    <div class="tab-edit" onclick="showEdit()">تعديل منتج</div>
+    <!-- حقل التعديل -->
+    <div class="box" id="edit-box">
+        <h3>تعديل منتجات المتجر</h3>
+        <div id="edit-content"></div>
+    </div>
 </div>
 
-<script src="products.js"></script>
+<div class="footer-box">
+    <button onclick="showAdd()">إضافة منتج</button>
+    <button onclick="showEdit()">تعديل منتجات المتجر</button>
+</div>
 
-<script>
-const store = localStorage.getItem("selectedStore");
-if(!store){ location.href="home.html"; }
-
-document.getElementById("title").innerText =
-"لوحة تحكم — " + store;
-
-/* ===== بيانات محلية للتجربة ===== */
-let localProducts = JSON.parse(localStorage.getItem("localProducts")||"[]");
-
-/* دمج المنتجات الأصلية + المحلية */
-function getStoreProducts(){
-    return [...products, ...localProducts]
-        .filter(p => p.store === store);
-}
-
-/* =========================
-   إضافة منتج
-========================= */
-function showAdd(){
-document.getElementById("content").innerHTML = `
-<h3>إضافة منتج</h3>
-
-<input id="name" placeholder="اسم المنتج">
-<input id="price" placeholder="السعر">
-<input id="status" placeholder="الحالة">
-<input id="image" placeholder="رابط الصورة">
-<input id="category" placeholder="التصنيف">
-
-<input value="${store}" disabled>
-
-<button onclick="addProduct()">حفظ المنتج</button>
-`;
-}
-
-function addProduct(){
-    const p = {
-        id: Date.now(),
-        name: name.value,
-        price: price.value,
-        status: status.value,
-        image: image.value,
-        category: category.value,
-        store: store
-    };
-
-    localProducts.push(p);
-    localStorage.setItem("localProducts",
-        JSON.stringify(localProducts));
-
-    alert("تمت الإضافة ✅");
-}
-
-/* =========================
-   تعديل منتج — قائمة
-========================= */
-function showEdit(){
-    const list = getStoreProducts();
-
-    let html = "<h3>اختر منتج للتعديل</h3>";
-
-    list.forEach(p=>{
-        html += `
-        <div class="product-row"
-            onclick="editProduct(${p.id})">
-            ${p.name}
-        </div>`;
-    });
-
-    document.getElementById("content").innerHTML = html;
-}
-
-/* =========================
-   نموذج تعديل
-========================= */
-function editProduct(id){
-    const p = getStoreProducts().find(x=>x.id==id);
-    if(!p) return;
-
-document.getElementById("content").innerHTML = `
-<h3>تعديل منتج</h3>
-
-<input id="name" value="${p.name}">
-<input id="price" value="${p.price}">
-<input id="status" value="${p.status}">
-<input id="image" value="${p.image}">
-<input id="category" value="${p.category}">
-<input value="${store}" disabled>
-
-<button onclick="saveEdit(${id})">حفظ التعديل</button>
-`;
-}
-
-function saveEdit(id){
-    const idx = localProducts.findIndex(p=>p.id==id);
-    if(idx>=0){
-        localProducts[idx] = {
-            ...localProducts[idx],
-            name:name.value,
-            price:price.value,
-            status:status.value,
-            image:image.value,
-            category:category.value
-        };
-        localStorage.setItem("localProducts",
-            JSON.stringify(localProducts));
-        alert("تم التعديل ✅");
-    } else {
-        alert("هذا المنتج من الملف الأساسي — عدله في products.js");
-    }
-}
-
-/* ابدأ على الإضافة */
-showAdd();
-</script>
-<!-- Firebase App (core) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<!-- Firebase Realtime Database -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>
-  // بيانات مشروعك
-  const firebaseConfig = {
-    apiKey: "AIzaSyAMEoUTIMAS0mh06_SxrM2T_efDxEmEoxg",
-    authDomain: "wafaseiyunshop.firebaseapp.com",
-    databaseURL: "https://wafaseiyunshop-default-rtdb.firebaseio.com",
-    projectId: "wafaseiyunshop",
-    storageBucket: "wafaseiyunshop.firebasestorage.app",
-    messagingSenderId: "101115796279",
-    appId: "1:101115796279:web:3753efad2a443c9b6098b2"
-  };
+const firebaseConfig = {
+ apiKey: "AIzaSyAMEoUTIMAS0mh06_SxrM2T_efDxEmEoxg",
+ authDomain: "wafaseiyunshop.firebaseapp.com",
+ databaseURL: "https://wafaseiyunshop-default-rtdb.firebaseio.com",
+ projectId: "wafaseiyunshop",
+ storageBucket: "wafaseiyunshop.firebasestorage.app",
+ messagingSenderId: "101115796279",
+ appId: "1:101115796279:web:3753efad2a443c9b6098b2"
+};
+firebase.initializeApp(firebaseConfig);
+const database=firebase.database();
 
-  // تهيئة Firebase
-  firebase.initializeApp(firebaseConfig);
+const store = localStorage.getItem("selectedStore");
+document.getElementById("title").innerText = "لوحة تحكم — " + store;
+document.getElementById("store").value = store;
 
-  // إنشاء متغير للاتصال بقاعدة البيانات
-  const database = firebase.database();
+let products = [];
+
+// تحميل منتجات المتجر
+function loadProducts() {
+    database.ref("products").once("value", snap => {
+        const data = snap.val() || {};
+        products = Object.values(data).filter(p => p.store === store);
+        renderEditProducts();
+    });
+}
+
+// عرض منتجات المتجر للتعديل
+function renderEditProducts(){
+    const container = document.getElementById("edit-content");
+    container.innerHTML = "";
+
+    products.forEach(p=>{
+        const div = document.createElement("div");
+        div.style.border = "1px solid #ccc";
+        div.style.padding = "8px";
+        div.style.marginBottom = "8px";
+        div.innerHTML = `
+            <input value="${p.name}" id="name-${p.id}">
+            <input value="${p.price}" id="price-${p.id}">
+            <input value="${p.status}" id="status-${p.id}">
+            <input value="${p.image}" id="image-${p.id}">
+            <input value="${p.category}" id="category-${p.id}">
+            <input value="${p.store}" readonly>
+            <button onclick="saveEdit(${p.id})">تعديل</button>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// إضافة منتج جديد
+function add(){
+    database.ref("products").push({
+        id:Date.now(),
+        name:name.value,
+        price:price.value,
+        status:status.value,
+        image:image.value,
+        category:category.value,
+        store:store
+    }).then(()=>alert("تم الحفظ ✅"));
+}
+
+// حفظ التعديلات
+function saveEdit(id){
+    const updated = {
+        name: document.getElementById("name-"+id).value,
+        price: document.getElementById("price-"+id).value,
+        status: document.getElementById("status-"+id).value,
+        image: document.getElementById("image-"+id).value,
+        category: document.getElementById("category-"+id).value,
+        store: store
+    };
+    database.ref("products").orderByChild("id").equalTo(id).once("value", snap=>{
+        snap.forEach(child=>{
+            child.ref.update(updated).then(()=>alert("تم التعديل ✅"));
+        });
+    });
+}
+
+// أزرار التنقل بين الإضافة والتعديل
+function showAdd(){
+    document.getElementById("add-box").style.display = "block";
+    document.getElementById("edit-box").style.display = "none";
+}
+function showEdit(){
+    document.getElementById("add-box").style.display = "none";
+    document.getElementById("edit-box").style.display = "block";
+    loadProducts();
+}
+
+// العرض المبدئي
+showAdd();
 </script>
 
 </body>
