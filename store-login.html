@@ -1,15 +1,17 @@
 <!DOCTYPE html>
 <html lang="ar">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تسجيل الدخول للمتجر</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #f5f5f5; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .login-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); text-align: center; width: 300px; }
-        input { width: 80%; padding: 8px; margin: 10px 0; border-radius: 6px; border: 1px solid #ccc; }
-        button { padding: 8px 15px; background: #1b1e33; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تسجيل الدخول للمتجر</title>
+
+<style>
+body { font-family: Arial, sans-serif; background: #f5f5f5; display: flex; justify-content: center; align-items: center; height: 100vh; }
+.login-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); text-align: center; width: 300px; }
+input { width: 80%; padding: 8px; margin: 10px 0; border-radius: 6px; border: 1px solid #ccc; }
+button { padding: 8px 15px; background: #1b1e33; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+</style>
+
 </head>
 <body>
 
@@ -21,44 +23,49 @@
     <p id="error-msg" style="color:red;"></p>
 </div>
 
-<script src="store-passwords.js"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+ apiKey: "AIzaSyAMEoUTIMAS0mh06_SxrM2T_efDxEmEoxg",
+ authDomain: "wafaseiyunshop.firebaseapp.com",
+ databaseURL: "https://wafaseiyunshop-default-rtdb.firebaseio.com",
+ projectId: "wafaseiyunshop",
+ storageBucket: "wafaseiyunshop.firebasestorage.app",
+ messagingSenderId: "101115796279",
+ appId: "1:101115796279:web:3753efad2a443c9b6098b2"
+};
+
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+</script>
+
 <script>
 const storeName = localStorage.getItem("selectedStore");
 document.getElementById("store-name").innerText = storeName || "المتجر";
 
 document.getElementById("login-btn").onclick = () => {
+
     const inputPass = document.getElementById("password").value;
 
-    if (STORE_PASSWORDS[storeName] && inputPass === STORE_PASSWORDS[storeName]) {
-        window.location.href = "dashboard.html";
-    } else {
-        document.getElementById("error-msg").innerText = "كلمة السر خاطئة!";
-        setTimeout(() => window.location.href = "home.html", 1500);
-    }
+    database.ref("storePasswords/" + storeName).once("value").then(snap => {
+
+        const realPass = String(snap.val());
+
+        if (inputPass === realPass) {
+            window.location.href = "dashboard.html";
+        } else {
+            document.getElementById("error-msg").innerText = "كلمة السر خاطئة!";
+        }
+
+    }).catch(err => {
+        document.getElementById("error-msg").innerText = "خطأ اتصال";
+        console.error(err);
+    });
+
 };
-</script>
-<!-- Firebase App (core) -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<!-- Firebase Realtime Database -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-<script>
-  // بيانات مشروعك
-  const firebaseConfig = {
-    apiKey: "AIzaSyAMEoUTIMAS0mh06_SxrM2T_efDxEmEoxg",
-    authDomain: "wafaseiyunshop.firebaseapp.com",
-    databaseURL: "https://wafaseiyunshop-default-rtdb.firebaseio.com",
-    projectId: "wafaseiyunshop",
-    storageBucket: "wafaseiyunshop.firebasestorage.app",
-    messagingSenderId: "101115796279",
-    appId: "1:101115796279:web:3753efad2a443c9b6098b2"
-  };
-
-  // تهيئة Firebase
-  firebase.initializeApp(firebaseConfig);
-
-  // إنشاء متغير للاتصال بقاعدة البيانات
-  const database = firebase.database();
 </script>
 
 </body>
