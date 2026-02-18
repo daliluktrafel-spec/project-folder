@@ -5,6 +5,13 @@
 <title>الدخول</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<script>
+  // ✅ التحقق المبكر قبل تحميل أي شيء
+  if(localStorage.getItem("userName") && localStorage.getItem("introShown")==="true"){
+      window.location.replace("home.html");
+  }
+</script>
+
 <link href="https://fonts.googleapis.com/css2?family=Lateef&display=swap" rel="stylesheet">
 
 <style>
@@ -83,11 +90,6 @@ button {
 </div>
 
 <script>
-/* ✅ تحسين تجربة المستخدم — تخطي تلقائي */
-if(localStorage.getItem("userName") && localStorage.getItem("introShown")==="true"){
-    location.href = "home.html";
-}
-
 function go(){
     const name = document.getElementById("name").value.trim();
     const region = document.getElementById("region").value.trim();
