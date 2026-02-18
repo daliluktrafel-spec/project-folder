@@ -189,33 +189,34 @@ function renderEditProducts(){
 
 // إضافة منتج جديد
 function add() {
-    const imageValue = document.getElementById("image").value;
-    if (!imageValue) {
-        alert("أدخل اسم الصورة أو رابطها!");
-        return;
-    }
+   const nameInput = document.getElementById("name");
+const priceInput = document.getElementById("price");
+const statusInput = document.getElementById("status");
+const imageInput = document.getElementById("image");
+const categoryInput = document.getElementById("category");
 
-    database.ref("products").push({
-        id: Date.now(),
-        name: name.value,
-        price: price.value,
-        status: status.value,
-        image: imageValue,  // ← الآن فقط الاسم أو الرابط
-        category: category.value,
-        store: store
-    }).then(() => {
-        alert("تم الحفظ ✅");
-        loadProducts();
-    });
+database.ref("products").push({
+    id: Date.now(),
+    name: nameInput.value,
+    price: priceInput.value,
+    status: statusInput.value,
+    image: imageInput.value,
+    category: categoryInput.value,
+    store: store
+}).then(() => {
+    alert("تم الحفظ ✅");
+    loadProducts();
+});
 
-    // تنظيف الحقول
-    name.value = "";
-    price.value = "";
-    status.value = "";
-    category.value = "";
-    image.value = "";
-        }
+// تنظيف الحقول
+nameInput.value = "";
+priceInput.value = "";
+statusInput.value = "";
+categoryInput.value = "";
+imageInput.value = "";
+
 }
+
 // حفظ التعديلات
 function saveEdit(id){
     const updated = {
