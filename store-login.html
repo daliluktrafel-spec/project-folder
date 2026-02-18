@@ -44,6 +44,9 @@ const database = firebase.database();
 
 <script>
 const storeName = localStorage.getItem("selectedStore");
+if (!storeName) {
+    window.location.href = "stores.html";
+}
 document.getElementById("store-name").innerText = storeName || "المتجر";
 
 document.getElementById("login-btn").onclick = () => {
@@ -52,11 +55,17 @@ document.getElementById("login-btn").onclick = () => {
 
     database.ref("storePasswords/" + storeName).once("value").then(snap => {
 
-        const realPass = String(snap.val());
+        if (!snap.exists()) {
+    document.getElementById("error-msg").innerText = "لا توجد كلمة سر لهذا المتجر";
+    return;
+}
+
+const realPass = String(snap.val());
 
         if (inputPass === realPass) {
-            window.location.href = "dashboard.html";
-        } else {
+    localStorage.setItem("storeLoggedIn", storeName);
+    window.location.href = "dashboard.html";
+}else {
             document.getElementById("error-msg").innerText = "كلمة السر خاطئة!";
         }
 
