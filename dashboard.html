@@ -100,7 +100,7 @@ button {
         <input id="name" placeholder="الاسم" style="color:gold; font-weight:bold;">
         <input id="price" placeholder="السعر" style="color:black;">
         <input id="status" placeholder="الحالة" style="color:gold; font-weight:bold;">
-        <input type="file" id="imageFile" accept="image/*">
+       <input id="image" placeholder="رابط أو اسم الصورة" style="color:black;">
         <input id="category" placeholder="التصنيف" style="color:gold; font-weight:bold;">
         <input id="store" placeholder="المتجر" style="color:black;" readonly>
         <button onclick="add()">حفظ</button>
@@ -189,49 +189,32 @@ function renderEditProducts(){
 
 // إضافة منتج جديد
 function add() {
-    const file = document.getElementById("imageFile").files[0];
-    if (!file) {
-        alert("اختر صورة أولاً!");
+    const imageValue = document.getElementById("image").value;
+    if (!imageValue) {
+        alert("أدخل اسم الصورة أو رابطها!");
         return;
     }
 
-    // إنشاء مرجع في Firebase Storage
-    const storageRef = firebase.storage().ref('products/' + Date.now() + '_' + file.name);
-    const uploadTask = storageRef.put(file);
+    database.ref("products").push({
+        id: Date.now(),
+        name: name.value,
+        price: price.value,
+        status: status.value,
+        image: imageValue,  // ← الآن فقط الاسم أو الرابط
+        category: category.value,
+        store: store
+    }).then(() => {
+        alert("تم الحفظ ✅");
+        loadProducts();
+    });
 
-    uploadTask.on('state_changed', 
-        (snapshot) => {
-            // هنا يمكن إضافة شريط تقدم إذا أحببت
-        }, 
-        (error) => {
-            alert("فشل رفع الصورة: " + error.message);
-        }, 
-        () => {
-            // بعد انتهاء الرفع، احصل على الرابط
-            uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
-                // حفظ المنتج في قاعدة البيانات
-                database.ref("products").push({
-                    id: Date.now(),
-                    name: name.value,
-                    price: price.value,
-                    status: status.value,
-                    image: downloadURL,  // الآن الصورة تأتي كرابط مباشر تلقائياً
-                    category: category.value,
-                    store: store
-                }).then(() => {
-                    alert("تم الحفظ ✅");
-                    loadProducts();
-                });
-
-                // تنظيف الحقول بعد الإضافة
-                name.value = "";
-                price.value = "";
-                status.value = "";
-                category.value = "";
-                document.getElementById("imageFile").value = "";
-            });
+    // تنظيف الحقول
+    name.value = "";
+    price.value = "";
+    status.value = "";
+    category.value = "";
+    image.value = "";
         }
-    );
 }
 // حفظ التعديلات
 function saveEdit(id){
