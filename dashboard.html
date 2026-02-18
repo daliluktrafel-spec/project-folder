@@ -89,7 +89,7 @@ button {
 }
 </style>
 </head>
-
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <body>
 
 <header id="title"></header>
@@ -101,7 +101,7 @@ button {
         <input id="name" placeholder="الاسم" style="color:gold; font-weight:bold;">
         <input id="price" placeholder="السعر" style="color:black;">
         <input id="status" placeholder="الحالة" style="color:gold; font-weight:bold;">
-        <input id="image" placeholder="رابط الصورة" style="color:black;">
+        <input type="file" id="imageFile" accept="image/*">
         <input id="category" placeholder="التصنيف" style="color:gold; font-weight:bold;">
         <input id="store" placeholder="المتجر" style="color:black;" readonly>
         <button onclick="add()">حفظ</button>
@@ -188,26 +188,51 @@ function renderEditProducts(){
 }
 
 // إضافة منتج جديد
-function add(){
-    database.ref("products").push({
-        id:Date.now(),
-        name:name.value,
-        price:price.value,
-        status:status.value,
-        image:image.value,
-        category:category.value,
-        store:store
-    }).then(()=>{
-        alert("تم الحفظ ✅");
-        loadProducts();   // ← مهم
-    });
-name.value="";
-price.value="";
-status.value="";
-image.value="";
-category.value="";
-}
+function add() {
+    const file = document.getElementById("imageFile").files[0];
+    if (!file) {
+        alert("اختر صورة أولاً!");
+        return;
+    }
 
+    // إنشاء مرجع في Firebase Storage
+    const storageRef = firebase.storage().ref('products/' + Date.now() + '_' + file.name);
+    const uploadTask = storageRef.put(file);
+
+    uploadTask.on('state_changed', 
+        (snapshot) => {
+            // هنا يمكن إضافة شريط تقدم إذا أحببت
+        }, 
+        (error) => {
+            alert("فشل رفع الصورة: " + error.message);
+        }, 
+        () => {
+            // بعد انتهاء الرفع، احصل على الرابط
+            uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                // حفظ المنتج في قاعدة البيانات
+                database.ref("products").push({
+                    id: Date.now(),
+                    name: name.value,
+                    price: price.value,
+                    status: status.value,
+                    image: downloadURL,  // الآن الصورة تأتي كرابط مباشر تلقائياً
+                    category: category.value,
+                    store: store
+                }).then(() => {
+                    alert("تم الحفظ ✅");
+                    loadProducts();
+                });
+
+                // تنظيف الحقول بعد الإضافة
+                name.value = "";
+                price.value = "";
+                status.value = "";
+                category.value = "";
+                document.getElementById("imageFile").value = "";
+            });
+        }
+    );
+}
 // حفظ التعديلات
 function saveEdit(id){
     const updated = {
