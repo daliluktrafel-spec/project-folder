@@ -117,7 +117,18 @@ button {
 <div class="footer-box">
     <button onclick="showAdd()">إضافة منتج</button>
     <button onclick="showEdit()">تعديل منتجات المتجر</button>
+    <button onclick="logout()">خروج</button>
 </div>
+
+<script>
+const store = localStorage.getItem("selectedStore");
+const logged = localStorage.getItem("storeLoggedIn");
+
+if (!store || logged !== store) {
+    alert("يجب تسجيل الدخول أولاً");
+    window.location.href = "stores.html";
+}
+</script>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -135,7 +146,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const database=firebase.database();
 
-const store = localStorage.getItem("selectedStore");
 document.getElementById("title").innerText = "لوحة تحكم — " + store;
 document.getElementById("store").value = store;
 
@@ -251,6 +261,13 @@ function showEdit(){
 
 // العرض المبدئي
 showAdd();
+
+function logout(){
+    localStorage.removeItem("storeLoggedIn");
+    localStorage.removeItem("selectedStore");
+    window.location.href = "stores.html";
+}
+
 </script>
 
 </body>
