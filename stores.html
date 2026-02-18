@@ -62,36 +62,6 @@ h2 {
 
 <div class="store-list" id="store-list"></div>
 
-<script>
-const stores = [
-    "متجر الألماس",
-    "متجر نور",
-    "متجر الجمال",
-    "متجر العيدروس للاقمشة",
-    "متجر طيب القلب",
-    "متجر مونيان",
-    "معرض ابو علي",
-    "حسان شي ان",
-    "حكاية غرزة",
-    "ميم",
-    "لولو سكراب"
-];
-
-const container = document.getElementById("store-list");
-
-stores.forEach(store => {
-    const card = document.createElement("div");
-    card.className = "store-card";
-    card.innerText = store;
-
-    card.onclick = () => {
-        localStorage.setItem("selectedStore", store);
-        window.location.href = "store-login.html";
-    };
-
-    container.appendChild(card);
-});
-</script>
 <!-- Firebase App (core) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <!-- Firebase Realtime Database -->
@@ -109,11 +79,38 @@ stores.forEach(store => {
     appId: "1:101115796279:web:3753efad2a443c9b6098b2"
   };
 
-  // تهيئة Firebase
-  firebase.initializeApp(firebaseConfig);
+ window.onload = function(){
 
-  // إنشاء متغير للاتصال بقاعدة البيانات
+  firebase.initializeApp(firebaseConfig);
   const database = firebase.database();
+  const container = document.getElementById("store-list");
+
+  database.ref("storePasswords").once("value").then(snapshot => {
+      const storesData = snapshot.val();
+      if(storesData){
+          Object.keys(storesData).forEach(storeName => {
+              const name = storeName.trim();
+              const card = document.createElement("div");
+              card.className = "store-card";
+              card.innerText = name;
+
+              card.onclick = () => {
+                  localStorage.setItem("selectedStore", name);
+                  window.location.href = "store-login.html";
+              };
+
+              container.appendChild(card);
+          });
+      } else {
+          container.innerHTML = "لا توجد متاجر";
+      }
+  }).catch(err => {
+      console.error(err);
+      container.innerHTML = "خطأ تحميل المتاجر";
+  });
+
+}
+
 </script>
 
 </body>
