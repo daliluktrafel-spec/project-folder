@@ -228,9 +228,9 @@ function add() {
                     const base64data = reader2.result.split(",")[1];
                     const fileName = "images/" + Date.now() + ".jpg";
                     const GITHUB_USERNAME = "daliluktrafel-spec";
-                    const REPO_NAME = "wafa-products-token";
+                    const REPO_NAME = "image";
                     const BRANCH = "main";
-                    const TOKEN = "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";
+                    const TOKEN = "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";
 
                     fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/${fileName}`, {
                         method: "PUT",
