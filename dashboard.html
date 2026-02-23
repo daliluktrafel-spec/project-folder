@@ -87,6 +87,23 @@ button {
     color: #1b1e33;
     background: linear-gradient(45deg,#fff200,#bfa14a);
 }
+
+/* Loader */
+#loader {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    font-size: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
 </style>
 </head>
 <body>
@@ -100,7 +117,7 @@ button {
         <input id="name" placeholder="الاسم" style="color:gold; font-weight:bold;">
         <input id="price" placeholder="السعر" style="color:black;">
         <input id="status" placeholder="الحالة" style="color:gold; font-weight:bold;">
-       <input id="image" placeholder="رابط أو اسم الصورة" style="color:black;">
+        <input type="file" id="imageFile" accept="image/*">
         <input id="category" placeholder="التصنيف" style="color:gold; font-weight:bold;">
         <input id="store" placeholder="المتجر" style="color:black;" readonly>
         <button onclick="add()">حفظ</button>
@@ -119,32 +136,29 @@ button {
     <button onclick="logout()">خروج</button>
 </div>
 
-<script>
-const store = localStorage.getItem("selectedStore");
-const logged = localStorage.getItem("storeLoggedIn");
-
-if (!store || logged !== store) {
-    alert("يجب تسجيل الدخول أولاً");
-    window.location.href = "stores.html";
-}
-</script>
-
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 <script>
-const firebaseConfig = {
- apiKey: "AIzaSyAMEoUTIMAS0mh06_SxrM2T_efDxEmEoxg",
- authDomain: "wafaseiyunshop.firebaseapp.com",
- databaseURL: "https://wafaseiyunshop-default-rtdb.firebaseio.com",
- projectId: "wafaseiyunshop",
- storageBucket: "wafaseiyunshop.firebasestorage.app",
- messagingSenderId: "101115796279",
- appId: "1:101115796279:web:3753efad2a443c9b6098b2"
-};
-firebase.initializeApp(firebaseConfig);
-const database=firebase.database();
+// التحقق من تسجيل الدخول
+const store = localStorage.getItem("selectedStore");
+const logged = localStorage.getItem("storeLoggedIn");
+if (!store || logged !== store) {
+    alert("يجب تسجيل الدخول أولاً");
+    window.location.href = "stores.html";
+}
+
+firebase.initializeApp({
+    apiKey: "AIzaSyAMEoUTIMAS0mh06_SxrM2T_efDxEmEoxg",
+    authDomain: "wafaseiyunshop.firebaseapp.com",
+    databaseURL: "https://wafaseiyunshop-default-rtdb.firebaseio.com",
+    projectId: "wafaseiyunshop",
+    storageBucket: "wafaseiyunshop.firebasestorage.app",
+    messagingSenderId: "101115796279",
+    appId: "1:101115796279:web:3753efad2a443c9b6098b2"
+});
+const database = firebase.database();
 
 document.getElementById("title").innerText = "لوحة تحكم — " + store;
 document.getElementById("store").value = store;
@@ -161,108 +175,148 @@ function loadProducts() {
 }
 
 // عرض منتجات المتجر للتعديل
-function renderEditProducts(){
+function renderEditProducts() {
     const container = document.getElementById("edit-content");
     container.innerHTML = "";
-
-    products.forEach(p=>{
+    products.forEach(p => {
         const div = document.createElement("div");
         div.style.border = "1px solid #ccc";
         div.style.padding = "8px";
         div.style.marginBottom = "8px";
         div.innerHTML = `
-    <input value="${p.name}" id="name-${p.id}">
-    <input value="${p.price}" id="price-${p.id}">
-    <input value="${p.status}" id="status-${p.id}">
-    <input value="${p.image}" id="image-${p.id}">
-    <input value="${p.category}" id="category-${p.id}">
-    <input value="${p.store}" readonly>
-
-    <button onclick="saveEdit(${p.id})">تعديل</button>
-    <button onclick="deleteProduct(${p.id})" style="background:#d9534f;color:white;margin-top:6px;">
-        حذف
-    </button>
-`;
-       container.appendChild(div);
+            <input value="${p.name}" id="name-${p.id}">
+            <input value="${p.price}" id="price-${p.id}">
+            <input value="${p.status}" id="status-${p.id}">
+            <input value="${p.image}" id="image-${p.id}">
+            <input value="${p.category}" id="category-${p.id}">
+            <input value="${p.store}" readonly>
+            <button onclick="saveEdit(${p.id})">تعديل</button>
+            <button onclick="deleteProduct(${p.id})" style="background:#d9534f;color:white;margin-top:6px;">حذف</button>
+        `;
+        container.appendChild(div);
     });
 }
 
-// إضافة منتج جديد
+// إضافة منتج جديد مع رفع الصورة إلى GitHub
 function add() {
-   const nameInput = document.getElementById("name");
-const priceInput = document.getElementById("price");
-const statusInput = document.getElementById("status");
-const imageInput = document.getElementById("image");
-const categoryInput = document.getElementById("category");
+    const nameInput = document.getElementById("name");
+    const priceInput = document.getElementById("price");
+    const statusInput = document.getElementById("status");
+    const categoryInput = document.getElementById("category");
+    const fileInput = document.getElementById("imageFile");
+    const file = fileInput.files[0];
+    if (!file) { alert("اختر صورة أولاً"); return; }
 
-database.ref("products").push({
-    id: Date.now(),
-    name: nameInput.value,
-    price: priceInput.value,
-    status: statusInput.value,
-    image: imageInput.value,
-    category: categoryInput.value,
-    store: store
-}).then(() => {
-    alert("تم الحفظ ✅");
-    loadProducts();
-});
+        const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = function(event) {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = function() {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            const maxWidth = 800;
+            const scaleSize = maxWidth / img.width;
+            canvas.width = maxWidth;
+            canvas.height = img.height * scaleSize;
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-// تنظيف الحقول
-nameInput.value = "";
-priceInput.value = "";
-statusInput.value = "";
-categoryInput.value = "";
-imageInput.value = "";
+            canvas.toBlob(function(blob) {
+                const reader2 = new FileReader();
+                reader2.readAsDataURL(blob);
+                reader2.onloadend = function() {
+                    const base64data = reader2.result.split(",")[1];
+                    const fileName = "images/" + Date.now() + ".jpg";
+                    const GITHUB_USERNAME = "daliluktrafel-spec";
+                    const REPO_NAME = "wafa-products-token";
+                    const BRANCH = "main";
+                    const TOKEN = "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";
 
+                    fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/${fileName}`, {
+                        method: "PUT",
+                        headers: {
+                            "Authorization": "Bearer " + TOKEN,
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            message: "رفع صورة منتج",
+                            content: base64data,
+                            branch: BRANCH
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        const downloadURL = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${REPO_NAME}/${BRANCH}/${fileName}`;
+                        database.ref("products").push({
+                            id: Date.now(),
+                            name: nameInput.value,
+                            price: priceInput.value,
+                            status: statusInput.value,
+                            image: downloadURL,
+                            category: categoryInput.value,
+                            store: store
+                        }).then(() => {
+                            alert("تم الحفظ مع رفع الصورة إلى GitHub ✅");
+                            loadProducts();
+                            nameInput.value = "";
+                            priceInput.value = "";
+                            statusInput.value = "";
+                            categoryInput.value = "";
+                            fileInput.value = "";
+                        });
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert("حدث خطأ أثناء رفع الصورة!");
+                    });
+                };
+            }, "image/jpeg", 0.7);
+        };
+    };
 }
 
 // حفظ التعديلات
-function saveEdit(id){
+function saveEdit(id) {
     const updated = {
-        name: document.getElementById("name-"+id).value,
-        price: document.getElementById("price-"+id).value,
-        status: document.getElementById("status-"+id).value,
-        image: document.getElementById("image-"+id).value,
-        category: document.getElementById("category-"+id).value,
+        name: document.getElementById("name-" + id).value,
+        price: document.getElementById("price-" + id).value,
+        status: document.getElementById("status-" + id).value,
+        image: document.getElementById("image-" + id).value,
+        category: document.getElementById("category-" + id).value,
         store: store
     };
-
     database.ref("products")
-    .orderByChild("id")
-    .equalTo(id)
-    .once("value", snap=>{
-        snap.forEach(child=>{
-            child.ref.update(updated).then(()=>{
-                alert("تم التعديل ✅");
-                loadProducts();
+        .orderByChild("id")
+        .equalTo(id)
+        .once("value", snap => {
+            snap.forEach(child => {
+                child.ref.update(updated).then(() => {
+                    alert("تم التعديل ✅");
+                    loadProducts();
+                });
             });
         });
-    });
 }
 
 // حذف المنتج
-function deleteProduct(id){
-    if(!confirm("هل تريد حذف المنتج؟")) return;
-
+function deleteProduct(id) {
+    if (!confirm("هل تريد حذف المنتج؟")) return;
     database.ref("products")
-    .orderByChild("id")
-    .equalTo(id)
-    .once("value", snap=>{
-        snap.forEach(child=>{
-            child.ref.remove();
+        .orderByChild("id")
+        .equalTo(id)
+        .once("value", snap => {
+            snap.forEach(child => child.ref.remove());
+            alert("تم الحذف ✅");
+            loadProducts();
         });
-        alert("تم الحذف ✅");
-        loadProducts();
-    });
 }
 
 // أزرار التنقل بين الإضافة والتعديل
-function showAdd(){
+function showAdd() {
     document.getElementById("add-box").style.display = "block";
     document.getElementById("edit-box").style.display = "none";
 }
-function showEdit(){
+function showEdit() {
     document.getElementById("add-box").style.display = "none";
     document.getElementById("edit-box").style.display = "block";
     loadProducts();
@@ -271,12 +325,11 @@ function showEdit(){
 // العرض المبدئي
 showAdd();
 
-function logout(){
+function logout() {
     localStorage.removeItem("storeLoggedIn");
     localStorage.removeItem("selectedStore");
     window.location.href = "stores.html";
 }
-
 </script>
 
 </body>
