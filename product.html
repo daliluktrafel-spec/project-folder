@@ -36,8 +36,17 @@
         position: absolute; top: 15px; left: 15px; background: white;
         border-radius: 50%; width: 45px; height: 45px; border: none;
         font-size: 24px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        z-index: 10;
     }
     .favorite-btn.active { color: #e74c3c; }
+
+    .share-btn {
+        position: absolute; top: 15px; right: 15px; background: white;
+        border-radius: 50%; width: 45px; height: 45px; border: none;
+        font-size: 20px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        display: flex; justify-content: center; align-items: center;
+        z-index: 10;
+    }
 
     .info-section { padding: 20px; }
     .product-name { font-size: 26px; font-weight: bold; color: #8b5e3c; margin-bottom: 10px; }
@@ -47,7 +56,6 @@
     .detail-label { color: #888; }
     .detail-value { font-weight: 600; color: #444; }
 
-    /* أزرار الطلب */
     .btn-group { display: flex; flex-direction: column; gap: 12px; padding: 20px; }
     .btn-main {
         border: none; border-radius: 12px; padding: 15px;
@@ -59,7 +67,6 @@
     .btn-card { background: linear-gradient(45deg,#d4af7f,#f7e1b5); color: #333; }
     .btn-back { background: #eee; color: #666; margin-top: 5px; }
 
-    /* النافذة المنبثقة (Modal) */
     .modal {
         display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0,0,0,0.7); z-index: 9999; justify-content: center; align-items: center;
@@ -84,7 +91,8 @@
 <div class="product-card">
     <div class="img-wrapper">
         <button class="favorite-btn" id="favBtn">♡</button>
-        <img src="" id="product-img" class="product-img">
+        <button class="share-btn" id="shareBtn">🔗</button> 
+        <img src="" alt="صورة المنتج" class="product-img" id="product-img">
     </div>
     
     <div class="info-section">
@@ -103,7 +111,7 @@
 
     <div class="btn-group">
         <button class="btn-main btn-wa" id="order-wa">🟢 الطلب عبر واتساب</button>
-        <button class="btn-main btn-bank" id="order-bank"> عبر الكريمي أو العمقي</button>
+        <button class="btn-main btn-bank" id="order-bank">🏦 عبر الكريمي أو العمقي</button>
         <button class="btn-main btn-card" id="order-card">💳 الطلب عبر بطاقة</button>
         <button class="btn-main btn-back" onclick="window.history.back()">رجوع</button>
     </div>
@@ -140,7 +148,6 @@ const urlParams = new URLSearchParams(window.location.search);
 const productId = String(urlParams.get('productId'));
 let currentProduct = null;
 
-// جلب بيانات المنتج
 database.ref("products").once("value").then(snapshot => {
     const data = snapshot.val() || {};
     const products = Object.values(data);
@@ -160,20 +167,34 @@ database.ref("products").once("value").then(snapshot => {
     const userName = localStorage.getItem("userName") || "مستخدم جديد";
     const userRegion = localStorage.getItem("userRegion") || "غير محدد";
 
-    // الطلب عبر واتساب المباشر
     document.getElementById("order-wa").onclick = () => {
         const msg = `*طلب جديد (واتساب)*%0Aالاسم: ${userName}%0Aالمنطقة: ${userRegion}%0Aالمنتج: ${currentProduct.name}%0Aالمتجر: ${currentProduct.store}`;
         window.open(`https://wa.me/967774257557?text=${msg}`, '_blank');
     };
 
-    // الدفع بالبطاقة (رسالة مؤقتة)
     document.getElementById("order-card").onclick = () => {
         alert("خدمة الدفع بالبطاقة ستتوفر قريباً داخل المنصة. حالياً يرجى استخدام التحويل البنكي.");
     };
 
+    // كود المشاركة تم وضعه هنا لضمان وجود بيانات المنتج
+    document.getElementById("shareBtn").onclick = async () => {
+        const shareData = {
+            title: currentProduct.name,
+            text: `شاهد هذا المنتج الرائع على منصة متاجر البلاد: ${currentProduct.name}`,
+            url: window.location.href
+        };
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                await navigator.clipboard.writeText(window.location.href);
+                alert("تم نسخ رابط المنتج! يمكنك الآن مشاركته في أي مكان.");
+            }
+        } catch (err) { console.log("خطأ في المشاركة:", err); }
+    };
+
 }).catch(err => console.error(err));
 
-// وظائف النافذة المنبثقة للبنك
 const modal = document.getElementById("bank-modal");
 document.getElementById("order-bank").onclick = () => modal.style.display = "flex";
 function closeModal() { modal.style.display = "none"; }
@@ -185,7 +206,6 @@ function confirmBankTransfer() {
     closeModal();
 }
 
-// نظام المفضلة
 let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
 const favBtn = document.getElementById("favBtn");
 
