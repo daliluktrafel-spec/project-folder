@@ -2,101 +2,162 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>منصة متاجر البلاد</title>
+<title>منصة متاجر البلاد - اكتشف عالمك المحلي</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{
-    margin:0;
-    font-family:"Segoe UI", Tahoma, Arial, sans-serif;
-    background: linear-gradient(to bottom, #f7f6f2, #e6d38a);
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    min-height:100vh;
-}
+    body{
+        margin:0;
+        font-family:"Segoe UI", Tahoma, Arial, sans-serif;
+        background: linear-gradient(135deg, #f7f6f2 0%, #e6d38a 100%);
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        min-height:100vh;
+        padding: 20px 0;
+    }
 
-.container{
-    background:white;
-    padding:40px 30px;
-    border-radius:20px;
-    width:90%;
-    max-width:700px;
-    box-shadow:0 15px 35px rgba(0,0,0,0.3);
-    text-align:right;
-    overflow-y:auto;
-    max-height:90vh;
-}
+    .container{
+        background:white;
+        padding:40px;
+        border-radius:30px;
+        width:90%;
+        max-width:800px;
+        box-shadow:0 25px 50px rgba(0,0,0,0.15);
+        text-align:right;
+        overflow-y:auto;
+        max-height:90vh;
+        border: 1px solid rgba(184, 155, 74, 0.3);
+    }
 
-h1{
-    color:#b89b4a;
-    font-size:32px;
-    margin-bottom:20px;
-}
+    h1 {
+        color:#b89b4a;
+        font-size:30px;
+        margin-bottom:25px;
+        text-align: center;
+        line-height: 1.4;
+    }
 
-p{
-    font-size:18px;
-    color:#333;
-    line-height:1.6;
-    margin-bottom:15px;
-}
+    .section-title {
+        color: #1b1e33;
+        font-size: 20px;
+        font-weight: bold;
+        margin-top: 25px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
 
-button{
-    padding:15px 35px;
-    font-size:18px;
-    border:none;
-    border-radius:15px;
-    font-weight:bold;
-    cursor:pointer;
-    background:linear-gradient(45deg,#c9b36a,#b89b4a);
-    color:white;
-    display:block;
-    margin:25px auto 0;
-}
+    p {
+        font-size:17px;
+        color:#555;
+        line-height:1.9;
+        margin-bottom:15px;
+    }
 
-button:hover{
-    opacity:0.9;
-}
+    .features-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin: 25px 0;
+    }
+
+    .feature-item {
+        background: #fdfbf5;
+        padding: 15px;
+        border-radius: 15px;
+        border-right: 4px solid #b89b4a;
+    }
+
+    .feature-item h4 { margin: 0 0 5px 0; color: #b89b4a; }
+    .feature-item p { font-size: 14px; margin: 0; line-height: 1.5; }
+
+    .payment-tag {
+        display: inline-block;
+        background: #f0f0f0;
+        padding: 4px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        color: #333;
+        font-weight: 600;
+        margin: 4px;
+        border: 1px solid #ddd;
+    }
+
+    button {
+        padding: 18px 60px;
+        font-size: 20px;
+        border: none;
+        border-radius: 20px;
+        font-weight: bold;
+        cursor: pointer;
+        background: linear-gradient(45deg,#c9b36a,#b89b4a);
+        color: white;
+        display: block;
+        margin: 40px auto 10px;
+        transition: 0.3s;
+        box-shadow: 0 10px 20px rgba(184, 155, 74, 0.3);
+    }
+
+    button:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(184, 155, 74, 0.4); }
+
+    @media (max-width: 600px) {
+        .features-grid { grid-template-columns: 1fr; }
+        .container { padding: 25px; }
+    }
 </style>
 </head>
 
 <body>
 <div class="container">
-    <h1>مرحبًا بك في منصة متاجر البلاد</h1>
+    <h1>مرحباً بك في منصة "متاجر البلاد" 🏪<br><span style="font-size: 18px; color: #888;">وجهتك الأولى للتسوق المحلي الذكي</span></h1>
 
     <p>
-    منصة متاجر البلاد هي سوق إلكتروني متكامل يضم جميع متاجر منطقتك في مكان واحد. هدفنا هو تسهيل تجربة التسوق للزبائن وتمكينهم من الوصول لكل المنتجات بسهولة وسرعة.
+    صُممت منصة <b>متاجر البلاد</b> لتكون الجسر الذي يربط بينك وبين أفضل المتاجر في منطقتك. نحن لا نقدم مجرد موقع إلكتروني، بل نوفر لك تجربة تسوق عصرية تجمع بين سهولة التصفح وأمان التعامل.
     </p>
 
+    <div class="section-title">✨ تجربة مستخدم لا مثيل لها</div>
     <p>
-    هنا يمكنك تصفح جميع المنتجات المتوفرة وغير المتوفرة مع أسعارها والمتجر الخاص بها، كما يمكنك البحث بسهولة عن أي منتج أو متجر، ومعرفة التفاصيل الدقيقة لكل منتج، والطلب مباشرة عبر واتساب بدون أي تعقيدات.
+    سواء كنت تستخدم الهاتف المحمول أو الكمبيوتر، ستجد واجهة سلسة وسريعة تمكنك من البحث عن أي منتج في ثوانٍ معدودة. يمكنك تصفح تفاصيل المنتجات، معرفة حالتها (متوفر/غير متوفر)، ومقارنة الأسعار بضغطة زر واحدة، مما يوفر عليك عناء البحث والتنقل التقليدي.
     </p>
 
+    <div class="features-grid">
+        <div class="feature-item">
+            <h4>🛎️ نظام الإشعارات الفوري</h4>
+            <p>كن أول من يعلم! تصلك تنبيهات مباشرة بآخر العروض، الخصومات، والمنتجات الجديدة التي تضاف في متاجرك المفضلة أولاً بأول.</p>
+        </div>
+        <div class="feature-item">
+            <h4>🏪 تمكين أصحاب المتاجر</h4>
+            <p>للمتاجر مرونة كاملة في الإدارة؛ حيث يمكنهم إضافة وحذف المنتجات وتعديل الأسعار في لحظات، مما يضمن لك بيانات دقيقة دائماً.</p>
+        </div>
+    </div>
+
+    <div class="section-title">💳 حلول دفع متنوعة وموثوقة</div>
     <p>
-    المنصة مرنة جدًا، حيث يمكن للمتاجر تحديث منتجاتهم أسبوعيًا، إضافة أو حذف المنتجات، تعديل الأسعار، أو تغيير حالة توفر المنتج. كل ذلك يظهر مباشرة في التطبيق بدون الحاجة لأي تحديث إضافي.
+    ندرك أهمية الثقة في المعاملات المالية، لذلك جعلنا بيانات التحويل البنكي الرسمية متاحة أمامك بوضوح تام داخل صفحة كل منتج، لتتمكن من الشراء وأنت مطمئن:
+    </p>
+    <div style="text-align: center; margin-bottom: 20px;">
+        <span class="payment-tag">💰 مصرف الكريمي</span>
+        <span class="payment-tag">💰 شركة العمقي</span>
+        <span class="payment-tag">📱 واتساب مباشر</span>
+        <span class="payment-tag">💳 بطائق الدفع (قريباً)</span>
+    </div>
+    
+    <p style="background: #fff8e1; padding: 10px; border-radius: 10px; font-size: 15px; border: 1px dashed #b89b4a;">
+    ℹ️ جميع الحسابات البنكية المعتمدة في المنصة مسجلة باسم: <b>حسين علي عبداللاه السقاف</b>، لضمان أعلى معايير الأمان المالي لزبائننا الكرام.
     </p>
 
-    <p>
-    نحرص على تقديم تجربة مستخدم سلسة وسهلة، مع واجهة جذابة ومتناسقة الألوان، وتصميم يريح العينين عند الاستخدام الطويل على أي جهاز، سواء كان كمبيوتر أو هاتف محمول.
-    </p>
-
-    <p>
-    نحن ملتزمون بتقديم أفضل تجربة تسوق ممكنة لك، وجعل كل عمليات الطلب والدفع أكثر سهولة ووضوحًا، بحيث يصبح التسوق من متاجرك المفضلة مجرد متعة وليست مهمة معقدة.
-    </p>
-
-    <button onclick="start()">ابدأ الآن</button>
+    <button onclick="start()">استكشف المتاجر الآن 🚀</button>
+    <p style="text-align: center; font-size: 13px; color: #aaa;">شكراً لثقتك بمنصتنا المحلية</p>
 </div>
+
 <script>
-// 1. التأكد إذا المستخدم دخل الصفحة قبلًا
-// قمنا بتغيير الوجهة هنا من home.html إلى fields.html
 if(localStorage.getItem("introShown") === "true"){
     window.location.href = "fields.html"; 
 }
-
-// 2. عند الضغط على زر "ابدأ الآن"
 function start(){
     localStorage.setItem("introShown","true");
-    window.location.href = "fields.html"; // التوجه للحاوية التي تحتوي التبويبات
+    window.location.href = "fields.html"; 
 }
 </script>
 
