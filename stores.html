@@ -67,36 +67,46 @@ h2 {
 <!-- Firebase Realtime Database -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="firebase.js"></script>
+
 <script>
-
 window.onload = function(){
+    const container = document.getElementById("store-list");
+    container.innerHTML = "جاري تحميل المتاجر...";
 
-  const container = document.getElementById("store-list");
+    // جلب البيانات من القسمين في نفس الوقت
+    Promise.all([
+        database.ref("Active_Stores").once("value"),
+        database.ref("storePasswords").once("value")
+    ]).then(snapshots => {
+        container.innerHTML = "";
+        const activeStores = snapshots[0].val() || {};
+        const oldStores = snapshots[1].val() || {};
 
-  database.ref("storePasswords").once("value").then(snapshot => {
-      const storesData = snapshot.val();
-      if(storesData){
-          Object.keys(storesData).forEach(storeName => {
-              const name = storeName.trim();
-              const card = document.createElement("div");
-              card.className = "store-card";
-              card.innerText = name;
+        // 1. عرض المتاجر الجديدة (المسجلة بالرقم)
+        Object.keys(activeStores).forEach(phone => {
+            const store = activeStores[phone];
+            createStoreCard(store.bizName, phone, "new");
+        });
 
-              card.onclick = () => {
-                  localStorage.setItem("selectedStore", name);
-                  window.location.href = "store-login.html";
-              };
+        // 2. عرض المتاجر القديمة (المسجلة بالاسم مباشرة)
+        Object.keys(oldStores).forEach(storeName => {
+            // نتأكد أن المتجر غير مكرر في القائمة الجديدة
+            createStoreCard(storeName, storeName, "old");
+        });
+    });
 
-              container.appendChild(card);
-          });
-      } else {
-          container.innerHTML = "لا توجد متاجر";
-      }
-  }).catch(err => {
-      console.error(err);
-      container.innerHTML = "خطأ تحميل المتاجر";
-  });
-
+    function createStoreCard(displayName, identifier, type) {
+        const card = document.createElement("div");
+        card.className = "store-card";
+        card.innerText = displayName;
+        card.onclick = () => {
+            localStorage.setItem("selectedStore", displayName);
+            localStorage.setItem("storeType", type); // حفظ نوع المتجر (قديم أم جديد)
+            localStorage.setItem("storeID", identifier); // المعرف (رقم الهاتف أو الاسم)
+            window.location.href = "store-login.html";
+        };
+        container.appendChild(card);
+    }
 }
 </script>
 

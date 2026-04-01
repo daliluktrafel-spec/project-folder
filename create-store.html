@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>إنشاء وتتبع المتجر - متاجر البلاد</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    :root { --gold: #b89b4a; --dark: #1b1e33; --light: #f7f6f2; --success: #27ae60; }
+    body { margin: 0; font-family: "Segoe UI", Tahoma, sans-serif; background: var(--light); display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    
+    .form-container { background: white; width: 95%; max-width: 600px; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.15); padding: 40px; position: relative; min-height: 400px; }
+
+    /* بوابة التحقق الأولية */
+    #checkGate { text-align: center; }
+    .gate-btn { background: var(--dark); color: white; padding: 15px; border-radius: 12px; border: none; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; font-size: 16px; transition: 0.3s; }
+    .gate-btn:hover { background: #2c2f4a; }
+    .gate-link { color: var(--gold); cursor: pointer; display: block; margin-top: 15px; font-weight: bold; text-decoration: underline; }
+
+    /* التنسيقات للنموذج */
+    .progress-wrapper { display: none; justify-content: space-between; margin-bottom: 40px; position: relative; }
+    .progress-line { position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: #eee; z-index: 1; transform: translateY(-50%); }
+    .step-circle { width: 35px; height: 35px; background: white; border: 2px solid #eee; border-radius: 50%; display: flex; justify-content: center; align-items: center; z-index: 2; font-weight: bold; color: #aaa; transition: 0.4s; }
+    .step-circle.active { border-color: var(--gold); background: var(--gold); color: white; }
+
+    .form-step { display: none; }
+    .form-step.active { display: block; animation: slideIn 0.4s ease-out; }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+
+    h2 { color: var(--gold); text-align: center; margin-bottom: 25px; }
+    .input-group { margin-bottom: 15px; }
+    label { display: block; font-weight: bold; margin-bottom: 5px; }
+    input, select, textarea { width: 100%; padding: 14px; border: 2px solid #f0f0f0; border-radius: 12px; box-sizing: border-box; font-size: 16px; margin-bottom: 10px; outline: none; }
+    input:focus { border-color: var(--gold); }
+
+    .btn-group { display: flex; justify-content: space-between; margin-top: 25px; }
+    .btn-next { background: var(--gold); color: white; border: none; padding: 15px 30px; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+    .btn-next:disabled { background: #eee; color: #ccc; cursor: not-allowed; }
+    .btn-prev { background: transparent; color: #aaa; border: none; cursor: pointer; font-weight: bold; }
+    
+    .status-box { display: none; text-align: center; padding: 20px; border-radius: 20px; margin-top: 15px; border: 2px dashed #ddd; }
+    .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #fdfdfd; padding: 15px; border-radius: 12px; border: 1px solid #eee; margin-bottom: 15px; }
+    .checkbox-item { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div class="form-container" id="mainContainer">
+    
+    <div id="checkGate">
+        <h2 style="color: var(--gold);">مرحباً بك في متاجر البلاد</h2>
+        <p>لبدء نشاطك التجاري، اختر أحد الخيارات التالية:</p>
+        <button class="gate-btn" onclick="startNewStore()">✨ إنشاء متجر إلكتروني جديد</button>
+        <p class="gate-link" onclick="showTracker()">🔍 تابِع طلبك السابق (الاستعلام)</p>
+    </div>
+
+    <div id="trackerArea" style="display:none; text-align: center;">
+        <h2 style="color: var(--gold);">تتبع حالة طلبك</h2>
+        <p>أدخل الرقم الذي استخدمته عند التسجيل</p>
+        <input type="tel" id="trackPhone" placeholder="777XXXXXX">
+        <button class="gate-btn" style="background: var(--gold);" onclick="performTrack()">تحقق من القبول</button>
+        <p class="gate-link" onclick="backToGate()">رجوع للخلف</p>
+        <div id="trackResult" class="status-box"></div>
+    </div>
+
+    <div class="progress-wrapper" id="progBar">
+        <div class="progress-line"></div>
+        <div class="step-circle active" id="s1">1</div>
+        <div class="step-circle" id="s2">2</div>
+        <div class="step-circle" id="s3">3</div>
+        <div class="step-circle" id="s4">4</div>
+        <div class="step-circle" id="s5">5</div>
+    </div>
+
+    <form id="masterForm" style="display:none;" oninput="checkValidation()">
+        <div class="form-step active" id="step1">
+            <h2>1. هوية المشروع</h2>
+            <div class="input-group"><label>اسمك الكامل</label><input type="text" id="ownerName" required></div>
+            <div class="input-group"><label>المنطقة</label><input type="text" id="storeRegion" required></div>
+            <div class="input-group"><label>اسم النشاط التجاري</label><input type="text" id="bizName" required></div>
+            <div class="input-group"><label>نبذة بسيطة عنك</label><textarea id="ownerBio" required></textarea></div>
+        </div>
+
+        <div class="form-step" id="step2">
+            <h2>2. التخصص والخدمات</h2>
+            <div class="input-group">
+                <label>التخصص الرئيسي</label>
+                <select id="mainSkill" onchange="updateSubSkills()" required>
+                    <option value="">-- اختر التخصص --</option>
+                    <option value="برمجة">البرمجة</option>
+                    <option value="غذاء">مواد غذائية</option>
+                    <option value="احذية">أحذية وشنط</option>
+                    <option value="بناء">أعمال بناء</option>
+                </select>
+            </div>
+            <div id="subArea" style="display:none;" class="input-group">
+                <label>ماذا تقدم في العمل؟</label>
+                <div id="subList" class="options-grid"></div>
+            </div>
+            <div class="input-group">
+                <label>نبذة عن مشروعك (20-500 حرف)</label>
+                <textarea id="projDesc" minlength="20" maxlength="500" required></textarea>
+            </div>
+        </div>
+
+        <div class="form-step" id="step3">
+            <h2>3. المعرض والاتصال</h2>
+            <div class="input-group"><label>رقم هاتف المتجر (واتساب)</label><input type="tel" id="ownerPhone" placeholder="777000000" required></div>
+            <p style="color:#888; font-size:12px;">ملاحظة: رفع الصور سيتم تفعيله بعد ربط التخزين.</p>
+        </div>
+
+        <div class="form-step" id="step4">
+            <h2>4. السياسات</h2>
+            <div class="input-group checkbox-item"><input type="checkbox" id="t1" required><label>أوافق على الشروط والسياسات</label></div>
+            <div class="input-group checkbox-item"><input type="checkbox" id="t2" required><label>أتعهد بصحة المعلومات المدخلة</label></div>
+        </div>
+
+        <div class="form-step" id="step5">
+            <h2>5. إرسال للمراجعة</h2>
+            <div style="text-align: center;">
+                <p>تنبيه: سيتم قفل الطلب للمراجعة (12-14 ساعة).</p>
+                <button type="button" class="btn-next" onclick="finalSubmitToFirebase()" style="width:100%;">إرسال الطلب النهائي</button>
+            </div>
+        </div>
+
+        <div class="btn-group" id="navContainer">
+            <button type="button" class="btn-prev" id="prevBtn" onclick="move(-1)" style="visibility:hidden;">تراجع</button>
+            <button type="button" class="btn-next" id="nextBtn" onclick="move(1)" disabled>التالي</button>
+        </div>
+    </form>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAMEoUTIMAS0mh06_SxrM2T_efDxEmEoxg",
+        databaseURL: "https://wafaseiyunshop-default-rtdb.firebaseio.com"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    let current = 1;
+
+    // وظائف البوابة
+    function startNewStore() {
+        document.getElementById("checkGate").style.display = "none";
+        document.getElementById("progBar").style.display = "flex";
+        document.getElementById("masterForm").style.display = "block";
+    }
+
+    function showTracker() {
+        document.getElementById("checkGate").style.display = "none";
+        document.getElementById("trackerArea").style.display = "block";
+    }
+
+    function backToGate() {
+        document.getElementById("trackerArea").style.display = "none";
+        document.getElementById("checkGate").style.display = "block";
+    }
+
+    // التحقق من صحة المدخلات (Validation)
+    function checkValidation() {
+        const stepDiv = document.getElementById("step" + current);
+        const inputs = stepDiv.querySelectorAll("input[required], textarea[required], select[required]");
+        let isValid = true;
+        
+        inputs.forEach(el => {
+            if (el.type === "checkbox") { if (!el.checked) isValid = false; }
+            else if (!el.value.trim()) { isValid = false; }
+            if (el.minLength && el.value.length < el.minLength) isValid = false;
+        });
+
+        document.getElementById("nextBtn").disabled = !isValid;
+    }
+
+    // التنقل بين الخطوات
+    function move(n) {
+        document.getElementById("step" + current).classList.remove("active");
+        current += n;
+        document.getElementById("step" + current).classList.add("active");
+        
+        for(let i=1; i<=5; i++) {
+            document.getElementById("s" + i).classList.toggle("active", i <= current);
+        }
+
+        document.getElementById("prevBtn").style.visibility = (current === 1 || current === 5) ? "hidden" : "visible";
+        document.getElementById("nextBtn").style.display = (current === 5) ? "none" : "block";
+        checkValidation();
+    }
+
+    // تحديث التخصصات الفرعية
+    function updateSubSkills() {
+        const main = document.getElementById("mainSkill").value;
+        const subList = document.getElementById("subList");
+        subList.innerHTML = "";
+        const data = { "برمجة": ["مواقع", "تطبيقات", "بوتات"], "غذاء": ["جملة", "توصيل", "حلويات"], "احذية": ["رجالي", "نسائي"], "بناء": ["سباكة", "كهرباء"] };
+        
+        if(data[main]) {
+            document.getElementById("subArea").style.display = "block";
+            data[main].forEach(item => { subList.innerHTML += `<label class="checkbox-item"><input type="checkbox" onchange="checkValidation()"> ${item}</label>`; });
+        } else {
+            document.getElementById("subArea").style.display = "none";
+        }
+        checkValidation();
+    }
+
+    // وظيفة الاستعلام عن الطلب
+    function performTrack() {
+        const phone = document.getElementById("trackPhone").value.trim();
+        const res = document.getElementById("trackResult");
+        if(!phone) return alert("أدخل رقم الهاتف أولاً");
+
+        database.ref("Active_Stores/" + phone).once("value").then(snap => {
+            const data = snap.val();
+            res.style.display = "block";
+            if(data) {
+                res.style.background = "#e8f5e9";
+                res.innerHTML = `
+                    <h3 style="color:var(--success);">🎉 تم قبول متجرك!</h3>
+                    <p>كلمة السر الخاصة بك هي:</p>
+                    <div style="font-size:24px; color:var(--gold); font-weight:bold; margin:10px;">${data.password}</div>
+                    <button class="gate-btn" onclick="location.href='dashboard.html'">دخول لوحة التحكم</button>
+                `;
+            } else {
+                res.style.background = "#fff3e0";
+                res.innerHTML = `<p>⏳ طلبك لا يزال قيد المراجعة. يرجى العودة لاحقاً (بعد 12-14 ساعة).</p>`;
+            }
+        });
+    }
+
+    // إرسال الطلب النهائي لقاعدة البيانات
+    function finalSubmitToFirebase() {
+        const data = {
+            ownerName: document.getElementById("ownerName").value,
+            storeRegion: document.getElementById("storeRegion").value,
+            bizName: document.getElementById("bizName").value,
+            mainSkill: document.getElementById("mainSkill").value,
+            ownerPhone: document.getElementById("ownerPhone").value,
+            projDesc: document.getElementById("projDesc").value,
+            status: "pending",
+            date: new Date().toLocaleString()
+        };
+
+        database.ref("Pending_Stores").push(data).then(() => {
+            document.getElementById("mainContainer").innerHTML = `
+                <div style="text-align:center; padding:40px;">
+                    <h2 style="color:#b89b4a;">تم إرسال طلبك بنجاح!</h2>
+                    <p>سوف يقوم حسين السقاف بمراجعة طلبك خلال الـ 14 ساعة القادمة.</p>
+                    <p>يمكنك التحقق من النتيجة لاحقاً باستخدام رقم هاتفك.</p>
+                    <button onclick="location.href='fields.html'" class="gate-btn">العودة للرئيسية</button>
+                </div>`;
+        });
+    }
+</script>
+</body>
+</html>

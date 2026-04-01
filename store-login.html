@@ -1,72 +1,93 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>تسجيل دخول المتجر</title>
+    <title>دخول المتجر - متاجر البلاد</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: Arial, sans-serif; background:#f8f8f8; display:flex; justify-content:center; align-items:center; height:100vh; }
-        .login-box { background:white; padding:20px; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.1); width:300px; }
-        .login-box h2 { text-align:center; margin-bottom:20px; }
-        .login-box input { width:100%; padding:8px; margin:10px 0; border:1px solid #ccc; border-radius:4px; }
-        .login-box button { width:100%; padding:10px; background:#007bff; color:white; border:none; border-radius:4px; cursor:pointer; }
-        .login-box button:hover { background:#0056b3; }
-        #error-msg { color:red; font-size:14px; margin-top:10px; text-align:center; }
+        :root { --gold: #b89b4a; --dark: #1b1e33; }
+        body { 
+            margin: 0; font-family: 'Cairo', sans-serif; 
+            background: linear-gradient(135deg, #f7f6f2 0%, #d1c7a3 100%);
+            display: flex; justify-content: center; align-items: center; height: 100vh; 
+        }
+        .login-box { 
+            background: white; padding: 40px 30px; border-radius: 25px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1); width: 90%; max-width: 350px; 
+            text-align: center; border-top: 5px solid var(--gold);
+        }
+        .login-box h2 { color: var(--dark); margin-bottom: 5px; font-size: 22px; }
+        .store-tag { color: var(--gold); font-weight: bold; margin-bottom: 25px; display: block; }
+        .login-box input { 
+            width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #eee; 
+            border-radius: 12px; box-sizing: border-box; outline: none; font-size: 16px; transition: 0.3s;
+            text-align: center;
+        }
+        .login-box input:focus { border-color: var(--gold); }
+        .login-box button { 
+            width: 100%; padding: 15px; background: var(--dark); color: white; 
+            border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 15px;
+        }
+        .login-box button:hover { background: #2c2f4a; transform: translateY(-2px); }
+        #error-msg { color: #e74c3c; font-size: 14px; margin-top: 15px; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="login-box">
-    <h2 id="store-name">تسجيل الدخول</h2>
-    <input type="password" id="password" placeholder="كلمة السر">
-    <button id="login-btn">دخول</button>
+    <h2>تسجيل الدخول</h2>
+    <span id="store-name" class="store-tag">اسم المتجر</span>
+    <input type="password" id="password" placeholder="أدخل كلمة السر الخاصة بمتجرك">
+    <button id="login-btn">دخول للوحة التحكم</button>
     <div id="error-msg"></div>
 </div>
 
-<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-<!-- Firebase config موحد -->
 <script src="firebase.js"></script>
 
 <script>
-    // جلب اسم المتجر المختار
+    // جلب البيانات المخزنة من صفحة المتاجر
     const storeName = localStorage.getItem("selectedStore");
-    if (!storeName) {
-        alert("يرجى اختيار متجر أولاً");
+    const identifier = localStorage.getItem("storeID");
+    const type = localStorage.getItem("storeType");
+
+    // إذا لم تتوفر بيانات المتجر، نرجعه لصفحة الاختيار
+    if (!storeName || !identifier) {
         window.location.href = "stores.html";
     }
-    document.getElementById("store-name").innerText = storeName;
+
+    document.getElementById("store-name").innerText = "🏪 " + storeName;
 
     document.getElementById("login-btn").onclick = () => {
         const inputPass = document.getElementById("password").value.trim();
+        const errorMsg = document.getElementById("error-msg");
 
-        if(!inputPass){
-            document.getElementById("error-msg").innerText = "الرجاء إدخال كلمة السر";
+        if(!inputPass) {
+            errorMsg.innerText = "⚠️ يرجى إدخال كلمة السر";
             return;
         }
 
-        database.ref("storePasswords/" + storeName).once("value")
-            .then(snap => {
-                if(!snap.exists()){
-                    document.getElementById("error-msg").innerText = "لا توجد كلمة سر لهذا المتجر";
-                    return;
-                }
+        // تحديد المسار الصحيح بناءً على نوع المتجر (قديم أو جديد)
+        const path = (type === "new") ? `Active_Stores/${identifier}/password` : `storePasswords/${identifier}`;
+
+        database.ref(path).once("value").then(snap => {
+            if(snap.exists()){
                 const realPass = String(snap.val());
-                if(inputPass === realPass){
+                if(inputPass === realPass) {
                     localStorage.setItem("storeLoggedIn", storeName);
                     window.location.href = "dashboard.html";
                 } else {
-                    document.getElementById("error-msg").innerText = "كلمة السر خاطئة!";
+                    errorMsg.innerText = "❌ كلمة السر خاطئة!";
                 }
-            })
-            .catch(err => {
-                console.error(err);
-                document.getElementById("error-msg").innerText = "خطأ في الاتصال، حاول لاحقاً";
-            });
+            } else {
+                errorMsg.innerText = "❌ لم يتم العثور على كلمة سر لهذا المتجر";
+            }
+        }).catch(err => {
+            console.error(err);
+            errorMsg.innerText = "🌐 خطأ في الاتصال بقاعدة البيانات";
+        });
     };
 </script>
-
 </body>
 </html>

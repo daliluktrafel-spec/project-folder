@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>حالة الطلب - متاجر البلاد</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: sans-serif; background: #f7f6f2; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .box { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 90%; max-width: 400px; text-align: center; border: 2px solid #b89b4a; }
+        input { width: 100%; padding: 15px; margin: 15px 0; border: 2px solid #eee; border-radius: 12px; text-align: center; font-size: 18px; outline: none; }
+        .btn { background: #b89b4a; color: white; border: none; padding: 15px; border-radius: 12px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; }
+        .result { margin-top: 20px; padding: 20px; border-radius: 15px; display: none; line-height: 1.6; }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h2 style="color:#1b1e33;">🔍 استعلام عن طلبك</h2>
+    <p style="color:#666;">أدخل رقم الهاتف الذي سجلت به لمشاهدة النتيجة</p>
+    <input type="tel" id="phone" placeholder="777XXXXXX">
+    <button class="btn" onclick="check()">تحقق من الحالة الآن</button>
+
+    <div id="res" class="result"></div>
+    <button onclick="location.href='fields.html'" style="margin-top:20px; background:none; border:none; color:#aaa; cursor:pointer;">العودة للرئيسية</button>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAMEoUTIMAS0mh06_SxrM2T_efDxEmEoxg",
+        databaseURL: "https://wafaseiyunshop-default-rtdb.firebaseio.com"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    function check() {
+        const phone = document.getElementById("phone").value.trim();
+        const res = document.getElementById("res");
+        if(!phone) return alert("يرجى إدخال الرقم");
+
+        database.ref("Active_Stores/" + phone).once("value").then(snap => {
+            const data = snap.val();
+            res.style.display = "block";
+            if(data) {
+                res.style.background = "#e8f5e9";
+                res.style.color = "#2e7d32";
+                res.innerHTML = `
+                    <h3 style="margin-top:0;">🎉 تهانينا! تم قبول متجرك</h3>
+                    <p>يمكنك الآن البدء بإضافة منتجاتك.</p>
+                    <div style="background:white; padding:10px; border-radius:8px; border:2px dashed #b89b4a; margin:10px 0;">
+                        كلمة السر: <br><strong style="font-size:22px; color:#b89b4a;">${data.password}</strong>
+                    </div>
+                    <button class="btn" onclick="location.href='dashboard.html'" style="background:#1b1e33;">دخول لوحة التحكم</button>
+                `;
+            } else {
+                res.style.background = "#fff3e0";
+                res.style.color = "#ef6c00";
+                res.innerHTML = `
+                    <p>⏳ طلبك لا يزال قيد المراجعة.</p>
+                    <p>يرجى العودة والتحقق مرة أخرى بعد اكتمال 14 ساعة.</p>
+                `;
+            }
+        });
+    }
+</script>
+</body>
+</html>
