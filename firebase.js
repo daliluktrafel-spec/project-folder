@@ -17,4 +17,3 @@ if (!firebase.apps.length) {
 
 // متاح لكل الصفحات
 window.database = firebase.database();
-window.storage = firebase.storage();

@@ -4,127 +4,28 @@
 <meta charset="UTF-8">
 <title>منصة متاجر البلاد - التسوق الذكي</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
-    body {
-        margin: 0;
-        font-family: "Segoe UI", Tahoma, Arial, sans-serif;
-        background: linear-gradient(to bottom, #f7f6f2 0%, #2c2f4a 25%, #1b1e33 75%, #f7f6f2 100%);
-        color: #2b2b2b;
-        padding-bottom: 80px;
-    }
-
-    .header {
-        background: linear-gradient(45deg,#c9b36a,#b89b4a,#e6d38a);
-        padding: 10px 15px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 10px;
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    }
-
-    .categories {
-        display: flex;
-        gap: 8px;
-        overflow-x: auto;
-        flex: 1;
-        scrollbar-width: none;
-    }
+    body { margin: 0; font-family: "Segoe UI", Tahoma, sans-serif; background: linear-gradient(to bottom, #f7f6f2 0%, #2c2f4a 25%, #1b1e33 75%, #f7f6f2 100%); color: #2b2b2b; padding-bottom: 80px; }
+    .header { background: linear-gradient(45deg,#c9b36a,#b89b4a,#e6d38a); padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+    .categories { display: flex; gap: 8px; overflow-x: auto; flex: 1; scrollbar-width: none; }
     .categories::-webkit-scrollbar { display: none; }
-
-    .category-btn {
-        flex: 0 0 auto;
-        background: white;
-        border: none;
-        border-radius: 20px;
-        padding: 8px 16px;
-        font-weight: bold;
-        font-size: 13px;
-        color: #1b1e33;
-        cursor: pointer;
-        white-space: nowrap;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .fav-top {
-        background: white;
-        color: #1b1e33;
-        padding: 8px 12px;
-        border-radius: 12px;
-        font-weight: bold;
-        cursor: pointer;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .fav-top span {
-        background: #d45d5d;
-        color: white;
-        font-size: 11px;
-        min-width: 18px;
-        height: 18px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        border-radius: 50%;
-    }
-
+    .category-btn { flex: 0 0 auto; background: white; border: none; border-radius: 20px; padding: 8px 16px; font-weight: bold; font-size: 13px; color: #1b1e33; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .fav-top { background: white; color: #1b1e33; padding: 8px 12px; border-radius: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 6px; }
+    .fav-top span { background: #d45d5d; color: white; font-size: 11px; min-width: 18px; height: 18px; display: flex; justify-content: center; align-items: center; border-radius: 50%; }
     .search-container { padding: 15px; text-align: center; }
-    .search-input { 
-        width: 90%; max-width: 450px; padding: 14px; 
-        border-radius: 15px; border: none; 
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-
-    .container { 
-        display: grid; 
-        grid-template-columns: repeat(2, 1fr); 
-        gap: 15px; 
-        padding: 15px; 
-    }
-    
-    .card {
-        background: white; border-radius: 20px; padding: 10px; text-align: center;
-        box-shadow: 0 8px 18px rgba(0,0,0,0.1); cursor: pointer;
-        display: flex; flex-direction: column; gap: 6px;
-    }
-
-    .product-img {
-        width: 100%; aspect-ratio: 1 / 1; border-radius: 15px;
-        background-size: cover; background-position: center;
-        background-color: #f9f9f9;
-    }
-
+    .search-input { width: 90%; max-width: 450px; padding: 14px; border-radius: 15px; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+    .container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 15px; }
+    .card { background: white; border-radius: 20px; padding: 10px; text-align: center; box-shadow: 0 8px 18px rgba(0,0,0,0.1); cursor: pointer; display: flex; flex-direction: column; gap: 6px; }
+    .product-img { width: 100%; aspect-ratio: 1 / 1; border-radius: 15px; background-size: cover; background-position: center; background-color: #f9f9f9; }
     .product-name { font-weight: bold; font-size: 13px; height: 35px; overflow: hidden; }
     .product-price { color: #b89b4a; font-weight: bold; font-size: 14px; }
     .product-store { color: #888; font-size: 11px; }
-
-    .fav-btn {
-        border: none; background: #f2f2f2; padding: 8px;
-        border-radius: 10px; margin-top: 5px; font-size: 11px; 
-        font-weight: bold; cursor: pointer;
-    }
-
-    .tabs {
-        display: flex; justify-content: space-around; padding: 12px;
-        position: fixed; bottom: 0; width: 100%; background: white;
-        box-shadow: 0 -4px 15px rgba(0,0,0,0.08); z-index: 1000;
-        box-sizing: border-box;
-    }
-    .tab {
-        padding: 10px 15px; border-radius: 12px; border: 1.5px solid #b89b4a;
-        font-weight: bold; cursor: pointer; font-size: 12px;
-    }
+    .fav-btn { border: none; background: #f2f2f2; padding: 8px; border-radius: 10px; margin-top: 5px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .tabs { display: flex; justify-content: space-around; padding: 12px; position: fixed; bottom: 0; width: 100%; background: white; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); z-index: 1000; box-sizing: border-box; }
+    .tab { padding: 10px 15px; border-radius: 12px; border: 1.5px solid #b89b4a; font-weight: bold; cursor: pointer; font-size: 12px; color: #b89b4a; }
     .tab.active { background: linear-gradient(45deg,#c9b36a,#b89b4a); color: white; }
 </style>
 </head>
-
 <body>
 
 <div class="header">
@@ -152,38 +53,32 @@
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="firebase.js"></script>
 
 <script>
-const firebaseConfig = {
-    apiKey: "AIzaSyAMEoUTIMAS0mh06_SxrM2T_efDxEmEoxg",
-    authDomain: "wafaseiyunshop.firebaseapp.com",
-    databaseURL: "https://wafaseiyunshop-default-rtdb.firebaseio.com",
-    projectId: "wafaseiyunshop",
-    storageBucket: "wafaseiyunshop.firebasestorage.app",
-    messagingSenderId: "101115796279",
-    appId: "1:101115796279:web:3753efad2a443c9b6098b2"
-};
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
-
 let products = [];
-let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+// تحميل المفضلة مع التأكد أنها مصفوفة نصوص
+let favorites = JSON.parse(localStorage.getItem("favorites") || "[]").map(String);
 
 const normalizeText = (text) => {
     if (!text) return "";
-    return text.trim()
-        .replace(/[أإآ]/g, "ا")
-        .replace(/ة/g, "ه")
-        .replace(/ى/g, "ي")
-        .toLowerCase();
+    return text.trim().replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي").toLowerCase();
 };
 
+// جلب البيانات من Firebase
 database.ref("products").on("value", snap => {
     const data = snap.val() || {};
     products = Object.values(data).sort((a,b)=> b.id - a.id);
     renderCategories();
-    renderProducts("all");
     updateFavCount();
+    // إعادة عرض القسم الحالي لتحديث البيانات
+    const activeTab = document.querySelector('.tab.active');
+    if(activeTab) {
+        const sectionId = activeTab.getAttribute('onclick').match(/'([^']+)'/)[1];
+        showSection(sectionId, activeTab);
+    } else {
+        showSection('all', document.querySelector('.tab'));
+    }
 });
 
 function updateFavCount() {
@@ -193,43 +88,36 @@ function updateFavCount() {
 function renderCategories() {
     const categoriesDiv = document.getElementById("categories");
     categoriesDiv.innerHTML = "";
-
     const allBtn = document.createElement("div");
     allBtn.className = "category-btn";
     allBtn.innerText = "🏠 الكل";
-    allBtn.onclick = () => { showSection('all'); renderProducts("all"); };
+    allBtn.onclick = () => showSection('all', document.querySelector('.tab'));
     categoriesDiv.appendChild(allBtn);
 
-    const uniqueCategories = [];
-    const seenNormalized = new Set();
-
-    products.forEach(p => {
-        if (p.category) {
-            const norm = normalizeText(p.category);
-            if (!seenNormalized.has(norm)) {
-                seenNormalized.add(norm);
-                uniqueCategories.push(p.category);
-            }
-        }
-    });
-
+    const uniqueCategories = [...new Set(products.map(p => p.category).filter(Boolean))];
     uniqueCategories.forEach(cat => {
         const btn = document.createElement("div");
         btn.className = "category-btn";
         btn.innerText = cat;
-        btn.onclick = () => {
-            showSection("all");
-            renderProducts("all", p => normalizeText(p.category) === normalizeText(cat));
-        };
+        btn.onclick = () => renderProducts("all", p => p.category === cat);
         categoriesDiv.appendChild(btn);
     });
 }
 
 function renderProducts(containerId, filter = () => true){
     const c = document.getElementById(containerId);
+    if(!c) return;
     c.innerHTML = "";
-    products.filter(filter).forEach(p=>{
-        const isFav = favorites.includes(Number(p.id));
+    
+    const filtered = products.filter(filter);
+    if(containerId === "favorites" && filtered.length === 0) {
+        c.innerHTML = "<div style='grid-column:1/-1; padding:40px; color:#888; text-align:center;'>السلة فارغة حالياً 🛒</div>";
+        return;
+    }
+
+    filtered.forEach(p=>{
+        const pId = String(p.id);
+        const isFav = favorites.includes(pId);
         const d = document.createElement("div");
         d.className = "card";
         d.innerHTML = `
@@ -237,29 +125,26 @@ function renderProducts(containerId, filter = () => true){
             <div class="product-name">${p.name}</div>
             <div class="product-price">${p.price}</div>
             <div class="product-store">📍 ${p.store}</div>
-            <button class="fav-btn" style="color: ${isFav ? '#d45d5d' : '#555'}">
-                🛒 ${isFav ? 'حذف من السلة' : 'إضافة للسلة'}
+            <button class="fav-btn" style="background:${isFav?'#ffebee':'#f2f2f2'}; color:${isFav?'#d45d5d':'#555'}">
+                ${isFav ? '❌ حذف من السلة' : '🛒 إضافة للسلة'}
             </button>
         `;
         d.onclick = (e) => { if(e.target.tagName !== 'BUTTON') location.href = `product.html?productId=${p.id}`; };
         d.querySelector(".fav-btn").onclick = (e) => {
             e.stopPropagation();
-            const id = Number(p.id);
-            if(favorites.includes(id)) favorites = favorites.filter(fid => fid !== id);
-            else favorites.push(id);
-            localStorage.setItem("favorites", JSON.stringify(favorites));
-            updateFavCount();
-            renderProducts(containerId, filter);
+            toggleFav(pId, containerId, filter);
         };
         c.appendChild(d);
     });
 }
 
-// دالة التحقق من التوفر المصلحة
-function isAvailable(p) {
-    const status = normalizeText(p.status || "");
-    // إذا كانت الحالة فارغة نعتبرها متوفرة، أو إذا لم تحتوِ على كلمة "غير متوفر"
-    return status === "" || !status.includes("غير متوفر");
+function toggleFav(id, containerId, filter) {
+    if(favorites.includes(id)) favorites = favorites.filter(f => f !== id);
+    else favorites.push(id);
+    localStorage.setItem("favorites", JSON.stringify(favorites));
+    updateFavCount();
+    if(containerId === "favorites") showSection("favorites");
+    else renderProducts(containerId, filter);
 }
 
 function showSection(id, el){
@@ -271,16 +156,10 @@ function showSection(id, el){
         el.classList.add("active");
     }
 
-    if(id === "stores") {
-        renderStores();
-    } else if(id === "all") {
-        renderProducts("all");
-    } else if(id === "available") {
-        // استدعاء الفلترة الخاصة بالمتوفر عند الضغط على التبويب
-        renderProducts("available", p => isAvailable(p));
-    } else if(id === "favorites") {
-        showFavorites();
-    }
+    if(id === "stores") renderStores();
+    else if(id === "all") renderProducts("all");
+    else if(id === "available") renderProducts("available", p => !normalizeText(p.status).includes("غير متوفر"));
+    else if(id === "favorites") renderProducts("favorites", p => favorites.includes(String(p.id)));
 }
 
 function renderStores(){
@@ -294,15 +173,16 @@ function renderStores(){
     });
 }
 
-function showFavorites(){ 
-    renderProducts("favorites", p => favorites.includes(Number(p.id))); 
+function showFavorites() {
+    showSection("favorites");
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
 }
 
 function openAddProduct(){ window.location.href = "stores.html"; }
 
 function smartSearch() {
     const term = normalizeText(document.getElementById("searchInput").value);
-    showSection("all");
+    showSection("all", document.querySelector('.tab'));
     renderProducts("all", p => 
         normalizeText(p.name).includes(term) || 
         normalizeText(p.store).includes(term) ||
