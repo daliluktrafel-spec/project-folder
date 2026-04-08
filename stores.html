@@ -33,6 +33,44 @@ h2 {
     max-width: 900px;
     margin: auto;
 }
+.orders-badge {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #1b1e33;
+    color: #e6d38a;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 1000;
+    border: 2px solid #b89b4a;
+    transition: 0.3s;
+}
+
+.orders-badge:hover {
+    transform: scale(1.1);
+    background: #b89b4a;
+    color: #1b1e33;
+}
+
+/* فقاعة تنبيه حمراء صغيرة */
+.dot {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: #d45d5d;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 2px solid white;
+    display: none; /* ستظهر فقط عند وجود طلبات */
+}
 
 /* بطاقة المتجر */
 .store-card {
@@ -61,6 +99,10 @@ h2 {
 <h2>اختر المتجر لإضافة المنتجات</h2>
 
 <div class="store-list" id="store-list"></div>
+<div class="orders-badge" onclick="goToMerchantOrders()" title="طلبات متجري">
+    📦الطلبات 
+    <div id="notif-dot" class="dot"></div>
+</div>
 
 <!-- Firebase App (core) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -108,7 +150,34 @@ window.onload = function(){
         container.appendChild(card);
     }
 }
+function goToMerchantOrders() {
+    // نتحقق أولاً إذا كان التاجر قد اختار متجره ودخل
+    const selectedStore = localStorage.getItem("selectedStore");
+    if(!selectedStore) {
+        alert("يرجى اختيار المتجر أولاً");
+    } else {
+        // نتوجه لملف لوحة التحكم الجديد الذي سنسميه merchant-dashboard.html
+        window.location.href = "merchant-dashboard.html";
+    }
+}
+
+// كود إضافي لجعل النقطة الحمراء تظهر إذا كان هناك طلبات "قيد الانتظار" لمتجره
+function checkNewOrders() {
+    const storeName = localStorage.getItem("selectedStore");
+    if(!storeName) return;
+
+    database.ref("Orders").on("value", snap => {
+        const data = snap.val() || {};
+        // فحص إذا كان هناك أي طلب لمتجري وحالته waiting (بانتظار مندوب)
+        const hasNew = Object.values(data).some(ord => ord.store === storeName && ord.status === "waiting");
+        document.getElementById("notif-dot").style.display = hasNew ? "block" : "none";
+    });
+}
+
+// تشغيل الفحص
+checkNewOrders();
 </script>
+
 
 </body>
 </html>

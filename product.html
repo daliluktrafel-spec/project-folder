@@ -134,6 +134,7 @@ document.getElementById("order-delivery").onclick = () => {
 };
 
 // 4. إرسال الطلب وحفظه
+// 4. إرسال الطلب وحفظه (بدون فتح واتساب)
 function sendOrderToDriver(phone, name) {
     const orderID = "ORD-" + Date.now();
     const orderData = {
@@ -144,17 +145,17 @@ function sendOrderToDriver(phone, name) {
         customer: localStorage.getItem("userName"),
         region: userRegion,
         driverPhone: phone,
-        driverName: name, // إضافة اسم المندوب للطلب
+        driverName: name, 
         status: "waiting",
         date: new Date().toLocaleString()
     };
 
     database.ref("Orders/" + orderID).set(orderData).then(() => {
-        alert("تم إرسال الطلب للمندوب " + name + " ✅");
-        window.open(`https://wa.me/${phone}?text=طلب توصيل جديد من متاجر البلاد:%0Aالمنتج: ${currentProduct.name}%0Aالموقع: ${userRegion}`, '_blank');
-        location.reload(); // إعادة التحميل لإظهار زر التتبع
+        alert("تم إرسال الطلب للمندوب " + name + " بنجاح ✅");
+        // نقوم بإعادة تحميل الصفحة ليظهر زر التتبع والدردشة بدلاً من أزرار الطلب
+        location.reload(); 
     }).catch(err => {
-        alert("خطأ في إرسال الطلب");
+        alert("خطأ في إرسال الطلب، يرجى المحاولة لاحقاً");
     });
 }
 

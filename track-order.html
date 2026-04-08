@@ -35,6 +35,29 @@
     <button onclick="sendMsg()">إرسال</button>
 </div>
 
+<div style="text-align: center; margin-top: 30px; border-top: 1px solid #ddd; padding-top: 20px;">
+    <p style="font-size: 13px; color: #888;">هل واجهت مشكلة في الطلب؟</p>
+    <button onclick="sendComplaint()" style="background:none; border:none; color:#d45d5d; font-weight:bold; cursor:pointer; text-decoration:underline;">
+        🚩 تبليغ الإدارة عن مشكلة
+    </button>
+</div>
+
+<script>
+function sendComplaint() {
+    const msg = prompt("اكتب مشكلتك هنا (تأخير، سوء تعامل، مشكلة في المنتج):");
+    if(msg) {
+        // orderId نحصل عليه من رابط الصفحة كما فعلنا سابقاً
+        database.ref("Complaints/" + orderId).set({
+            orderId: orderId,
+            customer: localStorage.getItem("userName"),
+            message: msg,
+            date: new Date().toLocaleString()
+        }).then(() => {
+            alert("تم إرسال بلاغك للإدارة، سيتم التواصل معك قريباً.");
+        });
+    }
+}
+</script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="firebase.js"></script>

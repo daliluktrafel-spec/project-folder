@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <title>إدارة الأرباح والعمليات | القائد حسين</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --gold: #b89b4a; --dark: #1b1e33; --green: #27ae60; --bg: #f4f7f6; }
+        :root { --gold: #b89b4a; --dark: #1b1e33; --green: #27ae60; --red: #d45d5d; --bg: #f4f7f6; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: var(--dark); }
         
         .header-top { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 25px; }
@@ -16,9 +15,11 @@
         .money-card { background: white; padding: 25px; border-radius: 20px; border-right: 8px solid var(--green); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         .money-card h3 { margin: 0; color: #888; font-size: 14px; }
         .money-card .amount { font-size: 32px; font-weight: bold; color: var(--dark); margin-top: 10px; display: block; }
-        .money-card .detail { font-size: 12px; color: var(--green); font-weight: bold; }
 
-        .tabs-container { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .backup-section { background: var(--dark); color: #e6d38a; padding: 20px; border-radius: 20px; margin-bottom: 25px; text-align: center; border: 2px solid var(--gold); }
+        .btn-backup { background: var(--gold); color: var(--dark); border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; margin: 5px; }
+
+        .tabs-container { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 25px; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th { text-align: right; color: var(--gold); padding: 15px; border-bottom: 2px solid #eee; }
         td { padding: 15px; border-bottom: 1px solid #f9f9f9; font-size: 14px; }
@@ -28,39 +29,37 @@
         .waiting { background: #fff3e0; color: #e67e22; }
         .picked { background: #e3f2fd; color: #1976d2; }
         
-        .action-btn { background: var(--gold); color: white; border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; }
+        .action-btn { background: var(--gold); color: white; border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; margin-top: 5px; }
+        .complaint-box { background: #fff5f5; border: 1px solid #ffdada; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-right: 5px solid var(--red); }
     </style>
 </head>
 <body>
 
     <div class="header-top">
-        <h1>📊 لوحة التحكم المالية والعمليات</h1>
-        <div style="text-align: left;">
-            <small>إجمالي الأرباح المتوقعة</small><br>
-            <strong id="live-time" style="color: var(--green);">--:--</strong>
-        </div>
+        <h1>📊 لوحة القائد حسين</h1>
+        <div style="text-align: left;"><strong id="live-time" style="color: var(--green);">--:--</strong></div>
     </div>
 
     <div class="finance-grid">
-        <div class="money-card">
-            <h3>أرباح المتاجر (5%)</h3>
-            <span class="amount" id="store-profit">0</span>
-            <span class="detail">سيتم تحصيلها من التجار</span>
-        </div>
-        <div class="money-card" style="border-right-color: #3498db;">
-            <h3>أرباح المناديب (5%)</h3>
-            <span class="amount" id="driver-profit">0</span>
-            <span class="detail" style="color: #3498db;">سيتم تحصيلها من المناديب</span>
-        </div>
-        <div class="money-card" style="border-right-color: var(--gold);">
-            <h3>صافي الربح الكلي</h3>
-            <span class="amount" id="total-profit" style="color: var(--gold);">0</span>
-            <span class="detail" style="color: var(--gold);">مجموع العمولات</span>
-        </div>
+        <div class="money-card"><h3>أرباح المتاجر (5%)</h3><span class="amount" id="store-profit">0</span></div>
+        <div class="money-card" style="border-right-color: #3498db;"><h3>أرباح المناديب (5%)</h3><span class="amount" id="driver-profit">0</span></div>
+        <div class="money-card" style="border-right-color: var(--gold);"><h3>الصافي الكلي</h3><span class="amount" id="total-profit" style="color: var(--gold);">0</span></div>
+    </div>
+
+    <div class="backup-section">
+        <h3>🛡️ مركز أمان البيانات</h3>
+        <button class="btn-backup" onclick="exportData('Active_Stores', 'المتاجر.txt')">تصدير المتاجر</button>
+        <button class="btn-backup" onclick="exportData('Deliveries', 'المناديب.txt')">تصدير المناديب</button>
+        <button class="btn-backup" onclick="exportData('Orders', 'سجل_الطلبات.txt')">تصدير الطلبات</button>
     </div>
 
     <div class="tabs-container">
-        <h2>🚚 مراقبة طلبات التوصيل (سيئون)</h2>
+        <h2 style="color: var(--red);">🚩 بلاغات الزبائن النشطة</h2>
+        <div id="complaints-list">جاري الفحص...</div>
+    </div>
+
+    <div class="tabs-container">
+        <h2>🚚 مراقبة العمليات والتحصيل</h2>
         <table>
             <thead>
                 <tr>
@@ -72,9 +71,7 @@
                     <th>العمولة (10%)</th>
                 </tr>
             </thead>
-            <tbody id="orders-table-body">
-                <tr><td colspan="6" style="text-align:center;">جاري جلب الطلبات الحية...</td></tr>
-            </tbody>
+            <tbody id="orders-table-body"></tbody>
         </table>
     </div>
 
@@ -82,52 +79,70 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="firebase.js"></script>
     <script>
-        setInterval(() => {
-            document.getElementById('live-time').innerText = new Date().toLocaleTimeString('ar-YE');
-        }, 1000);
+        setInterval(() => { document.getElementById('live-time').innerText = new Date().toLocaleTimeString('ar-YE'); }, 1000);
 
+        // مراقبة الطلبات والتحصيل المالي
         database.ref("Orders").on("value", snap => {
             const data = snap.val() || {};
             const orders = Object.values(data);
             const tbody = document.getElementById("orders-table-body");
             tbody.innerHTML = "";
-
-            let storeSum = 0;
-            let driverSum = 0;
+            let storeSum = 0, driverSum = 0;
 
             orders.sort((a, b) => b.id.split('-')[1] - a.id.split('-')[1]).forEach(ord => {
-                // تحويل السعر لنقم (بفرض أن السعر مكتوب مثل: 5000 ريال)
                 const priceNum = parseInt(ord.price) || 0;
-                const commission = priceNum * 0.05; // 5% لكل طرف
-                const totalComm = commission * 2; // إجمالي 10% من العملية
-
-                if(ord.status === "delivered") {
-                    storeSum += commission;
-                    driverSum += commission;
-                }
+                const commission = priceNum * 0.05;
+                if(ord.status === "delivered") { storeSum += commission; driverSum += commission; }
 
                 tbody.innerHTML += `
-                    <tr>
+                    <tr style="${ord.hussain_paid ? 'background: #e8f5e9;' : ''}">
                         <td><small>${ord.id}</small></td>
                         <td><b>${ord.pName}</b><br><small>${ord.price}</small></td>
                         <td>${ord.driverName || '---'}<br><small>${ord.driverPhone || ''}</small></td>
                         <td>${ord.customer}<br><small>📍 ${ord.region}</small></td>
                         <td><span class="status-badge ${ord.status}">${getStatusName(ord.status)}</span></td>
-                        <td><b>${ord.status === 'delivered' ? totalComm : '--'}</b></td>
+                        <td>
+                            <b>${ord.status === 'delivered' ? (commission*2).toLocaleString() : '--'}</b>
+                            ${(ord.status === 'delivered' && !ord.hussain_paid) ? 
+                                `<br><button class="action-btn" onclick="collectCommission('${ord.id}')">تم التحصيل؟</button>` : 
+                                (ord.hussain_paid ? '<br><small style="color:green;">✅ تم القبض</small>' : '')}
+                        </td>
                     </tr>
                 `;
             });
-
             document.getElementById("store-profit").innerText = storeSum.toLocaleString() + " ريال";
             document.getElementById("driver-profit").innerText = driverSum.toLocaleString() + " ريال";
             document.getElementById("total-profit").innerText = (storeSum + driverSum).toLocaleString() + " ريال";
         });
 
-        function getStatusName(s) {
-            if(s === "waiting") return "ينتظر مندوب";
-            if(s === "picked") return "قيد التوصيل";
-            if(s === "delivered") return "مكتمل ✅";
-            return s;
+        function collectCommission(id) { if(confirm("تأكيد استلام العمولة؟")) database.ref("Orders/"+id).update({hussain_paid:true}); }
+
+        function getStatusName(s) { return s === "waiting" ? "ينتظر مندوب" : s === "picked" ? "قيد التوصيل" : s === "delivered" ? "مكتمل ✅" : s; }
+
+        // مراقبة الشكاوى
+        database.ref("Complaints").on("value", snap => {
+            const list = document.getElementById("complaints-list");
+            list.innerHTML = "";
+            const data = snap.val();
+            if(!data) { list.innerHTML = "لا توجد بلاغات ✨"; return; }
+            Object.keys(data).forEach(id => {
+                const c = data[id];
+                list.innerHTML += `<div class="complaint-box">
+                    <b>طلب: ${c.orderId}</b> | الزبون: ${c.customer}<br>
+                    <p>💬 ${c.message}</p>
+                    <button class="action-btn" style="background:var(--red);" onclick="database.ref('Complaints/${id}').remove()">تم الحل ✅</button>
+                </div>`;
+            });
+        });
+
+        // النسخ الاحتياطي
+        function exportData(path, fileName) {
+            database.ref(path).once("value").then(snap => {
+                const blob = new Blob([JSON.stringify(snap.val(), null, 4)], { type: "text/plain" });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = fileName; link.click();
+            });
         }
     </script>
 </body>
