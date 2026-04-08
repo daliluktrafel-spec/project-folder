@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>دخول المناديب | متاجر البلاد</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root { --gold: #b89b4a; --dark: #1b1e33; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 90%; max-width: 350px; text-align: center; }
+        .logo { font-size: 50px; margin-bottom: 10px; }
+        h2 { color: var(--dark); margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; text-align: center; font-size: 16px; }
+        .btn-login { background: var(--gold); color: white; border: none; width: 100%; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-login:hover { background: #9a8139; }
+        .footer-text { margin-top: 15px; font-size: 12px; color: #888; }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <div class="logo">🛵</div>
+    <h2>دخول المناديب</h2>
+    <p style="font-size: 14px; color: #666;">أدخل رقم هاتفك المسجل للبدء</p>
+    
+    <input type="tel" id="driver-phone" placeholder="رقم الهاتف (77xxxxxxx)">
+    
+    <button class="btn-login" onclick="login()">دخول للوحة التحكم</button>
+    
+    <div class="footer-text">منصة متاجر البلاد - سيئون</div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="firebase.js"></script>
+<script>
+    function login() {
+        const phone = document.getElementById("driver-phone").value.trim();
+        if(!phone) return alert("يرجى إدخال رقم الهاتف");
+
+        // التأكد أن الرقم مسجل في قاعدة البيانات
+        database.ref("Deliveries/" + phone).once("value", snap => {
+            if(snap.exists()) {
+                const driverData = snap.val();
+                // حفظ البيانات في جهاز المندوب
+                localStorage.setItem("driverPhone", phone);
+                localStorage.setItem("driverName", driverData.name);
+                localStorage.setItem("driverRegion", driverData.region);
+                
+                alert("أهلاً بك يا " + driverData.name);
+                window.location.href = "delivery_panel.html";
+            } else {
+                alert("عذراً، هذا الرقم غير مسجل في نظام المناديب!");
+            }
+        });
+    }
+
+    // إذا كان مسجلاً مسبقاً، نوجهه فوراً للوحة
+    if(localStorage.getItem("driverPhone")) {
+        window.location.href = "delivery_panel.html";
+    }
+</script>
+</body>
+</html>

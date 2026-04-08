@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>لوحة المندوب الذكية | متاجر البلاد</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root { --gold: #b89b4a; --dark: #1b1e33; --green: #27ae60; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5; margin: 0; padding: 15px; padding-bottom: 50px; }
+        
+        .header-box { 
+            background: var(--dark); color: white; padding: 20px; border-radius: 15px; 
+            margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-bottom: 4px solid var(--gold);
+        }
+        
+        .order-card { 
+            background: white; padding: 20px; border-radius: 18px; margin-bottom: 15px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05); position: relative; border-right: 6px solid #e67e22;
+            transition: 0.3s; 
+        }
+        .order-card.my-order { border-right-color: var(--green); }
+
+        .status-tag { 
+            position: absolute; top: 15px; left: 15px; font-size: 11px; padding: 5px 12px; 
+            border-radius: 20px; font-weight: bold; 
+        }
+        .tag-new { background: #fff3e0; color: #e67e22; }
+        .tag-active { background: #e8f5e9; color: var(--green); }
+
+        .btn { 
+            border: none; padding: 14px; width: 100%; border-radius: 12px; 
+            font-weight: bold; cursor: pointer; margin-top: 10px; font-family: inherit;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-accept { background: var(--green); color: white; }
+        .btn-chat { background: #3498db; color: white; }
+        .btn-finish { background: var(--dark); color: white; }
+        .btn-logout { background: #d45d5d; color: white; padding: 8px 15px; font-size: 12px; width: auto; margin: 0; }
+
+        .order-info b { color: var(--dark); font-size: 18px; }
+        .order-info p { margin: 8px 0; color: #555; font-size: 14px; line-height: 1.5; }
+        
+        /* تأثير النبض للطلبات الجديدة */
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        .new-order-anim { animation: pulse 1.5s infinite; }
+    </style>
+</head>
+<body>
+
+    <div class="header-box">
+        <div>
+            <h2 style="margin:0; font-size: 18px;">لوحة المناديب 🛵</h2>
+            <small id="driver-name-display">مرحباً بك</small>
+        </div>
+        <button class="btn btn-logout" onclick="logoutDriver()">تسجيل خروج</button>
+    </div>
+
+    <div id="orders-list">
+        <p style="text-align:center; padding:50px; color:#888;">جاري البحث عن طلبات في منطقتك...</p>
+    </div>
+
+    <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" preload="auto"></audio>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="firebase.js"></script>
+    <script>
+        const myPhone = localStorage.getItem("driverPhone");
+        const myName = localStorage.getItem("driverName");
+        const myRegion = localStorage.getItem("driverRegion");
+
+        // التحقق من الدخول
+        if (!myPhone) {
+            window.location.href = "driver-login.html";
+        } else {
+            document.getElementById("driver-name-display").innerText = "المندوب: " + myName;
+            loadOrders();
+        }
+
+        let lastOrdersCount = 0;
+        const soundEffect = document.getElementById("notif-sound");
+
+        function loadOrders() {
+            database.ref("Orders").on("value", snap => {
+                const list = document.getElementById("orders-list");
+                list.innerHTML = "";
+                const data = snap.val() || {};
+                const ordersArray = Object.values(data);
+
+                // تصفية الطلبات الخاصة بمنطقة المندوب فقط
+                const filteredOrders = ordersArray.filter(ord => 
+                    ord.region === myRegion && (ord.status === "waiting" || ord.driverPhone === myPhone)
+                );
+
+                // --- منطق التنبيه الصوتي الذكي ---
+                const newOrdersCount = filteredOrders.filter(o => o.status === "waiting").length;
+                if (newOrdersCount > lastOrdersCount) {
+                    // تشغيل الصوت واهتزاز الجوال
+                    soundEffect.play().catch(() => console.log("تفاعل مع الشاشة لتفعيل الصوت"));
+                    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                }
+                lastOrdersCount = newOrdersCount;
+
+                if (filteredOrders.length === 0) {
+                    list.innerHTML = "<div style='text-align:center; padding:50px;'><p>لا توجد طلبات حالياً في <b>" + myRegion + "</b></p><small>سيتم إشعارك فور وصول طلب جديد</small></div>";
+                    return;
+                }
+
+                // ترتيب الطلبات (الأحدث أولاً)
+                filteredOrders.sort((a,b) => b.id.split('-')[1] - a.id.split('-')[1]).forEach(ord => {
+                    const isWaiting = ord.status === 'waiting';
+                    const isDelivered = ord.status === 'delivered';
+                    
+                    list.innerHTML += `
+                        <div class="order-card ${isWaiting ? 'new-order-anim' : 'my-order'}">
+                            <span class="status-tag ${isWaiting ? 'tag-new' : 'tag-active'}">
+                                ${isWaiting ? '🔔 طلب جديد' : (isDelivered ? '✅ مكتمل' : '🚚 قيد التوصيل')}
+                            </span>
+                            
+                            <div class="order-info">
+                                <b>${ord.pName}</b>
+                                <p>
+                                    👤 الزبون: <b>${ord.customer}</b><br>
+                                    🏪 المتجر: ${ord.store}<br>
+                                    💰 السعر: <span style="color:var(--green); font-weight:bold;">${ord.price}</span>
+                                </p>
+                            </div>
+
+                            ${isWaiting ? 
+                                `<button class="btn btn-accept" onclick="pickOrder('${ord.id}')">قبول الطلب ✅</button>` : 
+                                (!isDelivered ? `
+                                    <button class="btn btn-chat" onclick="goToChat('${ord.id}')">💬 دردشة مع الزبون</button>
+                                    <button class="btn btn-finish" onclick="finishOrder('${ord.id}')">🏁 تم التوصيل واستلام المبلغ</button>
+                                ` : `<p style="text-align:center; color:var(--green); font-weight:bold; margin-top:15px;">اكتملت العملية ✨</p>`)
+                            }
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        function pickOrder(id) {
+            database.ref("Orders/" + id).update({ 
+                status: "picked", 
+                driverPhone: myPhone,
+                driverName: myName 
+            }).then(() => {
+                alert("تم قبول الطلب! بالتوفيق يا " + myName);
+            });
+        }
+
+        function finishOrder(id) {
+            if(confirm("هل استلمت المبلغ والعمولة؟ سيتم نقل الطلب للأرشيف.")) {
+                database.ref("Orders/" + id).update({ status: "delivered" });
+            }
+        }
+
+        function goToChat(orderId) {
+            window.location.href = "driver-chat.html?orderId=" + orderId;
+        }
+
+        function logoutDriver() {
+            if(confirm("تسجيل الخروج؟")) {
+                localStorage.clear();
+                window.location.href = "driver-login.html";
+            }
+        }
+    </script>
+</body>
+</html>

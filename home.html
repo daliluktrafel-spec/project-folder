@@ -20,7 +20,21 @@
     .product-name { font-weight: bold; font-size: 13px; height: 35px; overflow: hidden; }
     .product-price { color: #b89b4a; font-weight: bold; font-size: 14px; }
     .product-store { color: #888; font-size: 11px; }
-    .fav-btn { border: none; background: #f2f2f2; padding: 8px; border-radius: 10px; margin-top: 5px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .region-chip {
+    background: rgba(255, 255, 255, 0.9);
+    color: #1b1e33;
+    padding: 6px 10px;
+    border-radius: 15px;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: pointer;
+    white-space: nowrap;
+    border: 1px solid #b89b4a;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.fav-btn { border: none; background: #f2f2f2; padding: 8px; border-radius: 10px; margin-top: 5px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s; }
     .tabs { display: flex; justify-content: space-around; padding: 12px; position: fixed; bottom: 0; width: 100%; background: white; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); z-index: 1000; box-sizing: border-box; }
     .tab { padding: 10px 15px; border-radius: 12px; border: 1.5px solid #b89b4a; font-weight: bold; cursor: pointer; font-size: 12px; color: #b89b4a; }
     .tab.active { background: linear-gradient(45deg,#c9b36a,#b89b4a); color: white; }
@@ -30,6 +44,9 @@
 
 <div class="header">
     <div id="categories" class="categories"></div>
+    <div class="region-chip" onclick="changeMyRegion()">
+        📍 <span id="current-region-display">جاري التحميل...</span>
+    </div>
     <div class="fav-top" onclick="showFavorites()">
         🛒 <span id="favCount">0</span>
     </div>
@@ -66,20 +83,33 @@ const normalizeText = (text) => {
 };
 
 // جلب البيانات من Firebase
-database.ref("products").on("value", snap => {
-    const data = snap.val() || {};
-    products = Object.values(data).sort((a,b)=> b.id - a.id);
-    renderCategories();
-    updateFavCount();
-    // إعادة عرض القسم الحالي لتحديث البيانات
-    const activeTab = document.querySelector('.tab.active');
-    if(activeTab) {
-        const sectionId = activeTab.getAttribute('onclick').match(/'([^']+)'/)[1];
-        showSection(sectionId, activeTab);
-    } else {
-        showSection('all', document.querySelector('.tab'));
+let limit = 20; // عدد المنتجات في كل دفعة
+let allFetchedProducts = []; // لتخزين ما تم جلبه
+
+function loadProducts() {
+    // جلب المنتجات مرتبة حسب الأحدث مع تحديد العدد
+    database.ref("products").orderByChild("id").limitToLast(limit).once("value", snap => {
+        const data = snap.val() || {};
+        // تحويل الكائن لمصفوفة وترتيبها من الأحدث للأقدم
+        products = Object.values(data).sort((a,b) => b.id - a.id);
+        
+        renderCategories(); 
+        updateFavCount();
+        renderProducts("all");
+    });
+}
+
+loadProducts(); 
+
+// كشف الوصول لآخر الصفحة لجلب المزيد
+window.onscroll = function() {
+    if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
+        if(limit <= products.length) {
+            limit += 20; // زيادة العدد المطلوب جلبة
+            loadProducts();
+        }
     }
-});
+};
 
 function updateFavCount() {
     document.getElementById("favCount").innerText = favorites.length;
@@ -188,6 +218,20 @@ function smartSearch() {
         normalizeText(p.store).includes(term) ||
         normalizeText(p.category).includes(term)
     );
+}
+// تحديث عرض المنطقة عند تحميل الصفحة
+document.getElementById("current-region-display").innerText = localStorage.getItem("userRegion") || "حدد منطقتك";
+
+function changeMyRegion() {
+    const oldRegion = localStorage.getItem("userRegion") || "";
+    const newRegion = prompt("تعديل منطقة التوصيل (مثلاً: سيئون):", oldRegion);
+    
+    if (newRegion !== null && newRegion.trim() !== "") {
+        localStorage.setItem("userRegion", newRegion.trim());
+        document.getElementById("current-region-display").innerText = newRegion.trim();
+        alert("تم تحديث منطقتك بنجاح ✅");
+        location.reload(); // لإعادة تحميل البيانات بناءً على المنطقة الجديدة
+    }
 }
 </script>
 </body>
