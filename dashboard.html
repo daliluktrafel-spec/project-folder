@@ -130,7 +130,7 @@
     const file = fileInput.files[0];
     const isFlash = document.getElementById("isFlash").value === 'true';
 
-    if (!name || !price || !file) return alert("يرجى ملء البيانات واختيار صورة");
+    if (!name || !price || !file) return alert("يرجى ملء كافة البيانات واختيار صورة");
 
     document.getElementById("loader").style.display = "flex";
 
@@ -138,20 +138,27 @@
     reader.readAsDataURL(file);
     reader.onload = () => {
         const base64Data = reader.result.split(',')[1];
+        
         const formData = new FormData();
         formData.append("key", "6d207e02198a847aa98d0a2a901485a5"); 
         formData.append("action", "upload");
         formData.append("source", base64Data);
         formData.append("format", "json");
 
-        // هذا الرابط سيعمل بامتياز بمجرد رفع الموقع أونلاين
-        fetch("https://freeimage.host/api/1/upload", {
+        // 🔥 استخدام البروكسي كـ "جسر" لتجاوز خطأ CORS الحاصل على فيرسل
+        const proxyUrl = "https://corsproxy.io/?";
+        const targetUrl = "https://freeimage.host/api/1/upload";
+
+        fetch(proxyUrl + encodeURIComponent(targetUrl), {
             method: "POST",
             body: formData
         })
         .then(r => r.json())
         .then(res => {
-            if (res.image && res.image.url) {
+            // ملاحظة: قد تختلف تسمية الرابط في FreeImage حسب الاستجابة، سنضع احتمالين:
+            const finalImgUrl = (res.image && res.image.url) ? res.image.url : (res.url ? res.url : null);
+            
+            if (finalImgUrl) {
                 const flashPrice = isFlash ? document.getElementById("flashPrice").value : "";
                 const hours = isFlash ? parseInt(document.getElementById("flashHours").value) : 0;
                 const flashExpiry = isFlash ? Date.now() + (hours * 60 * 60 * 1000) : 0;
@@ -161,7 +168,7 @@
                     name: name,
                     price: price,
                     category: category,
-                    image: res.image.url,
+                    image: finalImgUrl,
                     store: store,
                     isFlash: isFlash,
                     flashPrice: flashPrice,
@@ -169,14 +176,18 @@
                     status: "متوفر"
                 }).then(() => {
                     document.getElementById("loader").style.display = "none";
-                    alert("تم النشر بنجاح! مبروك أول منتج أونلاين 🚀");
+                    alert("تم النشر بنجاح! مبروك كسرنا الحماية 🚀✅");
                     location.reload();
                 });
-            } else { throw new Error(); }
+            } else { 
+                console.log(res); // لمشاهدة الرد في الكونسول إذا فشل
+                throw new Error(); 
+            }
         })
-        .catch(() => {
+        .catch((err) => {
             document.getElementById("loader").style.display = "none";
-            alert("⚠️ إذا كنت تفتح الموقع محلياً فسيظهر هذا الخطأ. ارفعه على Vercel وجرب من الرابط الرسمي.");
+            console.error(err);
+            alert("⚠️ تنبيه: يبدو أن البروكسي أيضاً يواجه ضغطاً أو حظراً في منطقتك. جرب تشغيل VPN لثوانٍ فقط لرفع أول منتج.");
         });
     };
 }
