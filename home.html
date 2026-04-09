@@ -145,19 +145,30 @@ function renderProducts(containerId, filter = () => true){
         return;
     }
 
-    filtered.forEach(p=>{
-        const pId = String(p.id);
-        const isFav = favorites.includes(pId);
-        const d = document.createElement("div");
-        d.className = "card";
-        d.innerHTML = `
-            <div class="product-img" style="background-image:url('${p.image || "no-image.png"}')"></div>
-            <div class="product-name">${p.name}</div>
-            <div class="product-price">${p.price}</div>
-            <div class="product-store">📍 ${p.store}</div>
-            <button class="fav-btn" style="background:${isFav?'#ffebee':'#f2f2f2'}; color:${isFav?'#d45d5d':'#555'}">
-                ${isFav ? '❌ حذف من السلة' : '🛒 إضافة للسلة'}
-            </button>
+   filtered.forEach(p => {
+    const pId = String(p.id);
+    const isFav = favorites.includes(pId);
+    
+    // فحص إذا كان العرض الصاروخي ما زال صالحاً (لم ينتهِ وقته)
+    const isFlashActive = p.isFlash && p.flashExpiry > Date.now();
+    
+    const d = document.createElement("div");
+    d.className = "card";
+    d.innerHTML = `
+        <div class="product-img" style="background-image:url('${p.image || "no-image.png"}')">
+            ${isFlashActive ? '<span style="position:absolute; background:red; color:white; padding:2px 8px; border-radius:10px; font-size:10px; margin:5px;">⚡ صاروخي</span>' : ''}
+        </div>
+        <div class="product-name">${p.name}</div>
+        <div class="product-price">
+            ${isFlashActive ? 
+                `<span style="text-decoration:line-through; color:#999; font-size:11px;">${p.price}</span> <span style="color:red;">${p.flashPrice}</span>` : 
+                `<span>${p.price}</span>`
+            }
+        </div>
+        <div class="product-store">📍 ${p.store}</div>
+        <button class="fav-btn" style="background:${isFav?'#ffebee':'#f2f2f2'}; color:${isFav?'#d45d5d':'#555'}">
+            ${isFav ? '❌ حذف من السلة' : '🛒 إضافة للسلة'}
+        </button>
         `;
         d.onclick = (e) => { if(e.target.tagName !== 'BUTTON') location.href = `product.html?productId=${p.id}`; };
         d.querySelector(".fav-btn").onclick = (e) => {

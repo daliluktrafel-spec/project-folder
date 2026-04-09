@@ -1,94 +1,108 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>لوحة التحكم - متاجر البلاد</title>
-<style>
-    :root { --gold: #b89b4a; --dark: #1b1e33; --light: #f7f6f2; }
-    body { margin: 0; font-family: "Segoe UI", sans-serif; background: var(--light); padding-bottom: 90px; }
-    header { background: white; padding: 20px; text-align: center; font-size: 22px; font-weight: bold; color: var(--dark); box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-bottom: 3px solid var(--gold); }
-    .container { padding: 20px; max-width: 600px; margin: auto; }
-    .box { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); margin-bottom: 20px; text-align: right; }
-    .box h3 { color: var(--gold); margin-top: 0; border-bottom: 2px solid var(--light); padding-bottom: 10px; text-align: center; }
-    label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px; }
-    input, select { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; outline: none; }
-    input:focus, select:focus { border-color: var(--gold); }
-    
-    /* ⚡ تنسيق العرض الصاروخي */
-    .flash-sale-section { background: #fff5f5; border: 2px dashed #e74c3c; padding: 15px; border-radius: 15px; margin-bottom: 20px; }
-    
-    .btn-main { background: linear-gradient(45deg, var(--gold), #d4bc7d); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; }
-    .btn-main:hover { opacity: 0.9; transform: translateY(-2px); }
-    
-    .product-edit-item { border: 1px solid #eee; padding: 15px; border-radius: 15px; margin-bottom: 15px; background: #fafafa; display: flex; align-items: center; gap: 15px; }
-    .btn-delete { background: #e74c3c; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
-
-    #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; color: white; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-    .spinner { border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid var(--gold); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    
-    .footer-tabs { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 15px; box-shadow: 0 -2px 15px rgba(0,0,0,0.1); }
-    .tab-btn { background: none; border: none; font-weight: bold; color: #888; cursor: pointer; font-size: 14px; }
-    .tab-btn.active { color: var(--gold); border-bottom: 2px solid var(--gold); }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - متاجر البلاد</title>
+    <style>
+        :root { --gold: #b89b4a; --dark: #1b1e33; --light: #f7f6f2; }
+        body { margin: 0; font-family: "Segoe UI", sans-serif; background: var(--light); padding-bottom: 90px; }
+        header { background: white; padding: 20px; text-align: center; font-size: 22px; font-weight: bold; color: var(--dark); box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .container { padding: 20px; max-width: 600px; margin: auto; }
+        .box { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); margin-bottom: 20px; text-align: right; }
+        .box h3 { color: var(--gold); margin-top: 0; border-bottom: 2px solid var(--light); padding-bottom: 10px; text-align: center; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px; }
+        input, select { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; outline: none; }
+        .flash-sale-card { background: #fff5f5; border: 2px dashed #e74c3c; padding: 15px; border-radius: 15px; margin-bottom: 20px; }
+        .btn-main { background: linear-gradient(45deg, var(--gold), #d4bc7d); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; }
+        .product-edit-item { border: 1px solid #eee; padding: 15px; border-radius: 15px; margin-bottom: 15px; background: #fafafa; display: flex; align-items: center; gap: 10px; }
+        .product-info { flex: 1; text-align: right; }
+        .btn-edit-trigger { background: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; }
+        .btn-delete { background: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; }
+        #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; color: white; flex-direction: column; justify-content: center; align-items: center; }
+        .spinner { border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid var(--gold); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .footer-tabs { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 15px; box-shadow: 0 -2px 15px rgba(0,0,0,0.1); }
+        .tab-btn { background: none; border: none; font-weight: bold; color: #888; cursor: pointer; font-size: 14px; }
+        .tab-btn.active { color: var(--gold); border-bottom: 2px solid var(--gold); }
+    </style>
 </head>
 <body>
 
-<div id="loader">
-    <div class="spinner"></div>
-    <p>جاري معالجة ورفع المنتج للسيرفر البديل...<br><small>قد يستغرق ثواني حسب سرعة الإنترنت</small></p>
-</div>
-
+<div id="loader"><div class="spinner"></div><p>جاري المعالجة...</p></div>
 <header id="title">لوحة التحكم</header>
 
 <div class="container">
     <div class="box" id="add-box">
-        <h3>إضافة منتج جديد آلياً 🚀</h3>
+        <h3 id="form-mode-title">إضافة منتج جديد</h3>
+        <input type="hidden" id="edit-key">
         
         <label>اسم المنتج</label>
-        <input type="text" id="name" placeholder="مثلاً: حذاء رياضي أصلي">
+        <input type="text" id="name" placeholder="مثلاً: عسل سدر">
         
         <label>السعر العادي</label>
-        <input type="text" id="price" placeholder="مثلاً: 5000 ريال">
+        <input type="text" id="price" placeholder="مثلاً: 5000">
 
-        <div class="flash-sale-section">
-            <label style="color: #e74c3c;">⚡ هل تريد تفعيل عرض صاروخي؟</label>
-            <select id="isFlash" onchange="document.getElementById('flash-fields').style.display=(this.value=='true'?'block':'none')">
-                <option value="false">لا، منتج عادي ❌</option>
-                <option value="true">نعم، عرض صاروخي ✅</option>
+        <div class="flash-sale-card">
+            <label style="color: #e74c3c; font-weight: bold;">⚡ عرض صاروخي؟</label>
+            <select id="isFlash" onchange="document.getElementById('flash-section').style.display=(this.value=='true'?'block':'none')">
+                <option value="false">لا</option>
+                <option value="true">نعم</option>
             </select>
-            <div id="flash-fields" style="display:none; margin-top:10px;">
-                <label>سعر العرض (المخفض):</label>
-                <input type="text" id="flashPrice" placeholder="مثلاً: 3500 ريال">
-                <label>مدة العرض (بالساعات):</label>
+            <div id="flash-section" style="display:none;">
+                <input type="text" id="flashPrice" placeholder="سعر الخصم">
                 <select id="flashHours">
                     <option value="1">ساعة واحدة</option>
                     <option value="3">3 ساعات</option>
-                    <option value="6">6 ساعات</option>
-                    <option value="12">12 ساعة</option>
-                    <option value="24">يوم كامل</option>
+                    <option value="24">يوم كامل (24س)</option>
                 </select>
             </div>
         </div>
 
-        <label>التصنيف</label>
+        <label>الحالة</label>
+        <select id="status">
+            <option value="متوفر">متوفر ✅</option>
+            <option value="غير متوفر">غير متوفر ❌</option>
+        </select>
+        
+      <label>التصنيف</label>
         <select id="category">
+            <option value="">-- اختر التصنيف --</option>
             <option value="المواد الغذائية">المواد الغذائية</option>
-            <option value="الملابس والملحقات">الملابس والملحقات</option>
+            <option value="الملابس والأزياء">الملابس والأزياء</option>
             <option value="الأحذية والشنط">الأحذية والشنط</option>
+            <option value="العطور والبخور">العطور والبخور</option>
+            <option value="مستحضرات التجميل">مستحضرات التجميل</option>
+            <option value="الإلكترونيات">الإلكترونيات</option>
+            <option value="الهواتف وملحقاتها">الهواتف وملحقاتها</option>
+            <option value="الأدوات المنزلية">الأدوات المنزلية</option>
+            <option value="الأثاث والديكور">الأثاث والديكور</option>
+            <option value="الأجهزة الكهربائية">الأجهزة الكهربائية</option>
+            <option value="الألعاب والهدايا">الألعاب والهدايا</option>
+            <option value="مستلزمات الأطفال">مستلزمات الأطفال</option>
+            <option value="الكتب والقرطاسية">الكتب والقرطاسية</option>
+            <option value="المستلزمات الطبية">المستلزمات الطبية</option>
+            <option value="الرياضة واللياقة">الرياضة واللياقة</option>
+            <option value="الساعات والمجوهرات">الساعات والمجوهرات</option>
+            <option value="قطع غيار السيارات">قطع غيار السيارات</option>
+            <option value="إكسسوارات السيارات">إكسسوارات السيارات</option>
+            <option value="أدوات البناء">أدوات البناء</option>
+            <option value="الحرف اليدوية">الحرف اليدوية</option>
+            <option value="الخدمات البرمجية">الخدمات البرمجية</option> 
+           <option value="سيارات">سيارات</option>
             <option value="أخرى">أخرى</option>
         </select>
         
         <label>صورة المنتج</label>
         <input type="file" id="imageFile" accept="image/*">
-        
-        <button class="btn-main" onclick="addProduct()">حفظ ونشر المنتج 🚀</button>
+
+        <button class="btn-main" id="submit-btn" onclick="processProduct()">حفظ ونشر المنتج 🚀</button>
+        <button class="btn-main" id="cancel-btn" style="display:none; background:#888; margin-top:10px;" onclick="resetForm()">إلغاء التعديل</button>
     </div>
 
     <div class="box" id="edit-box" style="display:none;">
         <h3>إدارة منتجاتي</h3>
-        <div id="edit-list">جاري تحميل منتجاتك...</div>
+        <div id="edit-list">جاري التحميل...</div>
     </div>
 </div>
 
@@ -104,121 +118,116 @@
 
 <script>
     const store = localStorage.getItem("selectedStore");
-    if (!store) { window.location.href = "stores.html"; }
     document.getElementById("title").innerText = "متجر: " + store;
 
     function showSection(type) {
-        if(type === 'add') {
-            document.getElementById("add-box").style.display = "block";
-            document.getElementById("edit-box").style.display = "none";
-            document.getElementById("tabAdd").classList.add("active");
-            document.getElementById("tabEdit").classList.remove("active");
+        document.getElementById("add-box").style.display = (type === 'add' ? 'block' : 'none');
+        document.getElementById("edit-box").style.display = (type === 'edit' ? 'block' : 'none');
+        if(type === 'edit') loadMyProducts();
+    }
+
+    function processProduct() {
+        const name = document.getElementById("name").value.trim();
+        const price = document.getElementById("price").value.trim();
+        const file = document.getElementById("imageFile").files[0];
+
+        if (!name || !price) return alert("الاسم والسعر مطلوبان");
+        document.getElementById("loader").style.display = "flex";
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement("canvas");
+                    canvas.width = 600; canvas.height = (img.height / img.width) * 600;
+                    canvas.getContext("2d").drawImage(img, 0, 0, 600, canvas.height);
+                    canvas.toBlob((blob) => {
+                        const formData = new FormData();
+                        formData.append("image", blob);
+                        fetch("https://api.imgbb.com/1/upload?key=18fe45ec36063f58b6895c320bf08330", { method: "POST", body: formData })
+                        .then(r => r.json()).then(res => {
+                            finalSave(res.data.url);
+                        }).catch(() => finalSave(null));
+                    }, "image/jpeg", 0.6);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
         } else {
-            document.getElementById("add-box").style.display = "none";
-            document.getElementById("edit-box").style.display = "block";
-            document.getElementById("tabAdd").classList.remove("active");
-            document.getElementById("tabEdit").classList.add("active");
-            loadMyProducts();
+            finalSave(null);
         }
     }
 
- function addProduct() {
-    const name = document.getElementById("name").value.trim();
-    const price = document.getElementById("price").value.trim();
-    const category = document.getElementById("category").value;
-    const fileInput = document.getElementById("imageFile");
-    const file = fileInput.files[0];
-    const isFlash = document.getElementById("isFlash").value === 'true';
+    function finalSave(newImageUrl) {
+        const editKey = document.getElementById("edit-key").value;
+        const isFlash = document.getElementById("isFlash").value === 'true';
+        const hours = parseInt(document.getElementById("flashHours").value) || 0;
+        const flashExpiry = isFlash ? Date.now() + (hours * 60 * 60 * 1000) : 0;
 
-    if (!name || !price || !file) return alert("يرجى ملء كافة البيانات واختيار صورة");
-
-    document.getElementById("loader").style.display = "flex";
-
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-        const base64Data = reader.result.split(',')[1];
+        const data = {
+            name: document.getElementById("name").value,
+            price: document.getElementById("price").value,
+            status: document.getElementById("status").value,
+            category: document.getElementById("category").value,
+            isFlash: isFlash,
+            flashPrice: document.getElementById("flashPrice").value,
+            flashExpiry: flashExpiry,
+            store: store
+        };
         
-        const formData = new FormData();
-        formData.append("key", "6d207e02198a847aa98d0a2a901485a5"); 
-        formData.append("action", "upload");
-        formData.append("source", base64Data);
-        formData.append("format", "json");
+        if (newImageUrl) data.image = newImageUrl;
+        else if (!editKey) data.image = "https://placehold.co/100";
 
-        // 🔥 استخدام البروكسي كـ "جسر" لتجاوز خطأ CORS الحاصل على فيرسل
-        const proxyUrl = "https://corsproxy.io/?";
-        const targetUrl = "https://freeimage.host/api/1/upload";
+        const ref = editKey ? database.ref("products/" + editKey) : database.ref("products").push();
+        
+        // إذا كان منتجاً جديداً، نحتاج لإضافة ID فريد له ليعمل في الهوم
+        if(!editKey) data.id = Date.now();
 
-        fetch(proxyUrl + encodeURIComponent(targetUrl), {
-            method: "POST",
-            body: formData
-        })
-        .then(r => r.json())
-        .then(res => {
-            // ملاحظة: قد تختلف تسمية الرابط في FreeImage حسب الاستجابة، سنضع احتمالين:
-            const finalImgUrl = (res.image && res.image.url) ? res.image.url : (res.url ? res.url : null);
-            
-            if (finalImgUrl) {
-                const flashPrice = isFlash ? document.getElementById("flashPrice").value : "";
-                const hours = isFlash ? parseInt(document.getElementById("flashHours").value) : 0;
-                const flashExpiry = isFlash ? Date.now() + (hours * 60 * 60 * 1000) : 0;
-
-                database.ref("products").push({
-                    id: Date.now(),
-                    name: name,
-                    price: price,
-                    category: category,
-                    image: finalImgUrl,
-                    store: store,
-                    isFlash: isFlash,
-                    flashPrice: flashPrice,
-                    flashExpiry: flashExpiry,
-                    status: "متوفر"
-                }).then(() => {
-                    document.getElementById("loader").style.display = "none";
-                    alert("تم النشر بنجاح! مبروك كسرنا الحماية 🚀✅");
-                    location.reload();
-                });
-            } else { 
-                console.log(res); // لمشاهدة الرد في الكونسول إذا فشل
-                throw new Error(); 
-            }
-        })
-        .catch((err) => {
-            document.getElementById("loader").style.display = "none";
-            console.error(err);
-            alert("⚠️ تنبيه: يبدو أن البروكسي أيضاً يواجه ضغطاً أو حظراً في منطقتك. جرب تشغيل VPN لثوانٍ فقط لرفع أول منتج.");
+        ref.update(data).then(() => {
+            alert("تم الحفظ بنجاح ✅");
+            location.reload();
         });
-    };
-}
+    }
 
     function loadMyProducts() {
         const list = document.getElementById("edit-list");
         database.ref("products").orderByChild("store").equalTo(store).once("value", snap => {
             list.innerHTML = "";
-            const data = snap.val();
-            if(!data) { list.innerHTML = "لا توجد بضائع حالياً."; return; }
-            Object.keys(data).forEach(key => {
-                const p = data[key];
+            snap.forEach(child => {
+                const p = child.val();
                 list.innerHTML += `
-                    <div class="product-edit-item">
-                        <img src="${p.image}" style="width:60px; height:60px; object-fit:cover; border-radius:10px;">
-                        <div style="flex:1;">
-                            <b style="font-size:14px;">${p.name}</b><br>
-                            <small>${p.price} ريال</small>
-                        </div>
-                        <button class="btn-delete" onclick="deleteProduct('${key}')">🗑️</button>
-                    </div>`;
+                <div class="product-edit-item">
+                    <img src="${p.image}" style="width:50px; height:50px; border-radius:5px;">
+                    <div class="product-info"><b>${p.name}</b><br><small>${p.price}</small></div>
+                    <button class="btn-edit-trigger" onclick="fillEditForm('${child.key}')">تعديل</button>
+                    <button class="btn-delete" onclick="deleteProduct('${child.key}')">حذف</button>
+                </div>`;
             });
         });
     }
 
-    function deleteProduct(key) {
-        if(confirm("هل تريد حذف هذا المنتج نهائياً؟")) {
-            database.ref("products/" + key).remove().then(() => loadMyProducts());
-        }
+    function fillEditForm(key) {
+        database.ref("products/" + key).once("value", snap => {
+            const p = snap.val();
+            showSection('add');
+            document.getElementById("form-mode-title").innerText = "تعديل المنتج الحالي";
+            document.getElementById("edit-key").value = key;
+            document.getElementById("name").value = p.name;
+            document.getElementById("price").value = p.price;
+            document.getElementById("status").value = p.status;
+            document.getElementById("category").value = p.category;
+            document.getElementById("isFlash").value = p.isFlash ? 'true' : 'false';
+            document.getElementById("flash-section").style.display = p.isFlash ? 'block' : 'none';
+            document.getElementById("flashPrice").value = p.flashPrice || "";
+            document.getElementById("submit-btn").innerText = "تحديث البيانات 💾";
+            document.getElementById("cancel-btn").style.display = "block";
+            window.scrollTo(0, 0);
+        });
     }
 
+    function resetForm() { location.reload(); }
+    function deleteProduct(k) { if(confirm("حذف؟")) database.ref("products/"+k).remove().then(()=>loadMyProducts()); }
     function logout() { localStorage.clear(); window.location.href = "stores.html"; }
 </script>
 </body>
