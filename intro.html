@@ -104,6 +104,9 @@ function askForRegion() {
 }
 
 function goToHome() {
+    // السطر السحري الناقص هو هذا:
+    localStorage.setItem("introShown", "true"); 
+    
     window.location.href = "fields.html";
 }
 </script>
