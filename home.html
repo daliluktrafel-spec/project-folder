@@ -147,36 +147,45 @@ function loadProducts() {
 }
 
 function shareApp() {
-    const myName = localStorage.getItem("userName") || "صديقك";
-    const shareText = `سجل في منصة متاجر البلاد واطلب أفضل المنتجات في حضرموت! استخدم اسمي كـ "كود دعوة" لنحصل معاً على مكافآت: ${myName}`;
-    const shareUrl = window.location.href; // يأخذ رابط موقعك الحالي تلقائياً
+    const myName = localStorage.getItem("userName") || "عميل مميز";
+    const myDomain = "https://www.beladshop.com";
+    
+    // دمج الوصف مع الرابط في نص واحد لضمان نسخهما معاً
+    const fullMessage = `🌟 منصة متاجر البلاد - تسوق بذكاء في حضرموت 🌟
+
+تسوق الآن واحصل على أفضل المنتجات مع ميزات حصرية:
+✅ توصيل سريع ومباشر لباب بيتك.
+✅ دردشة فورية مع المندوب لتتبع طلبك.
+✅ اجمع النقاط واحصل على توصيل مجاني!
+
+🎁 سجل الآن واستخدم اسمي (${myName}) ككود دعوة لنربح النقاط معاً.
+
+رابط المنصة: 
+${myDomain}`;
 
     if (navigator.share) {
         navigator.share({
-            title: 'منصة متاجر البلاد',
-            text: shareText,
-            url: shareUrl,
-        }).catch((err) => {
-            console.log("خطأ في المشاركة:", err);
-            copyToClipboard(shareText); // خطة بديلة
-        });
+            title: 'متاجر البلاد',
+            text: fullMessage, // هنا وضعنا النص الكامل (الوصف + الرابط)
+        }).catch(() => copyToClipboard(fullMessage));
     } else {
-        // إذا كان المتصفح لا يدعم المشاركة (مثل بعض إصدارات الكمبيوتر)
-        copyToClipboard(shareText);
+        copyToClipboard(fullMessage);
     }
 }
 
-// دالة مساعدة لنسخ النص إذا لم تعمل المشاركة التلقائية
 function copyToClipboard(text) {
     const el = document.createElement('textarea');
     el.value = text;
     document.body.appendChild(el);
     el.select();
-    document.execCommand('copy');
+    try {
+        document.execCommand('copy');
+        alert("✅ تم نسخ وصف المنصة مع الرابط بنجاح!\n\nيمكنك الآن لصق الرسالة وإرسالها لأصدقائك لجمع النقاط.");
+    } catch (err) {
+        prompt("انسخ رسالة الدعوة من هنا:", text);
+    }
     document.body.removeChild(el);
-    alert("تم نسخ رسالة الدعوة بنجاح! ارسلها الآن لأصدقائك في الواتساب ✅");
 }
-
 function loadMyPoints() {
     const myName = localStorage.getItem("userName");
     if(!myName) return;
