@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>لوحة منح النقاط - القائد حسين</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    :root { --gold: #b89b4a; --dark: #1b1e33; --bg: #f4f7f6; }
+    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; }
+    header { background: var(--dark); color: white; padding: 20px; text-align: center; border-radius: 15px; border-bottom: 4px solid var(--gold); margin-bottom: 20px; }
+    
+    .order-item { background: white; padding: 20px; border-radius: 15px; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; border-right: 5px solid var(--gold); }
+    .order-info b { display: block; color: var(--dark); font-size: 16px; }
+    .order-info span { font-size: 13px; color: #666; }
+    
+    .points-input-area { display: flex; gap: 10px; align-items: center; }
+    input { width: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; text-align: center; font-weight: bold; }
+    .btn-grant { background: var(--gold); color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    .btn-grant:active { transform: scale(0.95); }
+    
+    .empty-msg { text-align: center; padding: 50px; color: #888; }
+</style>
+</head>
+<body>
+
+<header>
+    <h2 style="margin:0;">🎁 لوحة مكافأة الزبائن</h2>
+    <p style="margin:5px 0 0; font-size:12px; opacity:0.8;">امنح النقاط لمن أتم الشراء بنجاح</p>
+</header>
+
+<div id="orders-to-reward">
+    <div class="empty-msg">جاري تحميل سجل المشتريات...</div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="firebase.js"></script>
+
+<script>
+// 1. التحقق من أمان الدخول (بسيط)
+const adminPass = prompt("ادخل رمز الدخول للوحة النقاط:");
+if(adminPass !== "7742575571100") { // غير الرمز حسب رغبتك
+    alert("رمز غير صحيح!");
+    window.location.href = "home.html";
+}
+
+function loadDeliveredOrders() {
+    const listDiv = document.getElementById("orders-to-reward");
+    
+    // جلب الطلبات المكتملة فقط التي لم تُمنح نقاط بعد (اختياري)
+    database.ref("Orders").orderByChild("status").equalTo("delivered").on("value", snap => {
+        listDiv.innerHTML = "";
+        const data = snap.val();
+        
+        if(!data) {
+            listDiv.innerHTML = "<div class='empty-msg'>لا توجد مشتريات مكتملة حالياً ☕</div>";
+            return;
+        }
+
+        Object.keys(data).reverse().forEach(id => {
+            const ord = data[id];
+            
+            const div = document.createElement("div");
+            div.className = "order-item";
+            div.innerHTML = `
+                <div class="order-info">
+                    <b>👤 الزبون: ${ord.customer}</b>
+                    <span>📦 المنتج: ${ord.pName} | 💰 السعر: ${ord.price}</span>
+                    <small style="display:block; margin-top:5px; color:#999;">رقم الطلب: ${id}</small>
+                </div>
+                <div class="points-input-area">
+                    <input type="number" id="pts-${id}" placeholder="النقاط" value="10">
+                    <button class="btn-grant" onclick="grantPoints('${ord.customer}', '${id}')">🎁 منح</button>
+                </div>
+            `;
+            listDiv.appendChild(div);
+        });
+    });
+}
+
+function grantPoints(customerName, orderId) {
+    const pointsValue = document.getElementById("pts-" + orderId).value;
+    if(!pointsValue || pointsValue <= 0) return alert("ادخل عدد نقاط صحيح");
+
+    const userRef = database.ref("Users/" + customerName + "/points");
+    
+    // استخدام الـ transaction لمنع الأخطاء عند تعدد المنح
+    userRef.transaction(currentPoints => {
+        return (currentPoints || 0) + parseInt(pointsValue);
+    }).then(() => {
+        alert("تم إضافة " + pointsValue + " نقطة لحساب " + customerName + " ✅");
+        
+        // اختيارياً: وسم الطلب بأنه "تم منح نقاطه" لكي لا تمنحه مرتين
+        database.ref("Orders/" + orderId).update({ points_granted: true });
+    }).catch(err => {
+        alert("خطأ في منح النقاط: " + err.message);
+    });
+}
+
+loadDeliveredOrders();
+</script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>مشترياتي | متاجر البلاد</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root { --gold: #b89b4a; --dark: #1b1e33; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
+        .order-card { 
+            background: white; border-radius: 15px; padding: 15px; margin-bottom: 12px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); cursor: pointer; border-right: 5px solid #ddd;
+        }
+        .status-badge { padding: 4px 10px; border-radius: 10px; font-size: 11px; font-weight: bold; float: left; }
+        .pending { background: #fff3cd; color: #856404; border-right-color: #ffeeba; }
+        .picked { background: #d1ecf1; color: #0c5460; border-right-color: #bee5eb; }
+        .delivered { background: #d4edda; color: #155724; border-right-color: #27ae60 !important; }
+        .click-hint { text-align: center; font-size: 11px; color: var(--gold); margin-top: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<h3 style="text-align: center; color: var(--dark);">📦 سجل طلباتي</h3>
+
+<div id="orders-list">
+    <div style="text-align:center; padding:50px; color:#999;">جاري تحميل طلباتك...</div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="firebase.js"></script>
+
+<script>
+    const myName = localStorage.getItem("userName");
+
+    function loadOrders() {
+        if(!myName) { window.location.href="index.html"; return; }
+
+        database.ref("Orders").orderByChild("customer").equalTo(myName).on("value", snap => {
+            const listDiv = document.getElementById("orders-list");
+            listDiv.innerHTML = "";
+            const data = snap.val();
+
+            if(!data) {
+                listDiv.innerHTML = "<div style='text-align:center; padding:50px; color:#999;'>لا توجد طلبات سابقة 🛒</div>";
+                return;
+            }
+
+            Object.keys(data).reverse().forEach(id => {
+                const ord = data[id];
+                let sClass = "pending";
+                let sText = "قيد الانتظار";
+
+                if(ord.status === "picked") { sClass = "picked"; sText = "جاري التوصيل 🚚"; }
+                if(ord.status === "delivered") { sClass = "delivered"; sText = "تم التسليم ✅"; }
+
+                const card = document.createElement("div");
+                card.className = `order-card ${sClass}`;
+                
+                // هنا التوجيه للملف الذي أرسلته أنت
+                card.onclick = () => { window.location.href = `track-order.html?orderId=${id}`; };
+                
+                card.innerHTML = `
+                    <span class="status-badge ${sClass}">${sText}</span>
+                    <div class="order-info">
+                        <b>${ord.pName}</b><br>
+                        <small>السعر: ${ord.price} ريال</small>
+                    </div>
+                    <div class="click-hint">اضغط للتتبع والدردشة مع المندوب 💬</div>
+                `;
+                listDiv.appendChild(card);
+            });
+        });
+    }
+    loadOrders();
+</script>
+</body>
+</html>
