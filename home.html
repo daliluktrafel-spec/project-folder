@@ -6,77 +6,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
     :root { --gold: #b89b4a; --dark: #1b1e33; --light: #f7f6f2; --white: #ffffff; }
-
-    body { 
-        margin: 0; font-family: "Segoe UI", Tahoma, sans-serif; 
-        background: linear-gradient(to bottom, #f7f6f2 0%, #2c2f4a 25%, #1b1e33 75%, #f7f6f2 100%); 
-        color: #2b2b2b; padding-bottom: 80px; overflow-x: hidden;
-    }
-
-    /* 1. الهيدر المطور */
-    .header { 
-        background: linear-gradient(45deg,#c9b36a,#b89b4a,#e6d38a); 
-        padding: 10px 15px; display: flex; justify-content: space-between; 
-        align-items: center; position: sticky; top: 0; z-index: 9999; 
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2); gap: 10px;
-    }
-
+    body { margin: 0; font-family: "Segoe UI", Tahoma, sans-serif; background: linear-gradient(to bottom, #f7f6f2 0%, #2c2f4a 25%, #1b1e33 75%, #f7f6f2 100%); color: #2b2b2b; padding-bottom: 80px; overflow-x: hidden; }
+    .header { background: linear-gradient(45deg,#c9b36a,#b89b4a,#e6d38a); padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.2); gap: 10px; }
     .categories { display: flex; gap: 8px; overflow-x: auto; flex: 1; scrollbar-width: none; }
     .categories::-webkit-scrollbar { display: none; }
-    .category-btn { 
-        flex: 0 0 auto; background: white; border: none; border-radius: 12px; 
-        padding: 8px 16px; font-weight: bold; font-size: 13px; color: #1b1e33; 
-        cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
-    }
-
-    /* 👤 زر المستخدم والقائمة المنسدلة */
+    .category-btn { flex: 0 0 auto; background: white; border: none; border-radius: 12px; padding: 8px 16px; font-weight: bold; font-size: 13px; color: #1b1e33; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
     .user-menu-container { position: relative; display: inline-block; }
-    .user-btn {
-        background: #1b1e33; color: #e6d38a; padding: 8px 12px; border-radius: 12px;
-        font-size: 13px; font-weight: bold; cursor: pointer; border: 1px solid var(--gold);
-        display: flex; align-items: center; gap: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    }
-
-    .dropdown-content {
-        display: none; position: absolute; left: 0; top: 110%; background: white;
-        min-width: 190px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-        z-index: 10000; overflow: hidden; border: 1px solid #eee;
-    }
-
-    .dropdown-content div {
-        color: #333; padding: 12px 15px; display: flex; justify-content: space-between; 
-        align-items: center; font-size: 13px; cursor: pointer; transition: 0.2s; 
-        border-bottom: 1px solid #f1f1f1; font-weight: bold;
-    }
+    .user-btn { background: #1b1e33; color: #e6d38a; padding: 8px 12px; border-radius: 12px; font-size: 13px; font-weight: bold; cursor: pointer; border: 1px solid var(--gold); display: flex; align-items: center; gap: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+    .dropdown-content { display: none; position: absolute; left: 0; top: 110%; background: white; min-width: 190px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); z-index: 10000; overflow: hidden; border: 1px solid #eee; }
+    .dropdown-content div { color: #333; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; cursor: pointer; transition: 0.2s; border-bottom: 1px solid #f1f1f1; font-weight: bold; }
     .dropdown-content div:hover { background: #f7f6f2; color: var(--gold); }
     .show { display: block !important; animation: fadeIn 0.3s ease; }
-
-    /* 🔍 البحث */
     .search-container { padding: 20px 15px; text-align: center; width: 100%; box-sizing: border-box; }
-    .search-input { 
-        width: 100%; max-width: 600px; padding: 15px; border-radius: 15px; 
-        border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.1); font-size: 16px; outline: none;
-    }
-
-    /* 📦 شبكة المنتجات */
+    .search-input { width: 100%; max-width: 600px; padding: 15px; border-radius: 15px; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.1); font-size: 16px; outline: none; }
     .container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 15px; }
-    .card { 
-        background: white; border-radius: 20px; padding: 10px; text-align: center; 
-        box-shadow: 0 8px 18px rgba(0,0,0,0.1); cursor: pointer; display: flex; 
-        flex-direction: column; gap: 6px; position: relative;
-    }
+    .card { background: white; border-radius: 20px; padding: 10px; text-align: center; box-shadow: 0 8px 18px rgba(0,0,0,0.1); cursor: pointer; display: flex; flex-direction: column; gap: 6px; position: relative; }
     .product-img { width: 100%; aspect-ratio: 1 / 1; border-radius: 15px; background-size: cover; background-position: center; background-color: #f9f9f9; }
     .product-name { font-weight: bold; font-size: 13px; height: 35px; overflow: hidden; }
     .product-price { color: var(--gold); font-weight: bold; font-size: 14px; }
     .product-store { color: #888; font-size: 11px; }
-
     .fav-btn { border: none; background: #f2f2f2; padding: 8px; border-radius: 10px; margin-top: 5px; font-size: 11px; font-weight: bold; cursor: pointer; }
-    
-    /* 📱 التابات السفلية */
     .tabs { display: flex; justify-content: space-around; padding: 12px; position: fixed; bottom: 0; width: 100%; background: white; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); z-index: 1000; box-sizing: border-box; }
     .tab { padding: 10px 15px; border-radius: 12px; border: 1.5px solid #b89b4a; font-weight: bold; cursor: pointer; font-size: 12px; color: #b89b4a; }
     .tab.active { background: linear-gradient(45deg,#c9b36a,#b89b4a); color: white; }
-
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
@@ -84,22 +36,18 @@
 
 <div class="header">
     <div id="categories" class="categories"></div>
-    
     <div class="user-menu-container">
         <div class="user-btn" onclick="toggleDropdown()">
             <span id="display-user-name">تحميل..</span>
             <span style="font-size: 10px;">▼</span>
         </div>
-        
         <div id="userDropdown" class="dropdown-content">
             <div onclick="showSection('favorites')"><span>🛒 المفضلة</span><span id="favCount" style="background:#d45d5d; color:white; padding:2px 8px; border-radius:10px; font-size:11px;">0</span></div>
             <div onclick="changeMyRegion()"><span>📍 المنطقة</span><small id="current-region-display" style="color:var(--gold); font-size:10px;">..</small></div>
             <div onclick="showPointsAlert()"><span>🪙 نقاطي</span><b id="my-points-count" style="color:#27ae60;">0</b></div>
-          <div onclick="shareApp()" style="background: #fff9e6; color: #b89b4a; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-    <span>📢 شارك واربح نقاط</span>
-    <span>🎁</span>
-</div>
-           <div onclick="location.href='my-orders.html'"><span>📦 سجل طلباتي</span><span>⬅</span></div>
+            <div onclick="openWallet()" style="background: #eef2ff;"><span>💳 محفظتي</span><small style="color:var(--gold)">💰</small></div>
+            <div onclick="shareApp()" style="background: #fff9e6;"><span>📢 شارك واربح</span><span>🎁</span></div>
+            <div onclick="location.href='my-orders.html'"><span>📦 سجل طلباتي</span><span>⬅</span></div>
         </div>
     </div>
 </div>
@@ -112,6 +60,18 @@
 <div id="all" class="container"></div>
 <div id="available" class="container" style="display:none;"></div>
 <div id="stores" class="container" style="display:none;"></div>
+
+<div id="wallet-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:10002; justify-content:center; align-items:center;">
+    <div style="background:white; width:90%; max-width:400px; padding:20px; border-radius:25px; text-align:center;">
+        <h3 style="color:var(--dark);">💰 محفظة المكافآت الذكية</h3>
+        <div style="background:var(--dark); color:var(--gold); padding:20px; border-radius:20px; margin:15px 0;">
+            <small style="color:white; opacity:0.8;">رصيد متاح للاستخدام</small>
+            <h1 id="total-saved" style="margin:5px 0;">0 <small style="font-size:15px;">ر.ي</small></h1>
+        </div>
+        <div id="wallet-history" style="text-align:right; max-height:200px; overflow-y:auto; font-size:13px; color:#666; padding:10px; background:#f9f9f9; border-radius:15px;"></div>
+        <button onclick="closeWallet()" style="width:100%; margin-top:20px; padding:12px; border:none; border-radius:15px; background:#eee; font-weight:bold; cursor:pointer;">إغلاق</button>
+    </div>
+</div>
 
 <div class="tabs">
     <div class="tab active" onclick="showSection('all',this)">كل البضائع</div>
@@ -138,7 +98,17 @@ const normalizeText = (text) => {
 function loadProducts() {
     database.ref("products").orderByChild("id").limitToLast(100).once("value", snap => {
         const data = snap.val() || {};
-        products = Object.values(data).sort((a,b) => b.id - a.id);
+        let productsArray = Object.values(data);
+        
+        let interests = JSON.parse(localStorage.getItem("userInterests") || "{}");
+        productsArray.sort((a, b) => {
+            let scoreA = interests[a.category] || 0;
+            let scoreB = interests[b.category] || 0;
+            if (scoreB === scoreA) return b.id - a.id;
+            return scoreB - scoreA; 
+        });
+
+        products = productsArray;
         renderCategories(); 
         updateFavCount();
         renderProducts("all");
@@ -146,83 +116,35 @@ function loadProducts() {
     });
 }
 
-function shareApp() {
-    const myName = localStorage.getItem("userName") || "عميل مميز";
-    const myDomain = "https://www.beladshop.com";
+function openWallet() {
+    const pts = parseInt(document.getElementById("my-points-count").innerText) || 0;
+    const rewardMoney = pts * 2; 
+    document.getElementById("total-saved").innerText = rewardMoney.toLocaleString();
+    document.getElementById("wallet-modal").style.display = "flex";
     
-    // دمج الوصف مع الرابط في نص واحد لضمان نسخهما معاً
-    const fullMessage = `🌟 منصة متاجر البلاد - تسوق بذكاء في حضرموت 🌟
-
-تسوق الآن واحصل على أفضل المنتجات مع ميزات حصرية:
-✅ توصيل سريع ومباشر لباب بيتك.
-✅ دردشة فورية مع المندوب لتتبع طلبك.
-✅ اجمع النقاط واحصل على توصيل مجاني!
-
-🎁 سجل الآن واستخدم اسمي (${myName}) ككود دعوة لنربح النقاط معاً.
-
-رابط المنصة: 
-${myDomain}`;
-
-    if (navigator.share) {
-        navigator.share({
-            title: 'متاجر البلاد',
-            text: fullMessage, // هنا وضعنا النص الكامل (الوصف + الرابط)
-        }).catch(() => copyToClipboard(fullMessage));
+    let spendHistory = JSON.parse(localStorage.getItem("spendHistory") || "[]");
+    const historyDiv = document.getElementById("wallet-history");
+    if(spendHistory.length === 0) {
+        historyDiv.innerHTML = "<p style='text-align:center;'>لا توجد عمليات مسجلة</p>";
     } else {
-        copyToClipboard(fullMessage);
+        historyDiv.innerHTML = "<b>آخر المشتريات:</b><br>" + spendHistory.map(h => `
+            <div style="border-bottom:1px solid #ddd; padding:8px 0; display:flex; justify-content:space-between;">
+                <span>🛍️ ${h.item}</span>
+                <span style="color:#d45d5d; font-weight:bold;">-${h.price} ر.ي</span>
+            </div>`).join('');
     }
 }
-
-function copyToClipboard(text) {
-    const el = document.createElement('textarea');
-    el.value = text;
-    document.body.appendChild(el);
-    el.select();
-    try {
-        document.execCommand('copy');
-        alert("✅ تم نسخ وصف المنصة مع الرابط بنجاح!\n\nيمكنك الآن لصق الرسالة وإرسالها لأصدقائك لجمع النقاط.");
-    } catch (err) {
-        prompt("انسخ رسالة الدعوة من هنا:", text);
-    }
-    document.body.removeChild(el);
-}
-function loadMyPoints() {
-    const myName = localStorage.getItem("userName");
-    if(!myName) return;
-    database.ref("Users/" + myName + "/points").on("value", snap => {
-        const pts = snap.val() || 0;
-        document.getElementById("my-points-count").innerText = pts;
-    });
-}
-
-function showPointsAlert() {
-    const pts = document.getElementById("my-points-count").innerText;
-    alert(`🪙 رصيدك الحالي: ${pts} نقطة\n\n💡 نصيحة القائد حسين: استمر في تسوق أجمل المنتجات لزيادة نقاطك.. تذكر أن الوصول لـ 500 نقطة يمنحك توصيلاً مجانياً بالكامل!`);
-}
-function toggleDropdown() { document.getElementById("userDropdown").classList.toggle("show"); }
-
-window.onclick = function(event) {
-    if (!event.target.matches('.user-btn') && !event.target.matches('.user-btn span')) {
-        const dropdowns = document.getElementsByClassName("dropdown-content");
-        for (let i = 0; i < dropdowns.length; i++) {
-            if (dropdowns[i].classList.contains('show')) dropdowns[i].classList.remove('show');
-        }
-    }
-}
-
-document.getElementById("display-user-name").innerText = localStorage.getItem("userName") || "حسابي";
+function closeWallet() { document.getElementById("wallet-modal").style.display = "none"; }
 
 function renderProducts(containerId, filter = () => true){
     const c = document.getElementById(containerId);
     if(!c) return;
     c.innerHTML = "";
     const filtered = products.filter(filter);
-    
     if(filtered.length === 0) {
         c.innerHTML = "<div style='grid-column:1/-1; padding:40px; color:#888; text-align:center;'>لا يوجد منتجات هنا حالياً 🛒</div>";
         return;
     }
-
     filtered.forEach(p => {
         const isFav = favorites.includes(String(p.id));
         const isFlashActive = p.isFlash && p.flashExpiry > Date.now();
@@ -237,23 +159,38 @@ function renderProducts(containerId, filter = () => true){
                 ${isFlashActive ? `<span style="text-decoration:line-through; color:#999; font-size:11px;">${p.price}</span> <span style="color:red;">${p.flashPrice}</span>` : `<span>${p.price}</span>`}
             </div>
             <div class="product-store">📍 ${p.store}</div>
-            <button class="fav-btn" style="background:${isFav?'#ffebee':'#f2f2f2'}">
-                ${isFav ? '❌ حذف' : '🛒 إضافة'}
-            </button>`;
+            <button class="fav-btn" style="background:${isFav?'#ffebee':'#f2f2f2'}">${isFav ? '❌ حذف' : '🛒 إضافة'}</button>`;
         d.onclick = (e) => { if(e.target.tagName !== 'BUTTON') location.href = `product.html?productId=${p.id}`; };
         d.querySelector(".fav-btn").onclick = (e) => { e.stopPropagation(); toggleFav(String(p.id), containerId, filter); };
         c.appendChild(d);
     });
 }
 
+function shareApp() {
+    const myName = localStorage.getItem("userName") || "عميل مميز";
+    const fullMessage = `🌟 منصة متاجر البلاد - تسوق بذكاء 🌟\nرابط المنصة: https://www.beladshop.com`;
+    if (navigator.share) { navigator.share({ title: 'متاجر البلاد', text: fullMessage }); }
+}
+
+function loadMyPoints() {
+    const myName = localStorage.getItem("userName");
+    if(!myName) return;
+    database.ref("Users/" + myName + "/points").on("value", snap => {
+        document.getElementById("my-points-count").innerText = snap.val() || 0;
+    });
+}
+
+function showPointsAlert() { alert(`🪙 رصيدك الحالي: ${document.getElementById("my-points-count").innerText} نقطة`); }
+function toggleDropdown() { document.getElementById("userDropdown").classList.toggle("show"); }
+window.onclick = function(e) { if (!e.target.matches('.user-btn') && !e.target.matches('.user-btn span')) { let ds = document.getElementsByClassName("dropdown-content"); for (let i = 0; i < ds.length; i++) if (ds[i].classList.contains('show')) ds[i].classList.remove('show'); } }
+document.getElementById("display-user-name").innerText = localStorage.getItem("userName") || "حسابي";
+
 function renderStores() {
-    const c = document.getElementById("stores");
-    c.innerHTML = "";
+    const c = document.getElementById("stores"); c.innerHTML = "";
     const uniqueStores = [...new Set(products.map(p => p.store))];
     uniqueStores.forEach(s => {
-        const d = document.createElement("div");
-        d.className = "card";
-        d.innerHTML = `<div style="padding: 20px; font-weight:bold; font-size:16px;">🏪 ${s}</div><div style="font-size:12px; color:#666;">اضغط لمشاهدة المنتجات</div>`;
+        const d = document.createElement("div"); d.className = "card";
+        d.innerHTML = `<div style="padding: 20px; font-weight:bold;">🏪 ${s}</div>`;
         d.onclick = () => renderProducts("stores", p => p.store === s);
         c.appendChild(d);
     });
@@ -263,35 +200,20 @@ function toggleFav(id, containerId, filter) {
     if(favorites.includes(id)) favorites = favorites.filter(f => f !== id);
     else favorites.push(id);
     localStorage.setItem("favorites", JSON.stringify(favorites));
-    updateFavCount();
-    renderProducts(containerId, filter);
+    updateFavCount(); renderProducts(containerId, filter);
 }
-
 function updateFavCount() { document.getElementById("favCount").innerText = favorites.length; }
 
 function showSection(id, el){
-    ["favorites","all","available","stores"].forEach(s => {
-        const target = document.getElementById(s);
-        if(target) target.style.display = "none";
-    });
-    
+    ["favorites","all","available","stores"].forEach(s => { let t = document.getElementById(s); if(t) t.style.display = "none"; });
     document.getElementById(id).style.display = "grid";
-    
-    if (el) { 
-        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active")); 
-        el.classList.add("active"); 
-    }
-
-    // التنفيذ حسب القسم
-    if(id === "all") {
-        // لا ننادي renderProducts هنا إذا كان الاستدعاء من زر تصنيف
-        // سنناديها فقط إذا ضغطنا على التاب السفلي مباشرة
-        if(el) renderProducts("all"); 
-    }
+    if (el) { document.querySelectorAll(".tab").forEach(t => t.classList.remove("active")); el.classList.add("active"); }
+    if(id === "all" && el) renderProducts("all");
     else if(id === "favorites") renderProducts("favorites", p => favorites.includes(String(p.id)));
     else if(id === "available") renderProducts("available", p => !normalizeText(p.status).includes("غير متوفر"));
     else if(id === "stores") renderStores();
 }
+
 function smartSearch() {
     const input = document.getElementById("searchInput").value;
     if (!input || input.trim() === "") { renderProducts("all"); return; }
@@ -302,38 +224,22 @@ function smartSearch() {
 }
 
 function renderCategories() {
-    const categoriesDiv = document.getElementById("categories");
-    categoriesDiv.innerHTML = "";
-    
-    // زر الكل
-    const allBtn = document.createElement("div");
-    allBtn.className = "category-btn";
-    allBtn.innerText = "🏠 الكل";
-    allBtn.onclick = () => showSection('all');
-    categoriesDiv.appendChild(allBtn);
-
-    // استخراج التصنيفات الفريدة
+    const categoriesDiv = document.getElementById("categories"); categoriesDiv.innerHTML = "";
+    const allBtn = document.createElement("div"); allBtn.className = "category-btn"; allBtn.innerText = "🏠 الكل"; allBtn.onclick = () => showSection('all'); categoriesDiv.appendChild(allBtn);
     const uniqueCategories = [...new Set(products.map(p => p.category).filter(Boolean))];
     uniqueCategories.forEach(cat => {
-        const btn = document.createElement("div");
-        btn.className = "category-btn";
-        btn.innerText = cat;
-        btn.onclick = () => {
-            showSection('all'); // نفتح قسم الكل أولاً
-            renderProducts("all", p => p.category === cat); // ثم نصفي المنتجات حسب التصنيف
-        };
+        const btn = document.createElement("div"); btn.className = "category-btn"; btn.innerText = cat;
+        btn.onclick = () => { showSection('all'); renderProducts("all", p => p.category === cat); };
         categoriesDiv.appendChild(btn);
     });
 }
 function openAddProduct(){ window.location.href = "stores.html"; }
 document.getElementById("current-region-display").innerText = localStorage.getItem("userRegion") || "حدد منطقتك";
-
 function changeMyRegion() {
-    const oldRegion = localStorage.getItem("userRegion") || "";
-    const newRegion = prompt("تعديل منطقة التوصيل:", oldRegion);
-    if (newRegion) { localStorage.setItem("userRegion", newRegion.trim()); location.reload(); }
+    const old = localStorage.getItem("userRegion") || "";
+    const n = prompt("تعديل منطقة التوصيل:", old);
+    if (n) { localStorage.setItem("userRegion", n.trim()); location.reload(); }
 }
-
 loadProducts();
 </script>
 </body>

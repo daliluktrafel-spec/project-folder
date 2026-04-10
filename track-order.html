@@ -15,6 +15,11 @@
         .input-area { background: white; padding: 10px; display: flex; gap: 10px; border-top: 1px solid #ddd; }
         input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 20px; outline: none; }
         button { background: #1b1e33; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; }
+        
+        /* تنسيق نافذة التقييم */
+        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center; }
+        .modal-content { background:white; width:85%; max-width:400px; padding:25px; border-radius:20px; text-align:center; }
+        .stars span { font-size:35px; cursor:pointer; color:#ccc; transition: 0.2s; }
     </style>
 </head>
 <body>
@@ -35,54 +40,98 @@
     <button onclick="sendMsg()">إرسال</button>
 </div>
 
-<div style="text-align: center; margin-top: 30px; border-top: 1px solid #ddd; padding-top: 20px;">
-    <p style="font-size: 13px; color: #888;">هل واجهت مشكلة في الطلب؟</p>
+<div id="rating-modal" class="modal">
+    <div class="modal-content">
+        <h2 style="margin:0; color:#1b1e33;">شكراً لثقتك! 🌟</h2>
+        <p style="color:#666; font-size:14px;">كيف كانت تجربة التوصيل مع المندوب؟</p>
+        <div class="stars" id="stars-container">
+            <span onclick="setRate(1)">⭐</span><span onclick="setRate(2)">⭐</span><span onclick="setRate(3)">⭐</span><span onclick="setRate(4)">⭐</span><span onclick="setRate(5)">⭐</span>
+        </div>
+        <textarea id="review-text" placeholder="اكتب ملاحظاتك (اختياري)..." style="width:100%; height:80px; border-radius:10px; border:1px solid #ddd; padding:10px; margin-top:10px; font-family:inherit;"></textarea>
+        <button onclick="submitRating()" style="background:#b89b4a; color:white; border:none; padding:12px; border-radius:12px; margin-top:15px; font-weight:bold; cursor:pointer; width:100%;">إرسال التقييم</button>
+    </div>
+</div>
+
+<div style="text-align: center; margin-top: 10px; border-top: 1px solid #ddd; padding: 15px; background: white;">
+    <p style="font-size: 13px; color: #888; margin: 0 0 10px 0;">هل واجهت مشكلة في الطلب؟</p>
     <button onclick="sendComplaint()" style="background:none; border:none; color:#d45d5d; font-weight:bold; cursor:pointer; text-decoration:underline;">
         🚩 تبليغ الإدارة عن مشكلة
     </button>
 </div>
 
-<script>
-function sendComplaint() {
-    const msg = prompt("اكتب مشكلتك هنا (تأخير، سوء تعامل، مشكلة في المنتج):");
-    if(msg) {
-        // orderId نحصل عليه من رابط الصفحة كما فعلنا سابقاً
-        database.ref("Complaints/" + orderId).set({
-            orderId: orderId,
-            customer: localStorage.getItem("userName"),
-            message: msg,
-            date: new Date().toLocaleString()
-        }).then(() => {
-            alert("تم إرسال بلاغك للإدارة، سيتم التواصل معك قريباً.");
-        });
-    }
-}
-</script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="firebase.js"></script>
+
 <script>
     const urlParams = new URLSearchParams(window.location.search);
     const orderId = urlParams.get('orderId');
     const myName = localStorage.getItem("userName");
+    let selectedStars = 0;
 
-    // 1. جلب بيانات الطلب وتحديث الحالة فوراً
-    database.ref("Orders/" + orderId).on("value", snap => {
-        const ord = snap.val();
-        if(!ord) return;
-        document.getElementById("p-name").innerText = ord.pName;
-        document.getElementById("driver-name").innerText = ord.driverName || "لم يقبل بعد";
+    // 1. مراقبة حالة الطلب والدردشة والتقييم
+    if (orderId) {
+        // جلب بيانات الطلب وتحديث الحالة
+        database.ref("Orders/" + orderId).on("value", snap => {
+            const ord = snap.val();
+            if(!ord) return;
+            document.getElementById("p-name").innerText = ord.pName;
+            document.getElementById("driver-name").innerText = ord.driverName || "لم يقبل بعد";
+            
+            let statusText = "🔎 في انتظار قبول المندوب";
+            if(ord.status === "picked") statusText = "🚚 المندوب في الطريق إليك";
+            if(ord.status === "delivered") statusText = "✅ تم التوصيل بنجاح";
+            document.getElementById("order-status").innerText = statusText;
+
+            // إظهار نافذة التقييم إذا اكتمل الطلب ولم يقيم بعد
+            if (ord.status === "delivered" && !ord.rated) {
+                document.getElementById("rating-modal").style.display = "flex";
+            }
+        });
+
+        // مراقبة الدردشة
+        database.ref("Chats/" + orderId).on("child_added", snap => {
+            const msg = snap.val();
+            const chatBox = document.getElementById("chat-box");
+            const div = document.createElement("div");
+            div.className = `msg ${msg.sender === 'driver' ? 'received' : 'sent'}`;
+            div.innerText = msg.text;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+    }
+
+    // 2. وظائف التقييم
+    function setRate(n) {
+        selectedStars = n;
+        const stars = document.querySelectorAll("#stars-container span");
+        stars.forEach((s, index) => {
+            s.style.color = index < n ? "#b89b4a" : "#ccc";
+        });
+    }
+
+    function submitRating() {
+        if (selectedStars === 0) return alert("من فضلك اختر عدد النجوم أولاً");
+        const review = document.getElementById("review-text").value;
         
-        let statusText = "🔎 في انتظار قبول المندوب";
-        if(ord.status === "picked") statusText = "🚚 المندوب في الطريق إليك";
-        if(ord.status === "delivered") statusText = "✅ تم التوصيل بنجاح";
-        document.getElementById("order-status").innerText = statusText;
-    });
+        database.ref("Reviews/" + orderId).set({
+            orderId: orderId,
+            stars: selectedStars,
+            review: review,
+            driverName: document.getElementById("driver-name").innerText,
+            customer: myName,
+            date: new Date().toLocaleString()
+        }).then(() => {
+            database.ref("Orders/" + orderId).update({ rated: true });
+            document.getElementById("rating-modal").style.display = "none";
+            alert("تم استلام تقييمك بنجاح! شكراً لك ✅");
+        });
+    }
 
-    // 2. نظام الدردشة الحية
+    // 3. وظائف الدردشة والبلاغات
     function sendMsg() {
         const text = document.getElementById("msg-input").value.trim();
-        if(!text) return;
+        if(!text || !orderId) return;
         database.ref("Chats/" + orderId).push({
             sender: myName,
             text: text,
@@ -91,18 +140,19 @@ function sendComplaint() {
         document.getElementById("msg-input").value = "";
     }
 
-    database.ref("Chats/" + orderId).on("child_added", snap => {
-    const msg = snap.val();
-    const chatBox = document.getElementById("chat-box");
-    const div = document.createElement("div");
-    
-    // إذا كان المرسل هو "driver" فهي رسالة مستلمة بالنسبة للزبون
-    div.className = `msg ${msg.sender === 'driver' ? 'received' : 'sent'}`;
-    
-    div.innerText = msg.text;
-    chatBox.appendChild(div);
-    chatBox.scrollTop = chatBox.scrollHeight;
-});
+    function sendComplaint() {
+        const msg = prompt("اكتب مشكلتك هنا (تأخير، سوء تعامل، مشكلة في المنتج):");
+        if(msg && orderId) {
+            database.ref("Complaints/" + orderId).set({
+                orderId: orderId,
+                customer: myName,
+                message: msg,
+                date: new Date().toLocaleString()
+            }).then(() => {
+                alert("تم إرسال بلاغك للإدارة، سيتم التواصل معك قريباً.");
+            });
+        }
+    }
 </script>
 </body>
 </html>

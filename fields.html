@@ -38,6 +38,21 @@
         transition: 0.3s;
         opacity: 0.7;
     }
+/* نقطة الإشعارات الحمراء */
+.notif-badge {
+    position: absolute;
+    top: 5px;
+    right: 25%; /* ضبط المكان حسب الحاجة */
+    background-color: #d45d5d;
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 50%;
+    display: none; /* مخفية حتى يوجد جديد */
+    border: 1px solid #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+.nav-link { position: relative; } /* ضروري لضبط مكان النقطة */
 
     .nav-link.active {
         opacity: 1;
@@ -65,9 +80,10 @@
     <div class="nav-link active" onclick="loadPage('home.html', this)">
         <span>🏠</span><br>الرئيسية
     </div>
-    <div class="nav-link" onclick="loadPage('notifications.html', this)">
-        <span>🔔</span><br>الإشعارات
-    </div>
+  <div class="nav-link" onclick="loadPage('notifications.html', this); markAsRead();">
+    <span id="notif-dot" class="notif-badge">!</span>
+    <span>🔔</span><br>الإشعارات
+</div>
     <div class="nav-link" onclick="loadPage('contact.html', this)">
         <span>📞</span><br>اتصل بنا
     </div>
@@ -78,6 +94,9 @@
 
 <iframe src="home.html" id="main-frame" name="main-frame"></iframe>
 
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="firebase.js"></script>
 <script>
     function loadPage(pageUrl, element) {
         // تغيير الصفحة داخل الإطار
@@ -95,6 +114,34 @@
         let h = window.innerHeight - 70;
         document.getElementById('main-frame').style.height = h + "px";
     });
+// نربط مع قاعدة البيانات (تأكد من وجود استدعاءات Firebase في الملف)
+function checkNewNews() {
+    const database = firebase.database();
+    database.ref("news").on("value", snap => {
+        const data = snap.val();
+        if (!data) return;
+
+        const newsCount = Object.keys(data).length;
+        const lastSeen = localStorage.getItem("lastSeenNewsCount") || 0;
+
+        if (newsCount > lastSeen) {
+            document.getElementById("notif-dot").style.display = "block";
+        }
+    });
+}
+
+function markAsRead() {
+    // عندما يضغط الزبون على الزر، نصفر التنبيه ونحفظ العدد الحالي
+    database.ref("news").once("value", snap => {
+        if (snap.val()) {
+            localStorage.setItem("lastSeenNewsCount", Object.keys(snap.val()).length);
+            document.getElementById("notif-dot").style.display = "none";
+        }
+    });
+}
+
+// تشغيل الفحص عند فتح الصفحة
+window.onload = checkNewNews;
 </script>
 
 </body>

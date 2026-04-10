@@ -2,74 +2,93 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>منصة متاجر البلاد - اكتشف عالمك المحلي</title>
+    <title>مرحباً بك في متاجر البلاد</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        :root { --gold: #b89b4a; --dark: #1b1e33; --white: #ffffff; }
         body {
-            margin: 0;
-            font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+            margin: 0; font-family: "Segoe UI", Tahoma, sans-serif;
             background: linear-gradient(135deg, #f7f6f2 0%, #e6d38a 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px 0;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; padding: 20px;
         }
         .container {
-            background: white;
-            padding: 40px;
-            border-radius: 30px;
-            width: 90%;
-            max-width: 800px;
+            background: white; padding: 30px; border-radius: 30px;
+            width: 100%; max-width: 700px;
             box-shadow: 0 25px 50px rgba(0,0,0,0.15);
-            text-align: right;
-            overflow-y: auto;
-            max-height: 90vh;
-            border: 1px solid rgba(184, 155, 74, 0.3);
+            text-align: center; border: 1px solid rgba(184, 155, 74, 0.3);
         }
-        h1 { color: #b89b4a; font-size: 30px; margin-bottom: 25px; text-align: center; line-height: 1.4; }
-        .section-title { color: #1b1e33; font-size: 20px; font-weight: bold; margin-top: 25px; display: flex; align-items: center; gap: 10px; }
-        p { font-size: 17px; color: #555; line-height: 1.9; margin-bottom: 15px; }
-        .features-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 25px 0; }
-        .feature-item { background: #fdfbf5; padding: 15px; border-radius: 15px; border-right: 4px solid #b89b4a; }
-        .feature-item h4 { margin: 0 0 5px 0; color: #b89b4a; }
-        .feature-item p { font-size: 14px; margin: 0; line-height: 1.5; }
-        .payment-tag { display: inline-block; background: #f0f0f0; padding: 4px 12px; border-radius: 8px; font-size: 13px; color: #333; font-weight: 600; margin: 4px; border: 1px solid #ddd; }
-        button { padding: 18px 60px; font-size: 20px; border: none; border-radius: 20px; font-weight: bold; cursor: pointer; background: linear-gradient(45deg,#c9b36a,#b89b4a); color: white; display: block; margin: 40px auto 10px; transition: 0.3s; box-shadow: 0 10px 20px rgba(184, 155, 74, 0.3); }
-        button:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(184, 155, 74, 0.4); }
-        @media (max-width: 600px) { .features-grid { grid-template-columns: 1fr; } .container { padding: 25px; } }
+        h1 { color: var(--gold); font-size: 28px; margin-bottom: 10px; }
+        .sub-title { color: #888; font-size: 16px; margin-bottom: 30px; }
+        
+        /* شبكة المزايا الجديدة */
+        .features-grid { 
+            display: grid; grid-template-columns: repeat(2, 1fr); 
+            gap: 15px; margin: 20px 0; text-align: right;
+        }
+        .feature-item { 
+            background: #fdfbf5; padding: 12px; border-radius: 15px; 
+            border-right: 4px solid var(--gold);
+        }
+        .feature-item b { color: var(--dark); font-size: 14px; display: block; margin-bottom: 5px; }
+        .feature-item span { font-size: 12px; color: #666; line-height: 1.4; }
+
+        .payment-section { margin: 25px 0; }
+        .payment-tag { 
+            display: inline-block; background: #eee; padding: 5px 12px; 
+            border-radius: 10px; font-size: 12px; font-weight: bold; margin: 3px;
+        }
+
+        button { 
+            padding: 18px 50px; font-size: 18px; border: none; border-radius: 20px; 
+            font-weight: bold; cursor: pointer; 
+            background: linear-gradient(45deg,#c9b36a,#b89b4a); color: white;
+            box-shadow: 0 10px 20px rgba(184, 155, 74, 0.3); transition: 0.3s;
+        }
+        button:hover { transform: scale(1.05); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>مرحباً بك في منصة "متاجر البلاد" 🏪<br><span style="font-size: 18px; color: #888;">وجهتك الأولى للتسوق المحلي الذكي</span></h1>
-
-    <p>صُممت منصة <b>متاجر البلاد</b> لتكون الجسر الذي يربط بينك وبين أفضل المتاجر في منطقتك.</p>
-
-    <div class="section-title">✨ تجربة مستخدم لا مثيل لها</div>
-    <p>سواء كنت تستخدم الهاتف أو الكمبيوتر، ستجد واجهة سلسة تمكنك من البحث عن أي منتج في ثوانٍ معدودة.</p>
+    <h1>منصة متاجر البلاد 🏪</h1>
+    <p class="sub-title">نظام التسوق الأذكى والأسرع في حضرموت</p>
 
     <div class="features-grid">
         <div class="feature-item">
-            <h4>🛎️ نظام الإشعارات الفوري</h4>
-            <p>كن أول من يعلم! تصلك تنبيهات مباشرة بآخر العروض والخصومات والمنتجات الجديدة.</p>
+            <b>🚀 طلب سريع ومباشر</b>
+            <span>اطلب بضغطة زر وسيصلك أقرب مندوب في منطقتك فوراً.</span>
         </div>
         <div class="feature-item">
-            <h4>🏪 تمكين أصحاب المتاجر</h4>
-            <p>للمتاجر مرونة كاملة في الإدارة؛ إضافة وحذف المنتجات وتعديل الأسعار في لحظات.</p>
+            <b>💬 دردشة فورية</b>
+            <span>تواصل مباشرة مع المندوب لتتبع طلبك لحظة بلحظة.</span>
+        </div>
+        <div class="feature-item">
+            <b>🏬 أنشئ متجرك الخاص</b>
+            <span>هل تملك محلاً؟ انضم إلينا واعرض بضائعك لآلاف الزبائن.</span>
+        </div>
+        <div class="feature-item">
+            <b>💰 محفظة المكافآت</b>
+            <span>جمع النقاط من مشترياتك وحولها لخصومات ورصيد حقيقي.</span>
+        </div>
+        <div class="feature-item">
+            <b>🔔 إشعارات ذكية</b>
+            <span>تنبيهات فورية بالعروض الصاعقة وتغييرات حالة طلبك.</span>
+        </div>
+        <div class="feature-item">
+            <b>📍 تتبع دقيق (GPS)</b>
+            <span>نظام تحديد مواقع متطور لضمان وصول الطلب لباب بيتك.</span>
         </div>
     </div>
 
-    <div class="section-title">💳 حلول دفع متنوعة</div>
-    <div style="text-align: center; margin-bottom: 20px;">
-        <span class="payment-tag">💰 التوصيل عبر المندوبين</span>
-        <span class="payment-tag">💰 شركة العمقي</span>
-        <span class="payment-tag">📱 واتساب مباشر</span>
+    <div class="payment-section">
+        <div class="payment-tag">✅ دفع عند الاستلام</div>
+        <div class="payment-tag">✅ تحويل العمقي</div>
+        <div class="payment-tag">✅ نقاط الولاء</div>
     </div>
 
-    <button onclick="start()">استكشف المتاجر الآن 🚀</button>
-    <p style="text-align: center; font-size: 13px; color: #aaa;">شكراً لثقتك بمنصتنا المحلية</p>
+    <button onclick="start()">ابدأ رحلة التسوق 🚀</button>
+    <p style="font-size: 11px; color: #aaa; margin-top: 15px;">إصدار 2026 - آمن ومشفر بالكامل</p>
 </div>
 
 <script>
@@ -81,7 +100,7 @@ function start() {
             localStorage.setItem("userName", name.trim());
             askForRegion();
         } else {
-            alert("يرجى إدخال الاسم للمتابعة");
+            alert("الاسم مطلوب للمتابعة");
         }
     } else {
         askForRegion();
@@ -91,23 +110,22 @@ function start() {
 function askForRegion() {
     const userRegion = localStorage.getItem("userRegion");
     if (!userRegion) {
-        let region = prompt("يرجى تحديد منطقتك (مثلاً: سيئون، تريم، مريمة):");
+        let region = prompt("يرجى تحديد منطقتك (سيئون، تريم، شبام...):");
         if (region && region.trim() !== "") {
             localStorage.setItem("userRegion", region.trim());
-            goToHome();
+            finishIntro();
         } else {
-            alert("يرجى تحديد المنطقة لخدمتك بشكل أفضل");
+            alert("تحديد المنطقة ضروري لخدمتك");
         }
     } else {
-        goToHome();
+        finishIntro();
     }
 }
 
-function goToHome() {
-    // السطر السحري الناقص هو هذا:
-    localStorage.setItem("introShown", "true"); 
-    
-    window.location.href = "fields.html";
+function finishIntro() {
+    localStorage.setItem("introShown", "true");
+    // التوجه لصفحة الاختيار الرئيسية
+    window.location.href = "fields.html"; 
 }
 </script>
 

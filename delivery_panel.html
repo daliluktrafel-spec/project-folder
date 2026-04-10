@@ -5,13 +5,20 @@
     <title>لوحة المندوب الذكية | متاجر البلاد</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        :root { --gold: #b89b4a; --dark: #1b1e33; --green: #27ae60; }
+        :root { --gold: #b89b4a; --dark: #1b1e33; --green: #27ae60; --blue: #3498db; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5; margin: 0; padding: 15px; padding-bottom: 50px; }
         
         .header-box { 
-            background: var(--dark); color: white; padding: 20px; border-radius: 15px; 
+            background: var(--dark); color: white; padding: 15px; border-radius: 15px; 
             margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-bottom: 4px solid var(--gold);
+        }
+
+        .profit-card {
+            background: linear-gradient(45deg, #1b1e33, #2c2f4a); 
+            color: #e6d38a; padding: 15px; border-radius: 20px; 
+            text-align: center; margin-bottom: 20px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2); border: 1px solid var(--gold);
         }
         
         .order-card { 
@@ -29,19 +36,19 @@
         .tag-active { background: #e8f5e9; color: var(--green); }
 
         .btn { 
-            border: none; padding: 14px; width: 100%; border-radius: 12px; 
+            border: none; padding: 12px; width: 100%; border-radius: 12px; 
             font-weight: bold; cursor: pointer; margin-top: 10px; font-family: inherit;
             display: flex; align-items: center; justify-content: center; gap: 8px;
         }
         .btn-accept { background: var(--green); color: white; }
-        .btn-chat { background: #3498db; color: white; }
+        .btn-chat { background: var(--blue); color: white; }
+        .btn-maps { background: #4285F4; color: white; }
         .btn-finish { background: var(--dark); color: white; }
         .btn-logout { background: #d45d5d; color: white; padding: 8px 15px; font-size: 12px; width: auto; margin: 0; }
 
         .order-info b { color: var(--dark); font-size: 18px; }
         .order-info p { margin: 8px 0; color: #555; font-size: 14px; line-height: 1.5; }
         
-        /* تأثير النبض للطلبات الجديدة */
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
         .new-order-anim { animation: pulse 1.5s infinite; }
     </style>
@@ -53,7 +60,12 @@
             <h2 style="margin:0; font-size: 18px;">لوحة المناديب 🛵</h2>
             <small id="driver-name-display">مرحباً بك</small>
         </div>
-        <button class="btn btn-logout" onclick="logoutDriver()">تسجيل خروج</button>
+        <button class="btn btn-logout" onclick="logoutDriver()">خروج</button>
+    </div>
+
+    <div class="profit-card">
+        <p style="margin:0; font-size: 13px; opacity: 0.8;">💰 أرباحك المحققة اليوم</p>
+        <h2 id="driver-daily-profit" style="margin: 5px 0 0; font-size: 28px;">0 <small style="font-size: 14px;">ر.ي</small></h2>
     </div>
 
     <div id="orders-list">
@@ -70,12 +82,12 @@
         const myName = localStorage.getItem("driverName");
         const myRegion = localStorage.getItem("driverRegion");
 
-        // التحقق من الدخول
         if (!myPhone) {
             window.location.href = "driver-login.html";
         } else {
             document.getElementById("driver-name-display").innerText = "المندوب: " + myName;
             loadOrders();
+            updateDriverEarnings();
         }
 
         let lastOrdersCount = 0;
@@ -88,26 +100,22 @@
                 const data = snap.val() || {};
                 const ordersArray = Object.values(data);
 
-                // تصفية الطلبات الخاصة بمنطقة المندوب فقط
                 const filteredOrders = ordersArray.filter(ord => 
                     ord.region === myRegion && (ord.status === "waiting" || ord.driverPhone === myPhone)
                 );
 
-                // --- منطق التنبيه الصوتي الذكي ---
                 const newOrdersCount = filteredOrders.filter(o => o.status === "waiting").length;
                 if (newOrdersCount > lastOrdersCount) {
-                    // تشغيل الصوت واهتزاز الجوال
-                    soundEffect.play().catch(() => console.log("تفاعل مع الشاشة لتفعيل الصوت"));
+                    soundEffect.play().catch(() => {});
                     if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
                 }
                 lastOrdersCount = newOrdersCount;
 
                 if (filteredOrders.length === 0) {
-                    list.innerHTML = "<div style='text-align:center; padding:50px;'><p>لا توجد طلبات حالياً في <b>" + myRegion + "</b></p><small>سيتم إشعارك فور وصول طلب جديد</small></div>";
+                    list.innerHTML = `<div style='text-align:center; padding:50px;'><p>لا توجد طلبات حالياً في <b>${myRegion}</b></p></div>`;
                     return;
                 }
 
-                // ترتيب الطلبات (الأحدث أولاً)
                 filteredOrders.sort((a,b) => b.id.split('-')[1] - a.id.split('-')[1]).forEach(ord => {
                     const isWaiting = ord.status === 'waiting';
                     const isDelivered = ord.status === 'delivered';
@@ -130,6 +138,7 @@
                             ${isWaiting ? 
                                 `<button class="btn btn-accept" onclick="pickOrder('${ord.id}')">قبول الطلب ✅</button>` : 
                                 (!isDelivered ? `
+                                    <button class="btn btn-maps" onclick="smartOpenMaps('${ord.region}', '${ord.gps || ''}')">📍 موقع البيت بدقة (GPS)</button>
                                     <button class="btn btn-chat" onclick="goToChat('${ord.id}')">💬 دردشة مع الزبون</button>
                                     <button class="btn btn-finish" onclick="finishOrder('${ord.id}')">🏁 تم التوصيل واستلام المبلغ</button>
                                 ` : `<p style="text-align:center; color:var(--green); font-weight:bold; margin-top:15px;">اكتملت العملية ✨</p>`)
@@ -145,15 +154,43 @@
                 status: "picked", 
                 driverPhone: myPhone,
                 driverName: myName 
-            }).then(() => {
-                alert("تم قبول الطلب! بالتوفيق يا " + myName);
             });
         }
 
         function finishOrder(id) {
-            if(confirm("هل استلمت المبلغ والعمولة؟ سيتم نقل الطلب للأرشيف.")) {
-                database.ref("Orders/" + id).update({ status: "delivered" });
+            if(confirm("هل استلمت المبلغ والعمولة؟")) {
+                const today = new Date().toLocaleDateString('en-CA');
+                database.ref("Orders/" + id).update({ 
+                    status: "delivered",
+                    deliveryDate: today 
+                });
             }
+        }
+
+        function updateDriverEarnings() {
+            database.ref("Orders").orderByChild("driverPhone").equalTo(myPhone).on("value", snap => {
+                const today = new Date().toLocaleDateString('en-CA');
+                let completedToday = 0;
+                snap.forEach(child => {
+                    const ord = child.val();
+                    if(ord.status === "delivered" && ord.deliveryDate === today) {
+                        completedToday++;
+                    }
+                });
+                document.getElementById("driver-daily-profit").innerText = (completedToday * 1000).toLocaleString() + " ر.ي";
+            });
+        }
+
+        function smartOpenMaps(region, gps) {
+            let url = "";
+            if (gps && gps !== "") {
+                // الرابط المباشر للإحداثيات (هذا سيفتح البيت بدقة)
+                url = `https://www.google.com/maps?q=${gps}`;
+            } else {
+                // البحث بالاسم (المنطقة)
+                url = `https://www.google.com/maps/search/${encodeURIComponent(region)}`;
+            }
+            window.open(url, '_blank');
         }
 
         function goToChat(orderId) {
