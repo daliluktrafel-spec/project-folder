@@ -100,10 +100,10 @@
                 const data = snap.val() || {};
                 const ordersArray = Object.values(data);
 
-                const filteredOrders = ordersArray.filter(ord => 
-                    ord.region === myRegion && (ord.status === "waiting" || ord.driverPhone === myPhone)
-                );
-
+              // المندوب يرى فقط: الطلبات الموجهة لرقمه هو شخصياً
+const filteredOrders = ordersArray.filter(ord => 
+    ord.driverPhone === myPhone // شرط أساسي: الطلب موجه لهذا المندوب فقط
+);
                 const newOrdersCount = filteredOrders.filter(o => o.status === "waiting").length;
                 if (newOrdersCount > lastOrdersCount) {
                     soundEffect.play().catch(() => {});

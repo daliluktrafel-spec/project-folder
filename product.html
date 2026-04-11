@@ -142,15 +142,31 @@ document.getElementById("order-delivery").onclick = () => {
 
 function sendOrderToDriver(phone, name) {
     const orderID = "ORD-" + Date.now();
+    
+    // --- الحسبة الذكية للسعر ---
+    // نتحقق أولاً: هل العرض الصاروخي فعال حالياً؟
+    const isFlashActive = currentProduct.isFlash && currentProduct.flashExpiry > Date.now();
+    // إذا فعال نأخذ flashPrice، إذا لا نأخذ السعر العادي price
+    const finalPrice = isFlashActive ? currentProduct.flashPrice : currentProduct.price;
+
     database.ref("Orders/" + orderID).set({
-        id: orderID, pName: currentProduct.name, price: currentProduct.price, store: currentProduct.store,
-        customer: localStorage.getItem("userName") || "عميل", region: userRegion, driverPhone: phone, driverName: name, 
-        gps: customerGPS, status: "waiting", date: new Date().toLocaleString()
+        id: orderID, 
+        pName: currentProduct.name, 
+        price: finalPrice, // السعر الصحيح (العادي أو الصاروخي)
+        store: currentProduct.store,
+        customer: localStorage.getItem("userName") || "عميل", 
+        region: userRegion, 
+        driverPhone: phone, // رقم المندوب المختار
+        driverName: name,   // اسم المندوب المختار
+        gps: customerGPS, 
+        status: "waiting", 
+        date: new Date().toLocaleString()
     }).then(() => { 
         let history = JSON.parse(localStorage.getItem("spendHistory") || "[]");
-        history.unshift({ item: currentProduct.name, price: currentProduct.price, date: new Date().toLocaleDateString() });
+        history.unshift({ item: currentProduct.name, price: finalPrice, date: new Date().toLocaleDateString() });
         localStorage.setItem("spendHistory", JSON.stringify(history.slice(0, 10)));
-        alert("تم الإرسال وتسجيل العملية في محفظتك ✅"); location.reload(); 
+        alert("تم إرسال الطلب للمندوب " + name + " بنجاح ✅"); 
+        location.reload(); 
     });
 }
 
