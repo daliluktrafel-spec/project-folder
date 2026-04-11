@@ -22,14 +22,29 @@
     <script src="firebase.js"></script>
     <script>
         function addDriver() {
-            const phone = document.getElementById("d-phone").value;
+            const name = document.getElementById("d-name").value.trim();
+            const phone = document.getElementById("d-phone").value.trim();
+            const region = document.getElementById("d-region").value.trim();
+            const vehicle = document.getElementById("d-vehicle").value.trim();
+
+            if (!name || !phone || !region) return alert("يرجى تعبئة كافة البيانات");
+
             const data = {
-                name: document.getElementById("d-name").value,
-                region: document.getElementById("d-region").value,
-                vehicle: document.getElementById("d-vehicle").value,
-                status: "active"
+                name: name,
+                region: region,
+                vehicle: vehicle,
+                status: "active",
+                joinedAt: Date.now()
             };
-            database.ref("Deliveries/" + phone).set(data).then(() => alert("تمت الإضافة!"));
+
+            // نستخدم phone كمفتاح (Key) للتخزين
+            database.ref("Deliveries/" + phone).set(data)
+            .then(() => {
+                alert("تمت إضافة المندوب " + name + " بنجاح ✅");
+                // مسح الخانات بعد الإضافة
+                document.querySelectorAll("input").forEach(i => i.value = "");
+            })
+            .catch(err => alert("خطأ في الاتصال بالقاعدة: " + err.message));
         }
     </script>
 </body>
