@@ -10,7 +10,7 @@
         .login-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 90%; max-width: 350px; text-align: center; }
         .logo { font-size: 50px; margin-bottom: 10px; }
         h2 { color: var(--dark); margin-bottom: 20px; }
-        input { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; text-align: center; font-size: 16px; }
+        input { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; text-align: center; font-size: 16px; outline: none; }
         .btn-login { background: var(--gold); color: white; border: none; width: 100%; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .btn-login:hover { background: #9a8139; }
         .footer-text { margin-top: 15px; font-size: 12px; color: #888; }
@@ -23,7 +23,7 @@
     <h2>دخول المناديب</h2>
     <p style="font-size: 14px; color: #666;">أدخل رقم هاتفك المسجل للبدء</p>
     
-    <input type="tel" id="driver-phone" placeholder="رقم الهاتف (77xxxxxxx)">
+    <input type="tel" id="driver-phone" placeholder="77xxxxxxx">
     
     <button class="btn-login" onclick="login()">دخول للوحة التحكم</button>
     
@@ -33,50 +33,48 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="firebase.js"></script>
+
 <script>
+    // دالة الدخول (منظفة ومحدثة)
     function login() {
-        // تنظيف الرقم من أي مسافات أو رموز غريبة قد تأتي من النسخ واللصق
+        // تنظيف الرقم من المسافات
         let phone = document.getElementById("driver-phone").value.trim().replace(/\s+/g, '');
         
         if(!phone) return alert("يرجى إدخال رقم الهاتف");
 
-        console.log("جاري البحث عن الرقم:", phone); // فحص في الكونسول
+        console.log("جاري البحث عن الرقم:", phone);
 
         database.ref("Deliveries/" + phone).once("value")
         .then(snap => {
             if(snap.exists()) {
                 const driverData = snap.val();
-                console.log("تم العثور على المندوب:", driverData.name);
+                console.log("تم العثور عليه:", driverData.name);
                 
+                // حفظ البيانات
                 localStorage.setItem("driverPhone", phone);
                 localStorage.setItem("driverName", driverData.name);
                 localStorage.setItem("driverRegion", driverData.region);
                 
-                alert("أهلاً بك يا " + driverData.name);
+                alert("أهلاً بك يا بطل: " + driverData.name);
                 window.location.href = "delivery_panel.html";
             } else {
-                console.log("الرقم غير موجود في المسار Deliveries/" + phone);
                 alert("عذراً، هذا الرقم غير مسجل في نظام المناديب!");
             }
         })
         .catch(err => {
-            console.error("خطأ في قاعدة البيانات:", err);
-            alert("حدث خطأ في الاتصال، تأكد من الإنترنت");
+            console.error("خطأ:", err);
+            alert("حدث خطأ في الاتصال بالقاعدة");
         });
     }
 
-    // لغرض التجربة حالياً: عطل التوجيه التلقائي حتى تتأكد من الدخول
-    /*
-    if(localStorage.getItem("driverPhone")) {
-        window.location.href = "delivery_panel.html";
-    }
-    */        });
-    }
-
-    // إذا كان مسجلاً مسبقاً، نوجهه فوراً للوحة
-    if(localStorage.getItem("driverPhone")) {
-        window.location.href = "delivery_panel.html";
-    }
+    // فحص إذا كان مسجلاً مسبقاً
+    window.onload = function() {
+        if(localStorage.getItem("driverPhone")) {
+            console.log("المندوب مسجل مسبقاً، تحويل...");
+            window.location.href = "delivery_panel.html";
+        }
+    };
 </script>
+
 </body>
 </html>
