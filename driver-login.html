@@ -35,14 +35,19 @@
 <script src="firebase.js"></script>
 <script>
     function login() {
-        const phone = document.getElementById("driver-phone").value.trim();
+        // تنظيف الرقم من أي مسافات أو رموز غريبة قد تأتي من النسخ واللصق
+        let phone = document.getElementById("driver-phone").value.trim().replace(/\s+/g, '');
+        
         if(!phone) return alert("يرجى إدخال رقم الهاتف");
 
-        // التأكد أن الرقم مسجل في قاعدة البيانات
-        database.ref("Deliveries/" + phone).once("value", snap => {
+        console.log("جاري البحث عن الرقم:", phone); // فحص في الكونسول
+
+        database.ref("Deliveries/" + phone).once("value")
+        .then(snap => {
             if(snap.exists()) {
                 const driverData = snap.val();
-                // حفظ البيانات في جهاز المندوب
+                console.log("تم العثور على المندوب:", driverData.name);
+                
                 localStorage.setItem("driverPhone", phone);
                 localStorage.setItem("driverName", driverData.name);
                 localStorage.setItem("driverRegion", driverData.region);
@@ -50,9 +55,22 @@
                 alert("أهلاً بك يا " + driverData.name);
                 window.location.href = "delivery_panel.html";
             } else {
+                console.log("الرقم غير موجود في المسار Deliveries/" + phone);
                 alert("عذراً، هذا الرقم غير مسجل في نظام المناديب!");
             }
+        })
+        .catch(err => {
+            console.error("خطأ في قاعدة البيانات:", err);
+            alert("حدث خطأ في الاتصال، تأكد من الإنترنت");
         });
+    }
+
+    // لغرض التجربة حالياً: عطل التوجيه التلقائي حتى تتأكد من الدخول
+    /*
+    if(localStorage.getItem("driverPhone")) {
+        window.location.href = "delivery_panel.html";
+    }
+    */        });
     }
 
     // إذا كان مسجلاً مسبقاً، نوجهه فوراً للوحة
