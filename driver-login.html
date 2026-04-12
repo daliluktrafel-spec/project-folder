@@ -34,56 +34,34 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="firebase.js"></script>
 <script>
-    function login() {
-        // 1. تنظيف الرقم المدخل من أي مسافات زائدة
-        let phoneInput = document.getElementById("driver-phone");
-        let phone = phoneInput.value.trim().replace(/\s+/g, '');
-        
-        if(!phone) {
-            alert("يرجى إدخال رقم الهاتف أولاً");
-            return;
-        }
-
-        // تحسين تجربة المستخدم: تغيير نص الزر أثناء الفحص
-        const loginBtn = document.querySelector(".btn-login");
-        const originalText = loginBtn.innerText;
-        loginBtn.innerText = "جاري التحقق... ⏳";
-        loginBtn.disabled = true;
-
-        // 2. البحث في Firebase
-        database.ref("Deliveries/" + phone).once("value")
-        .then(snap => {
-            if(snap.exists()) {
-                const driverData = snap.val();
-                
-                // حفظ بيانات الجلسة في المتصفح
-                localStorage.setItem("driverPhone", phone);
-                localStorage.setItem("driverName", driverData.name);
-                localStorage.setItem("driverRegion", driverData.region);
-                
-                alert("أهلاً بك يا " + driverData.name);
-                // التوجه للوحة المندوب
-                window.location.href = "delivery_panel.html";
-            } else {
-                alert("عذراً، هذا الرقم (" + phone + ") غير مسجل كمتجر أو مندوب!");
-                loginBtn.innerText = originalText;
-                loginBtn.disabled = false;
-            }
-        })
-        .catch(err => {
-            console.error("Firebase Error:", err);
-            alert("حدث خطأ في الاتصال بقاعدة البيانات. تأكد من الإنترنت.");
-            loginBtn.innerText = originalText;
-            loginBtn.disabled = false;
-        });
+  function login() {
+    // هذا السطر سينظف الرقم من المسافات وأي رموز مخفية تماماً
+    let phoneInput = document.getElementById("driver-phone").value;
+    let phone = phoneInput.replace(/\D/g, ''); // سيُبقي فقط الأرقام (0-9)
+    
+    if(!phone) {
+        alert("يرجى إدخال الرقم");
+        return;
     }
 
-    // كود فحص إذا كان المندوب مسجل دخول مسبقاً (يتم تشغيله عند فتح الصفحة)
-    window.onload = function() {
-        if(localStorage.getItem("driverPhone")) {
+    console.log("الرقم النقي الذي سيتم البحث عنه:", phone);
+
+    database.ref("Deliveries/" + phone).once("value")
+    .then(snap => {
+        if(snap.exists()) {
+            const driverData = snap.val();
+            localStorage.setItem("driverPhone", phone);
+            localStorage.setItem("driverName", driverData.name);
+            localStorage.setItem("driverRegion", driverData.region);
+            
+            alert("أهلاً بك يا " + driverData.name);
             window.location.href = "delivery_panel.html";
+        } else {
+            alert("هذا الرقم (" + phone + ") غير موجود. تأكد من كتابة الرقم بشكل صحيح.");
         }
-    };
+    })
+    .catch(err => alert("خطأ: " + err.message));
+}
 </script>
 </body>
 </html>
