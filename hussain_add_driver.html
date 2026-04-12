@@ -23,7 +23,7 @@
     <script>
         function addDriver() {
             const name = document.getElementById("d-name").value.trim();
-            const phone = document.getElementById("d-phone").value.trim();
+const phone = document.getElementById("d-phone").value.replace(/\D/g, '');
             const region = document.getElementById("d-region").value.trim();
             const vehicle = document.getElementById("d-vehicle").value.trim();
 
