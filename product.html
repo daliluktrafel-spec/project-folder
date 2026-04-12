@@ -128,18 +128,32 @@ document.getElementById("order-delivery").onclick = () => {
     askForGPS(); 
     document.getElementById("delivery-modal").style.display = "flex";
     const list = document.getElementById("drivers-list");
-    list.innerHTML = "جاري البحث...";
-    database.ref("Deliveries").orderByChild("region").equalTo(userRegion).once("value", snap => {
+    list.innerHTML = "جاري البحث عن مناديب...";
+
+    // التعديل هنا: سنقوم بجلب كل المناديب بدون شرط المنطقة
+    database.ref("Deliveries").once("value", snap => {
         list.innerHTML = "";
         const drivers = snap.val();
-        if(!drivers) return list.innerHTML = "لا يوجد مناديب حالياً";
+        if(!drivers) return list.innerHTML = "لا يوجد مناديب حالياً في النظام";
+
         Object.keys(drivers).forEach(phone => {
             const d = drivers[phone];
-            list.innerHTML += `<div class="driver-card"><div style="text-align:right;"><b>${d.name}</b><br><small>${d.vehicle || 'توصيل'}</small></div><button class="btn-main" style="width:70px; padding:8px; font-size:12px; background:var(--gold); color:white;" onclick="sendOrderToDriver('${phone}', '${d.name}')">طلب</button></div>`;
+            
+            // إنشاء كرت المندوب مع إظهار منطقته بخط صغير
+            list.innerHTML += `
+                <div class="driver-card">
+                    <div style="text-align:right;">
+                        <b>${d.name}</b><br>
+                        <small style="color:var(--gold); font-size:11px;">📍 المنطقة: ${d.region}</small> | 
+                        <small style="font-size:11px;">${d.vehicle || 'توصيل'}</small>
+                    </div>
+                    <button class="btn-main" 
+                        style="width:70px; padding:8px; font-size:12px; background:var(--gold); color:white;" 
+                        onclick="sendOrderToDriver('${phone}', '${d.name}')">طلب</button>
+                </div>`;
         });
     });
 };
-
 function sendOrderToDriver(phone, name) {
     const orderID = "ORD-" + Date.now();
     
