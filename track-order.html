@@ -130,16 +130,15 @@
 
     // 3. وظائف الدردشة والبلاغات
     function sendMsg() {
-        const text = document.getElementById("msg-input").value.trim();
-        if(!text || !orderId) return;
-        database.ref("Chats/" + orderId).push({
-            sender: myName,
-            text: text,
-            time: Date.now()
-        });
-        document.getElementById("msg-input").value = "";
-    }
-
+    const text = document.getElementById("msg-input").value.trim();
+    if(!text || !orderId) return;
+    database.ref("Chats/" + orderId).push({
+        sender: "customer", // أرسل كلمة customer ثابتة
+        text: text,
+        time: Date.now()
+    });
+    document.getElementById("msg-input").value = "";
+}
     function sendComplaint() {
         const msg = prompt("اكتب مشكلتك هنا (تأخير، سوء تعامل، مشكلة في المنتج):");
         if(msg && orderId) {

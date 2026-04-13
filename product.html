@@ -79,7 +79,7 @@ const productId = String(urlParams.get('productId'));
 let currentProduct = null;
 const userRegion = localStorage.getItem("userRegion") || "";
 let customerGPS = ""; 
-const FCM_SERVER_KEY = "AIzaSyAMEoUTIMAS0mh06_SxrM2T_efDxEmEoxg"; // مفتاح التنبيهات
+const FCM_SERVER_KEY = "AIzaSyAMEoUTIMAS0mh06_SxrM2T_efDxEmEoxg"; 
 
 // 1. جلب بيانات المنتج
 database.ref("products").once("value").then(snap => {
@@ -104,7 +104,7 @@ database.ref("products").once("value").then(snap => {
     initFavorite(); checkActiveOrder(); loadRelatedProducts(currentProduct);
 });
 
-// 2. دالة إرسال التنبيه اللحظي للمناديب (عند طلب مندوب)
+// 2. دالة إرسال التنبيه اللحظي
 function notifyDriversInstantly(region, productName) {
     database.ref("Deliveries").orderByChild("region").equalTo(region).once("value", snap => {
         snap.forEach(child => {
@@ -129,25 +129,16 @@ function notifyDriversInstantly(region, productName) {
     });
 }
 
-// 3. برمجة زر الواتساب (طلب مباشر)
+// 3. برمجة زر الواتساب
 document.getElementById("order-wa").onclick = () => {
     if(!currentProduct) return;
-    
-    // التحقق من وجود عرض صاروخي
     const isFlashActive = currentProduct.isFlash && currentProduct.flashExpiry > Date.now();
     const offerStatus = isFlashActive ? `نعم (سعر العرض: ${currentProduct.flashPrice})` : "لا يوجد عرض حالياً";
-    
-    const message = `مرحباً متاجر البلاد، أرجو شراء المنتج التالي:
-- الاسم: ${currentProduct.name}
-- السعر: ${currentProduct.price} ريال
-- المتجر: ${currentProduct.store}
-- العرض الصاروخي: ${offerStatus}`;
-
-    const whatsappUrl = `https://wa.me/967774257557?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+    const message = `مرحباً متاجر البلاد، أرجو شراء المنتج التالي:\n- الاسم: ${currentProduct.name}\n- السعر: ${currentProduct.price} ريال\n- المتجر: ${currentProduct.store}\n- العرض الصاروخي: ${offerStatus}`;
+    window.open(`https://wa.me/967774257557?text=${encodeURIComponent(message)}`, '_blank');
 };
 
-// 4. برمجة زر المندوب (المزاد)
+// 4. برمجة زر المندوب (المزاد) + التحديث اللحظي للدردشة
 document.getElementById("order-delivery").onclick = () => {
     const userName = localStorage.getItem("userName");
     const userPhone = localStorage.getItem("userPhone");
@@ -155,7 +146,7 @@ document.getElementById("order-delivery").onclick = () => {
     const pPrice = document.getElementById("product-price").innerText;
 
     if(!userName) return alert("يرجى تسجيل الدخول أولاً");
-    if(!userRegion) return alert("حدد منطقتك أولاً من القائمة العلوية");
+    if(!userRegion) return alert("حدد منطقتك أولاً");
 
     const orderData = {
         customer: userName, customerPhone: userPhone || "لا يوجد رقم",
@@ -167,11 +158,17 @@ document.getElementById("order-delivery").onclick = () => {
     database.ref("Orders").push(orderData).then(() => {
         notifyDriversInstantly(userRegion, pName); 
         alert("تم إرسال طلبك للمزاد! سيقبله أقرب مندوب فوراً 🛵");
-        document.getElementById("delivery-modal").style.display = "none";
+        
+        // التحديث السحري: استدعاء الفحص فوراً ليظهر زر التتبع بدون خروج
+        checkActiveOrder(); 
+        
+        if(document.getElementById("delivery-modal")) {
+            document.getElementById("delivery-modal").style.display = "none";
+        }
     }).catch(err => alert("خطأ في الطلب: " + err.message));
 };
 
-// --- الدوال الإضافية (مساعدة) ---
+// --- الدوال الإضافية ---
 function trackInterest(category) {
     if(!category) return;
     let interests = JSON.parse(localStorage.getItem("userInterests") || "{}");
@@ -203,13 +200,18 @@ function initFavorite() {
 
 function checkActiveOrder() {
     const myName = localStorage.getItem("userName");
-    if(!myName) return;
+    if(!myName || !currentProduct) return;
     database.ref("Orders").orderByChild("customer").equalTo(myName).once("value", snap => {
         const orders = snap.val();
         if (orders) {
             Object.values(orders).forEach(ord => {
                 if (ord.pName === currentProduct.name && ord.status !== "delivered") {
-                    document.getElementById("main-btn-group").innerHTML = `<div style="background:#fff3e0; padding:15px; border-radius:12px; border:1px solid #e67e22; margin-bottom:10px;"><p style="margin:0; font-size:14px; color:#e67e22; font-weight:bold;">لديك طلب نشط!</p><button class="btn-main" style="background:#e67e22; color:white; margin-top:10px;" onclick="location.href='track-order.html?orderId=${ord.id}'">💬 تتبع الطلب</button></div><button class="btn-main btn-back" onclick="window.history.back()">رجوع</button>`;
+                    document.getElementById("main-btn-group").innerHTML = `
+                        <div style="background:#fff3e0; padding:15px; border-radius:12px; border:1px solid #e67e22; margin-bottom:10px;">
+                            <p style="margin:0; font-size:14px; color:#e67e22; font-weight:bold;">لديك طلب نشط!</p>
+                            <button class="btn-main" style="background:#e67e22; color:white; margin-top:10px;" onclick="location.href='track-order.html?orderId=${ord.id}'">💬 تتبع الطلب والدردشة</button>
+                        </div>
+                        <button class="btn-main btn-back" onclick="window.history.back()">رجوع</button>`;
                 }
             });
         }
