@@ -7,48 +7,21 @@
     <style>
         :root { --gold: #b89b4a; --dark: #1b1e33; --green: #27ae60; --blue: #3498db; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5; margin: 0; padding: 15px; padding-bottom: 50px; }
-        
-        .header-box { 
-            background: var(--dark); color: white; padding: 15px; border-radius: 15px; 
-            margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-bottom: 4px solid var(--gold);
-        }
-
-        .profit-card {
-            background: linear-gradient(45deg, #1b1e33, #2c2f4a); 
-            color: #e6d38a; padding: 15px; border-radius: 20px; 
-            text-align: center; margin-bottom: 20px; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2); border: 1px solid var(--gold);
-        }
-        
-        .order-card { 
-            background: white; padding: 20px; border-radius: 18px; margin-bottom: 15px; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05); position: relative; border-right: 6px solid #e67e22;
-            transition: 0.3s; 
-        }
+        .header-box { background: var(--dark); color: white; padding: 15px; border-radius: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-bottom: 4px solid var(--gold); }
+        .profit-card { background: linear-gradient(45deg, #1b1e33, #2c2f4a); color: #e6d38a; padding: 15px; border-radius: 20px; text-align: center; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); border: 1px solid var(--gold); }
+        .order-card { background: white; padding: 20px; border-radius: 18px; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); position: relative; border-right: 6px solid #e67e22; transition: 0.3s; }
         .order-card.my-order { border-right-color: var(--green); }
-
-        .status-tag { 
-            position: absolute; top: 15px; left: 15px; font-size: 11px; padding: 5px 12px; 
-            border-radius: 20px; font-weight: bold; 
-        }
+        .status-tag { position: absolute; top: 15px; left: 15px; font-size: 11px; padding: 5px 12px; border-radius: 20px; font-weight: bold; }
         .tag-new { background: #fff3e0; color: #e67e22; }
         .tag-active { background: #e8f5e9; color: var(--green); }
-
-        .btn { 
-            border: none; padding: 12px; width: 100%; border-radius: 12px; 
-            font-weight: bold; cursor: pointer; margin-top: 10px; font-family: inherit;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
+        .btn { border: none; padding: 12px; width: 100%; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 10px; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-accept { background: var(--green); color: white; }
         .btn-chat { background: var(--blue); color: white; }
         .btn-maps { background: #4285F4; color: white; }
         .btn-finish { background: var(--dark); color: white; }
         .btn-logout { background: #d45d5d; color: white; padding: 8px 15px; font-size: 12px; width: auto; margin: 0; }
-
         .order-info b { color: var(--dark); font-size: 18px; }
         .order-info p { margin: 8px 0; color: #555; font-size: 14px; line-height: 1.5; }
-        
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
         .new-order-anim { animation: pulse 1.5s infinite; }
     </style>
@@ -69,7 +42,7 @@
     </div>
 
     <div id="orders-list">
-        <p style="text-align:center; padding:50px; color:#888;">جاري البحث عن طلبات في منطقتك...</p>
+        <p style="text-align:center; padding:50px; color:#888;">جاري البحث عن طلبات...</p>
     </div>
 
     <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" preload="auto"></audio>
@@ -98,22 +71,18 @@
                 const list = document.getElementById("orders-list");
                 list.innerHTML = "";
                 const data = snap.val() || {};
-                const ordersArray = Object.values(data);
+                
+                // تحويل البيانات لمصفوفة لسهولة الفلترة والترتيب
+                const ordersArray = Object.keys(data).map(key => ({
+                    id: key,
+                    ...data[key]
+                })).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-              // المندوب يرى فقط: الطلبات الموجهة لرقمه هو شخصياً
-const filteredOrders = ordersArray.filter(ord => 
-    ord.driverPhone === myPhone // شرط أساسي: الطلب موجه لهذا المندوب فقط
-);
-// إذا كان الطلب في حالة انتظار، أظهر زر "قبول الطلب"
-if (ord.status === "waiting") {
-    cardHTML += `
-        <button class="btn-accept" 
-            style="background: #27ae60; color: white; width: 100%; padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px;" 
-            onclick="acceptOrder('${orderId}')">
-            ✅ قبول الطلب (خطف)
-        </button>
-    `;
-}
+                // المندوب يرى طلباته الخاصة أو طلبات المزاد في منطقته
+                const filteredOrders = ordersArray.filter(ord => 
+                    ord.driverPhone === myPhone || (ord.status === "waiting" && ord.region === myRegion)
+                );
+
                 const newOrdersCount = filteredOrders.filter(o => o.status === "waiting").length;
                 if (newOrdersCount > lastOrdersCount) {
                     soundEffect.play().catch(() => {});
@@ -122,59 +91,76 @@ if (ord.status === "waiting") {
                 lastOrdersCount = newOrdersCount;
 
                 if (filteredOrders.length === 0) {
-                    list.innerHTML = `<div style='text-align:center; padding:50px;'><p>لا توجد طلبات حالياً في <b>${myRegion}</b></p></div>`;
+                    list.innerHTML = `<div style='text-align:center; padding:50px;'><p>لا توجد طلبات متاحة حالياً</p></div>`;
                     return;
                 }
 
-                filteredOrders.sort((a,b) => b.id.split('-')[1] - a.id.split('-')[1]).forEach(ord => {
+                filteredOrders.forEach(ord => {
                     const isWaiting = ord.status === 'waiting';
                     const isDelivered = ord.status === 'delivered';
                     
-                    filteredOrders.sort((a,b) => b.timestamp - a.timestamp).forEach(ord => {
-                    const isWaiting = ord.status === 'waiting';
-                    const isDelivered = ord.status === 'delivered';
-                    
-                    // تحديد معرف الطلب (OrderId) من البيانات
-                    const orderId = Object.keys(data).find(key => data[key].timestamp === ord.timestamp);
-
                     list.innerHTML += `
                         <div class="order-card ${isWaiting ? 'new-order-anim' : 'my-order'}">
                             <span class="status-tag ${isWaiting ? 'tag-new' : 'tag-active'}">
-                                ${isWaiting ? '🔔 طلب متاح للمزاد' : (isDelivered ? '✅ مكتمل' : '🚚 قيد التوصيل')}
+                                ${isWaiting ? '🔔 طلب جديد (متاح)' : (isDelivered ? '✅ مكتمل' : '🚚 قيد التوصيل')}
                             </span>
                             
                             <div class="order-info">
-                                <b>${ord.pName}</b>
+                                <b>${ord.pName || ord.product || 'منتج'}</b>
                                 <p>
                                     👤 الزبون: <b>${ord.customer}</b><br>
-                                    📍 المنطقة: ${ord.region}<br>
+                                    🏪 المتجر: ${ord.store || 'غير محدد'}<br>
                                     💰 السعر: <span style="color:var(--green); font-weight:bold;">${ord.price}</span>
                                 </p>
                             </div>
 
                             ${isWaiting ? 
-                                `<button class="btn btn-accept" onclick="acceptOrder('${orderId}')">✅ قبول الطلب (خطف)</button>` : 
+                                `<button class="btn btn-accept" onclick="acceptOrder('${ord.id}')">✅ قبول الطلب (خطف)</button>` : 
                                 (!isDelivered ? `
-                                    <button class="btn btn-maps" onclick="smartOpenMaps('${ord.region}', '${ord.gps || ''}')">📍 الموقع بدقة</button>
-                                    <button class="btn btn-chat" onclick="goToChat('${orderId}')">💬 دردشة</button>
-                                    <button class="btn btn-finish" onclick="finishOrder('${orderId}')">🏁 تم التوصيل</button>
-                                ` : `<p style="text-align:center; color:var(--green); font-weight:bold; margin-top:15px;">اكتملت العملية ✨</p>`)
+                                    <button class="btn btn-maps" onclick="smartOpenMaps('${ord.region}', '${ord.gps || ''}')">📍 موقع البيت (GPS)</button>
+                                    <button class="btn btn-chat" onclick="goToChat('${ord.id}')">💬 دردشة مع الزبون</button>
+                                    <button class="btn btn-finish" onclick="finishOrder('${ord.id}')">🏁 تم التوصيل</button>
+                                ` : `<p style="text-align:center; color:var(--green); font-weight:bold; margin-top:15px;">تمت المهمة بنجاح ✨</p>`)
                             }
                         </div>
                     `;
-                });            });
+                });
+            });
         }
 
-        function pickOrder(id) {
-            database.ref("Orders/" + id).update({ 
-                status: "picked", 
-                driverPhone: myPhone,
-                driverName: myName 
+        function acceptOrder(orderId) {
+            database.ref("Orders/" + orderId).transaction((order) => {
+                if (order && order.status === "waiting") {
+                    order.status = "picked";
+                    order.driverPhone = myPhone;
+                    order.driverName = myName;
+                    return order;
+                }
+                return; 
+            }, (error, committed) => {
+                if (committed) {
+                    alert("مبروك! ربحت الطلب ✅");
+                    updateDriverRank(myPhone);
+                } else {
+                    alert("للأسف، مندوب آخر خطف الطلب قبلك 🏃‍♂️");
+                }
+            });
+        }
+
+        function updateDriverRank(phone) {
+            const ref = database.ref("Deliveries/" + phone);
+            ref.child("completedCount").transaction(c => (c || 0) + 1)
+            .then(() => {
+                ref.once("value", s => {
+                    if (s.val() && s.val().completedCount >= 50) {
+                        ref.update({ rank: "مميز ⭐" });
+                    }
+                });
             });
         }
 
         function finishOrder(id) {
-            if(confirm("هل استلمت المبلغ والعمولة؟")) {
+            if(confirm("هل استلمت المبلغ؟")) {
                 const today = new Date().toLocaleDateString('en-CA');
                 database.ref("Orders/" + id).update({ 
                     status: "delivered",
@@ -198,50 +184,9 @@ if (ord.status === "waiting") {
         }
 
         function smartOpenMaps(region, gps) {
-            let url = "";
-            if (gps && gps !== "") {
-                // الرابط المباشر للإحداثيات (هذا سيفتح البيت بدقة)
-                url = `https://www.google.com/maps?q=${gps}`;
-            } else {
-                // البحث بالاسم (المنطقة)
-                url = `https://www.google.com/maps/search/${encodeURIComponent(region)}`;
-            }
+            let url = gps ? `https://www.google.com/maps/search/?api=1&query=${gps}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(region)}`;
             window.open(url, '_blank');
         }
-function acceptOrder(orderId) {
-    const myPhone = localStorage.getItem("driverPhone");
-    const myName = localStorage.getItem("driverName");
-
-    // نظام المزاد: أول من يضغط يربح
-    database.ref("Orders/" + orderId).transaction((order) => {
-        if (order && order.status === "waiting") {
-            order.status = "picked";
-            order.driverPhone = myPhone;
-            order.driverName = myName;
-            return order;
-        }
-        return; // إذا قام مندوب آخر بقبوله قبلك
-    }, (error, committed) => {
-        if (committed) {
-            alert("مبروك! ربحت الطلب ✅");
-            updateDriverRank(myPhone); // تحديث الرتبة
-        } else {
-            alert("للأسف، مندوب آخر كان أسرع منك 🏃‍♂️");
-        }
-    });
-}
-
-function updateDriverRank(phone) {
-    const ref = database.ref("Deliveries/" + phone);
-    ref.child("completedCount").transaction(c => (c || 0) + 1)
-    .then(() => {
-        ref.once("value", s => {
-            if (s.val().completedCount >= 50) {
-                ref.update({ rank: "مميز ⭐" });
-            }
-        });
-    });
-}
 
         function goToChat(orderId) {
             window.location.href = "driver-chat.html?orderId=" + orderId;
@@ -249,7 +194,9 @@ function updateDriverRank(phone) {
 
         function logoutDriver() {
             if(confirm("تسجيل الخروج؟")) {
-                localStorage.clear();
+                localStorage.removeItem("driverPhone");
+                localStorage.removeItem("driverName");
+                localStorage.removeItem("driverRegion");
                 window.location.href = "driver-login.html";
             }
         }
