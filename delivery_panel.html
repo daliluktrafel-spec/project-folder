@@ -200,6 +200,35 @@
                 window.location.href = "driver-login.html";
             }
         }
+// استبدل الدالة الموجودة في ملفك بهذا الكود المصلح
+function requestNotificationPermission() {
+    // التحقق من أن المتصفح يدعم الإشعارات
+    if (!('Notification' in window)) return;
+
+    Notification.requestPermission().then((permission) => {
+        if (permission === 'granted') {
+            console.log('تم السماح بالتنبيهات ✅');
+            
+            const messaging = firebase.messaging();
+            // وضع مفتاح VAPID الذي وجدته في لوحة فايربيس هنا
+            messaging.getToken({ 
+                vapidKey: 'BDBJraRn91TvT5nwsB94WxxSeoRbU_q_lYczGfKAINhe3cmKIpTbPvKjBaqeisPZBM1o-7tCQ37M5OFPsVoQnDM' 
+            }).then((currentToken) => {
+                if (currentToken) {
+                    console.log('تم الحصول على توكن الجهاز:', currentToken);
+                    // حفظ التوكن في قاعدة البيانات لكي نعرف كيف نراسل هذا المندوب
+                    database.ref("Deliveries/" + myPhone).update({ fcmToken: currentToken });
+                } else {
+                    console.log('لم نتمكن من الحصول على التوكن. تأكد من إعدادات الموقع.');
+                }
+            }).catch((err) => {
+                console.log('خطأ في الحصول على التوكن:', err);
+            });
+        }
+    });
+}
+// نطلب الإذن بمجرد دخول المندوب
+window.onload = requestNotificationPermission;
     </script>
 </body>
 </html>

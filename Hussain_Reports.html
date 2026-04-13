@@ -134,6 +134,46 @@
                 </div>`;
             });
         });
+// 1. مفتاح السيرفر (المحرك) - استبدله بمفتاحك
+const FCM_SERVER_KEY = "AIzaSyAMEoUTIMAS0mh06_SxrM2T_efDxEmEoxg";
+
+// 2. دالة إرسال الإشعار لجميع المناديب في منطقة معينة
+function broadcastOrderAlert(region, productName) {
+    // جلب المناديب الذين لديهم Token في هذه المنطقة
+    database.ref("Deliveries").orderByChild("region").equalTo(region).once("value", snap => {
+        snap.forEach(child => {
+            const driver = child.val();
+            if (driver.fcmToken) {
+                // إرسال الطلب لجوجل ليقوم بتنبيه الجوال
+                fetch('https://fcm.googleapis.com/fcm/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'key=' + FCM_SERVER_KEY
+                    },
+                    body: JSON.stringify({
+                        to: driver.fcmToken,
+                        notification: {
+                            title: "🛵 طلب جديد في " + region,
+                            body: "المنتج: " + productName + " بانتظار من يخطفه!",
+                            icon: "icon.png",
+                            click_action: "https://wafaseiyunshop.web.app/delivery_panel.html"
+                        },
+                        priority: "high"
+                    })
+                }).then(res => console.log("تم إرسال التنبيه للمندوب: " + driver.name));
+            }
+        });
+    });
+}
+
+// 3. مراقبة الطلبات الجديدة (بمجرد أن يطلب زبون، اللوحة ستطلق الإنذار)
+database.ref("Orders").on("child_added", snap => {
+    const order = snap.val();
+    if (order.status === "waiting") {
+        broadcastOrderAlert(order.region, order.pName || order.product);
+    }
+});
 
         // النسخ الاحتياطي
         function exportData(path, fileName) {

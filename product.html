@@ -73,14 +73,15 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="firebase.js"></script>
-
 <script>
 const urlParams = new URLSearchParams(window.location.search);
 const productId = String(urlParams.get('productId'));
 let currentProduct = null;
 const userRegion = localStorage.getItem("userRegion") || "";
 let customerGPS = ""; 
+const FCM_SERVER_KEY = "AIzaSyAMEoUTIMAS0mh06_SxrM2T_efDxEmEoxg"; // مفتاح التنبيهات
 
+// 1. جلب بيانات المنتج
 database.ref("products").once("value").then(snap => {
     const data = snap.val() || {};
     currentProduct = Object.values(data).find(p => String(p.id) === productId);
@@ -103,31 +104,53 @@ database.ref("products").once("value").then(snap => {
     initFavorite(); checkActiveOrder(); loadRelatedProducts(currentProduct);
 });
 
-function trackInterest(category) {
-    if(!category) return;
-    let interests = JSON.parse(localStorage.getItem("userInterests") || "{}");
-    interests[category] = (interests[category] || 0) + 1;
-    localStorage.setItem("userInterests", JSON.stringify(interests));
+// 2. دالة إرسال التنبيه اللحظي للمناديب (عند طلب مندوب)
+function notifyDriversInstantly(region, productName) {
+    database.ref("Deliveries").orderByChild("region").equalTo(region).once("value", snap => {
+        snap.forEach(child => {
+            const driver = child.val();
+            if (driver.fcmToken) {
+                fetch('https://fcm.googleapis.com/fcm/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'key=' + FCM_SERVER_KEY },
+                    body: JSON.stringify({
+                        to: driver.fcmToken,
+                        notification: {
+                            title: "🛵 طلب جديد في " + region,
+                            body: "منتج: " + productName + " بانتظار من يخطفه!",
+                            icon: "icon.png",
+                            click_action: "https://wafaseiyunshop.web.app/delivery_panel.html"
+                        },
+                        priority: "high"
+                    })
+                });
+            }
+        });
+    });
 }
 
-function askForGPS() {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition((position) => {
-            customerGPS = position.coords.latitude + "," + position.coords.longitude;
-            document.getElementById("gps-status").innerText = "📍 تم تحديد موقع منزلك بدقة ✅";
-            document.getElementById("gps-status").style.color = "#27ae60";
-        }, (error) => {
-            document.getElementById("gps-status").innerText = "📍 لم يتم تحديد الموقع بدقة (استخدم اسم المنطقة)";
-            document.getElementById("gps-status").style.color = "orange";
-        }, { enableHighAccuracy: true });
-    }
-}
+// 3. برمجة زر الواتساب (طلب مباشر)
+document.getElementById("order-wa").onclick = () => {
+    if(!currentProduct) return;
+    
+    // التحقق من وجود عرض صاروخي
+    const isFlashActive = currentProduct.isFlash && currentProduct.flashExpiry > Date.now();
+    const offerStatus = isFlashActive ? `نعم (سعر العرض: ${currentProduct.flashPrice})` : "لا يوجد عرض حالياً";
+    
+    const message = `مرحباً متاجر البلاد، أرجو شراء المنتج التالي:
+- الاسم: ${currentProduct.name}
+- السعر: ${currentProduct.price} ريال
+- المتجر: ${currentProduct.store}
+- العرض الصاروخي: ${offerStatus}`;
 
+    const whatsappUrl = `https://wa.me/967774257557?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+};
+
+// 4. برمجة زر المندوب (المزاد)
 document.getElementById("order-delivery").onclick = () => {
     const userName = localStorage.getItem("userName");
     const userPhone = localStorage.getItem("userPhone");
-    
-    // سحب البيانات مباشرة من الصفحة لضمان عدم وجود خطأ undefined
     const pName = document.getElementById("product-name").innerText;
     const pPrice = document.getElementById("product-price").innerText;
 
@@ -135,71 +158,25 @@ document.getElementById("order-delivery").onclick = () => {
     if(!userRegion) return alert("حدد منطقتك أولاً من القائمة العلوية");
 
     const orderData = {
-        customer: userName,
-        customerPhone: userPhone || "لا يوجد رقم",
-        pName: pName,
-        price: pPrice,
-        region: userRegion,
-        status: "waiting", // الحالة الأساسية للمزاد
-        driverPhone: "none",
-        driverName: "none",
-        gps: customerGPS,
-        date: new Date().toLocaleString(),
-        timestamp: Date.now()
+        customer: userName, customerPhone: userPhone || "لا يوجد رقم",
+        pName: pName, price: pPrice, region: userRegion,
+        status: "waiting", driverPhone: "none", driverName: "none",
+        gps: customerGPS, date: new Date().toLocaleString(), timestamp: Date.now()
     };
 
-    database.ref("Orders").push(orderData)
-    .then(() => {
+    database.ref("Orders").push(orderData).then(() => {
+        notifyDriversInstantly(userRegion, pName); 
         alert("تم إرسال طلبك للمزاد! سيقبله أقرب مندوب فوراً 🛵");
         document.getElementById("delivery-modal").style.display = "none";
-    })
-    .catch(err => alert("خطأ في الطلب: " + err.message));
+    }).catch(err => alert("خطأ في الطلب: " + err.message));
 };
 
-function sendOrderToDriver(phone, name) {
-    const orderID = "ORD-" + Date.now();
-    
-    // --- الحسبة الذكية للسعر ---
-    // نتحقق أولاً: هل العرض الصاروخي فعال حالياً؟
-    const isFlashActive = currentProduct.isFlash && currentProduct.flashExpiry > Date.now();
-    // إذا فعال نأخذ flashPrice، إذا لا نأخذ السعر العادي price
-    const finalPrice = isFlashActive ? currentProduct.flashPrice : currentProduct.price;
-
-    database.ref("Orders/" + orderID).set({
-        id: orderID, 
-        pName: currentProduct.name, 
-        price: finalPrice, // السعر الصحيح (العادي أو الصاروخي)
-        store: currentProduct.store,
-        customer: localStorage.getItem("userName") || "عميل", 
-        region: userRegion, 
-        driverPhone: phone, // رقم المندوب المختار
-        driverName: name,   // اسم المندوب المختار
-        gps: customerGPS, 
-        status: "waiting", 
-        date: new Date().toLocaleString()
-    }).then(() => { 
-        let history = JSON.parse(localStorage.getItem("spendHistory") || "[]");
-        history.unshift({ item: currentProduct.name, price: finalPrice, date: new Date().toLocaleDateString() });
-        localStorage.setItem("spendHistory", JSON.stringify(history.slice(0, 10)));
-        alert("تم إرسال الطلب للمندوب " + name + " بنجاح ✅"); 
-        location.reload(); 
-    });
-}
-
-function loadRelatedProducts(currentP) {
-    const list = document.getElementById("related-list");
-    database.ref("products").limitToLast(40).once("value", snap => {
-        const allData = snap.val() || {};
-        const related = Object.values(allData).filter(p => {
-            if (String(p.id) === String(currentP.id)) return false;
-            return p.category === currentP.category;
-        });
-        if (related.length === 0) { document.querySelector(".related-section").style.display = "none"; return; }
-        list.innerHTML = "";
-        related.forEach(rp => {
-            list.innerHTML += `<div class="related-card" onclick="location.href='product.html?productId=${rp.id}';"><img src="${rp.image || 'no-image.png'}" class="related-img"><div class="related-name">${rp.name}</div><div class="related-price">${rp.price} ريال</div></div>`;
-        });
-    });
+// --- الدوال الإضافية (مساعدة) ---
+function trackInterest(category) {
+    if(!category) return;
+    let interests = JSON.parse(localStorage.getItem("userInterests") || "{}");
+    interests[category] = (interests[category] || 0) + 1;
+    localStorage.setItem("userInterests", JSON.stringify(interests));
 }
 
 function startCountdown(expiry) {
@@ -224,11 +201,6 @@ function initFavorite() {
     };
 }
 
-document.getElementById("order-wa").onclick = () => {
-    const msg = `مرحباً، أود طلب المنتج التالي:\n- الاسم: ${currentProduct.name}\n- السعر: ${currentProduct.price}\n- المتجر: ${currentProduct.store}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-};
-
 function checkActiveOrder() {
     const myName = localStorage.getItem("userName");
     if(!myName) return;
@@ -243,6 +215,20 @@ function checkActiveOrder() {
         }
     });
 }
+
+function loadRelatedProducts(currentP) {
+    const list = document.getElementById("related-list");
+    database.ref("products").limitToLast(40).once("value", snap => {
+        const allData = snap.val() || {};
+        const related = Object.values(allData).filter(p => p.id !== currentP.id && p.category === currentP.category);
+        if (related.length === 0) { document.querySelector(".related-section").style.display = "none"; return; }
+        list.innerHTML = "";
+        related.forEach(rp => {
+            list.innerHTML += `<div class="related-card" onclick="location.href='product.html?productId=${rp.id}';"><img src="${rp.image || 'no-image.png'}" class="related-img"><div class="related-name">${rp.name}</div><div class="related-price">${rp.price} ريال</div></div>`;
+        });
+    });
+}
+
 function closeModal() { document.getElementById("delivery-modal").style.display = "none"; }
 function copyLink() { navigator.clipboard.writeText(window.location.href); alert("تم نسخ الرابط ✅"); }
 </script>
