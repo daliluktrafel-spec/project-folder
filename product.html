@@ -124,36 +124,38 @@ function askForGPS() {
 }
 
 document.getElementById("order-delivery").onclick = () => {
-    if(!userRegion) return alert("حدد منطقتك أولاً");
-    askForGPS(); 
-    document.getElementById("delivery-modal").style.display = "flex";
-    const list = document.getElementById("drivers-list");
-    list.innerHTML = "جاري البحث عن مناديب...";
+    const userName = localStorage.getItem("userName");
+    const userPhone = localStorage.getItem("userPhone");
+    
+    // سحب البيانات مباشرة من الصفحة لضمان عدم وجود خطأ undefined
+    const pName = document.getElementById("product-name").innerText;
+    const pPrice = document.getElementById("product-price").innerText;
 
-    // التعديل هنا: سنقوم بجلب كل المناديب بدون شرط المنطقة
-    database.ref("Deliveries").once("value", snap => {
-        list.innerHTML = "";
-        const drivers = snap.val();
-        if(!drivers) return list.innerHTML = "لا يوجد مناديب حالياً في النظام";
+    if(!userName) return alert("يرجى تسجيل الدخول أولاً");
+    if(!userRegion) return alert("حدد منطقتك أولاً من القائمة العلوية");
 
-        Object.keys(drivers).forEach(phone => {
-            const d = drivers[phone];
-            
-            // إنشاء كرت المندوب مع إظهار منطقته بخط صغير
-            list.innerHTML += `
-                <div class="driver-card">
-                    <div style="text-align:right;">
-                        <b>${d.name}</b><br>
-                        <small style="color:var(--gold); font-size:11px;">📍 المنطقة: ${d.region}</small> | 
-                        <small style="font-size:11px;">${d.vehicle || 'توصيل'}</small>
-                    </div>
-                    <button class="btn-main" 
-                        style="width:70px; padding:8px; font-size:12px; background:var(--gold); color:white;" 
-                        onclick="sendOrderToDriver('${phone}', '${d.name}')">طلب</button>
-                </div>`;
-        });
-    });
+    const orderData = {
+        customer: userName,
+        customerPhone: userPhone || "لا يوجد رقم",
+        pName: pName,
+        price: pPrice,
+        region: userRegion,
+        status: "waiting", // الحالة الأساسية للمزاد
+        driverPhone: "none",
+        driverName: "none",
+        gps: customerGPS,
+        date: new Date().toLocaleString(),
+        timestamp: Date.now()
+    };
+
+    database.ref("Orders").push(orderData)
+    .then(() => {
+        alert("تم إرسال طلبك للمزاد! سيقبله أقرب مندوب فوراً 🛵");
+        document.getElementById("delivery-modal").style.display = "none";
+    })
+    .catch(err => alert("خطأ في الطلب: " + err.message));
 };
+
 function sendOrderToDriver(phone, name) {
     const orderID = "ORD-" + Date.now();
     

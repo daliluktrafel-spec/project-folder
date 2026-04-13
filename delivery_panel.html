@@ -104,6 +104,16 @@
 const filteredOrders = ordersArray.filter(ord => 
     ord.driverPhone === myPhone // شرط أساسي: الطلب موجه لهذا المندوب فقط
 );
+// إذا كان الطلب في حالة انتظار، أظهر زر "قبول الطلب"
+if (ord.status === "waiting") {
+    cardHTML += `
+        <button class="btn-accept" 
+            style="background: #27ae60; color: white; width: 100%; padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px;" 
+            onclick="acceptOrder('${orderId}')">
+            ✅ قبول الطلب (خطف)
+        </button>
+    `;
+}
                 const newOrdersCount = filteredOrders.filter(o => o.status === "waiting").length;
                 if (newOrdersCount > lastOrdersCount) {
                     soundEffect.play().catch(() => {});
@@ -120,33 +130,39 @@ const filteredOrders = ordersArray.filter(ord =>
                     const isWaiting = ord.status === 'waiting';
                     const isDelivered = ord.status === 'delivered';
                     
+                    filteredOrders.sort((a,b) => b.timestamp - a.timestamp).forEach(ord => {
+                    const isWaiting = ord.status === 'waiting';
+                    const isDelivered = ord.status === 'delivered';
+                    
+                    // تحديد معرف الطلب (OrderId) من البيانات
+                    const orderId = Object.keys(data).find(key => data[key].timestamp === ord.timestamp);
+
                     list.innerHTML += `
                         <div class="order-card ${isWaiting ? 'new-order-anim' : 'my-order'}">
                             <span class="status-tag ${isWaiting ? 'tag-new' : 'tag-active'}">
-                                ${isWaiting ? '🔔 طلب جديد' : (isDelivered ? '✅ مكتمل' : '🚚 قيد التوصيل')}
+                                ${isWaiting ? '🔔 طلب متاح للمزاد' : (isDelivered ? '✅ مكتمل' : '🚚 قيد التوصيل')}
                             </span>
                             
                             <div class="order-info">
                                 <b>${ord.pName}</b>
                                 <p>
                                     👤 الزبون: <b>${ord.customer}</b><br>
-                                    🏪 المتجر: ${ord.store}<br>
+                                    📍 المنطقة: ${ord.region}<br>
                                     💰 السعر: <span style="color:var(--green); font-weight:bold;">${ord.price}</span>
                                 </p>
                             </div>
 
                             ${isWaiting ? 
-                                `<button class="btn btn-accept" onclick="pickOrder('${ord.id}')">قبول الطلب ✅</button>` : 
+                                `<button class="btn btn-accept" onclick="acceptOrder('${orderId}')">✅ قبول الطلب (خطف)</button>` : 
                                 (!isDelivered ? `
-                                    <button class="btn btn-maps" onclick="smartOpenMaps('${ord.region}', '${ord.gps || ''}')">📍 موقع البيت بدقة (GPS)</button>
-                                    <button class="btn btn-chat" onclick="goToChat('${ord.id}')">💬 دردشة مع الزبون</button>
-                                    <button class="btn btn-finish" onclick="finishOrder('${ord.id}')">🏁 تم التوصيل واستلام المبلغ</button>
+                                    <button class="btn btn-maps" onclick="smartOpenMaps('${ord.region}', '${ord.gps || ''}')">📍 الموقع بدقة</button>
+                                    <button class="btn btn-chat" onclick="goToChat('${orderId}')">💬 دردشة</button>
+                                    <button class="btn btn-finish" onclick="finishOrder('${orderId}')">🏁 تم التوصيل</button>
                                 ` : `<p style="text-align:center; color:var(--green); font-weight:bold; margin-top:15px;">اكتملت العملية ✨</p>`)
                             }
                         </div>
                     `;
-                });
-            });
+                });            });
         }
 
         function pickOrder(id) {
@@ -192,6 +208,40 @@ const filteredOrders = ordersArray.filter(ord =>
             }
             window.open(url, '_blank');
         }
+function acceptOrder(orderId) {
+    const myPhone = localStorage.getItem("driverPhone");
+    const myName = localStorage.getItem("driverName");
+
+    // نظام المزاد: أول من يضغط يربح
+    database.ref("Orders/" + orderId).transaction((order) => {
+        if (order && order.status === "waiting") {
+            order.status = "picked";
+            order.driverPhone = myPhone;
+            order.driverName = myName;
+            return order;
+        }
+        return; // إذا قام مندوب آخر بقبوله قبلك
+    }, (error, committed) => {
+        if (committed) {
+            alert("مبروك! ربحت الطلب ✅");
+            updateDriverRank(myPhone); // تحديث الرتبة
+        } else {
+            alert("للأسف، مندوب آخر كان أسرع منك 🏃‍♂️");
+        }
+    });
+}
+
+function updateDriverRank(phone) {
+    const ref = database.ref("Deliveries/" + phone);
+    ref.child("completedCount").transaction(c => (c || 0) + 1)
+    .then(() => {
+        ref.once("value", s => {
+            if (s.val().completedCount >= 50) {
+                ref.update({ rank: "مميز ⭐" });
+            }
+        });
+    });
+}
 
         function goToChat(orderId) {
             window.location.href = "driver-chat.html?orderId=" + orderId;
