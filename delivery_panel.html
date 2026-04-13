@@ -67,24 +67,22 @@
         const soundEffect = document.getElementById("notif-sound");
 
         function loadOrders() {
-    database.ref("Orders").on("value", snap => {
-        const list = document.getElementById("orders-list");
-        list.innerHTML = "";
-        const data = snap.val() || {};
-        
-        // تحويل البيانات لمصفوفة
-        const ordersArray = Object.keys(data).map(key => ({
-            id: key,
-            ...data[key]
-        }));
+            database.ref("Orders").on("value", snap => {
+                const list = document.getElementById("orders-list");
+                list.innerHTML = "";
+                const data = snap.val() || {};
+                
+                // تحويل البيانات لمصفوفة لسهولة الفلترة والترتيب
+                const ordersArray = Object.keys(data).map(key => ({
+                    id: key,
+                    ...data[key]
+                })).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-        // القنبلة هنا: المندوب يشوف حالتين فقط
-        const filteredOrders = ordersArray.filter(ord => 
-            // 1. الطلبات اللي هو "خطفها" ومسجلة باسمه
-            ord.driverPhone === myPhone || 
-            // 2. أو أي طلب في "المزاد" (waiting) وموجود في منطقته
-            (ord.status === "waiting" && ord.region === myRegion)
-        );
+                // المندوب يرى: (طلباته اللي خطفها) + (كل طلبات المزاد اللي تنتظر أي مندوب)
+const filteredOrders = ordersArray.filter(ord => 
+    ord.driverPhone === myPhone || ord.status === "waiting"
+);
+
                 const newOrdersCount = filteredOrders.filter(o => o.status === "waiting").length;
                 if (newOrdersCount > lastOrdersCount) {
                     soundEffect.play().catch(() => {});
