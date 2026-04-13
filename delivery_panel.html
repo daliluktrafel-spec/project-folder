@@ -129,24 +129,25 @@
         }
 
         function acceptOrder(orderId) {
-            database.ref("Orders/" + orderId).transaction((order) => {
-                if (order && order.status === "waiting") {
-                    order.status = "picked";
-                    order.driverPhone = myPhone;
-                    order.driverName = myName;
-                    return order;
-                }
-                return; 
-            }, (error, committed) => {
-                if (committed) {
-                    alert("مبروك! ربحت الطلب ✅");
-                    updateDriverRank(myPhone);
-                } else {
-                    alert("للأسف، مندوب آخر خطف الطلب قبلك 🏃‍♂️");
-                }
-            });
+    database.ref("Orders/" + orderId).transaction((order) => {
+        // نتحقق: هل لا يزال الطلب متاحاً (waiting)؟
+        if (order && order.status === "waiting") {
+            order.status = "picked"; // تغيير الحالة فوراً ليختفي من عند البقية
+            order.driverPhone = myPhone;
+            order.driverName = myName;
+            return order; // تنفيذ العملية
         }
-
+        return; // إذا قام شخص آخر بقبوله قبلك، لا تفعل شيئاً
+    }, (error, committed) => {
+        if (committed) {
+            alert("مبروك! لقد خطفت الطلب بنجاح ✅");
+            updateDriverRank(myPhone);
+        } else {
+            // هذا سيظهر للمندوب الذي تأخر بضعة أجزاء من الثانية
+            alert("للأسف، مندوب آخر كان أسرع منك وخطف الطلب! 🏃‍♂️");
+        }
+    });
+}
         function updateDriverRank(phone) {
             const ref = database.ref("Deliveries/" + phone);
             ref.child("completedCount").transaction(c => (c || 0) + 1)
