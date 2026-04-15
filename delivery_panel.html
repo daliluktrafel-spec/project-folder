@@ -262,6 +262,34 @@ if ('serviceWorker' in navigator) {
       console.log('فشل تسجيل ملف الخلفية ❌', err);
     });
 }
+let isReadyForSound = false;
+setTimeout(() => { isReadyForSound = true; }, 3000); // يفعل الجرس بعد 3 ثواني من فتح الصفحة
+
+// 2. كود مراقبة الطلبات الجديدة "تلقائياً"
+database.ref("Orders").on("child_added", snap => {
+    if (isReadyForSound) {
+        const newOrder = snap.val();
+        
+        // هل الطلب في منطقتي وحالته "ينتظر"؟
+        if (newOrder.status === "waiting" && newOrder.region === myRegion) {
+            
+            // تشغيل الجرس
+            const sound = document.getElementById("notif-sound");
+            if (sound) {
+                sound.currentTime = 0;
+                sound.play().catch(() => {
+                    console.log("يا حسين: لازم المندوب يضغط ضغطة واحدة على الشاشة أول ما يفتح عشان يشتغل الصوت!");
+                });
+            }
+
+            // اهتزاز الجوال
+            if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
+            
+            // إظهار تنبيه في المتصفح
+            alert("🛵 طلب جديد في منطقتك بانتظارك!");
+        }
+    }
+});
     </script>
 </body>
 </html>
