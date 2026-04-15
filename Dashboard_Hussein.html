@@ -29,9 +29,26 @@
 
         /* الكروت والجداول */
         .card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 20px; border-right: 5px solid var(--gold); }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
-        .stat-card { background: white; padding: 20px; border-radius: 15px; text-align: center; border-top: 4px solid var(--gold); }
-        
+        /* هذا الجزء سيجعل المحتوى يترتب تلقائياً مهما زادت العناصر */
+.stats-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); 
+    gap: 20px; 
+    align-items: start; /* يمنع تمدد الكروت بشكل عشوائي */
+}
+
+/* تعديل مهم لكرت الزوار والمالية */
+.stat-card, .money-card { 
+    background: white; 
+    padding: 20px; 
+    border-radius: 15px; 
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05); 
+    border-top: 4px solid var(--gold);
+    min-height: 120px; /* لضمان توحيد الشكل */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
         table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; }
         th { background: var(--dark); color: var(--gold); padding: 12px; text-align: right; }
         td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
@@ -67,19 +84,37 @@
 <div class="main-content">
     
     <div id="sec-stats" class="section active">
-        <h1>📊 نظرة عامة اليوم</h1>
-        <div class="stats-grid">
-            <div class="stat-card"><h3>مبيعات اليوم</h3><p id="s-total">0</p></div>
-            <div class="stat-card"><h3>عمولتك (5%)</h3><p id="s-profit" style="color: green;">0</p></div>
-            <div class="stat-card"><h3>طلبات نشطة</h3><p id="s-orders">0</p></div>
+    <h1>📊 نظرة عامة شاملة</h1>
+    
+    <div class="stats-grid">
+        <div class="stat-card" style="border-top-color: #3498db;">
+            <h3>👥 إجمالي زوار المنصة</h3>
+            <p id="s-visits" style="font-size: 28px; color: #3498db;">0</p>
         </div>
-        <div class="card" style="margin-top: 30px;">
-            <h3>🛡️ النسخ الاحتياطي</h3>
-            <button class="btn" onclick="exportData('Orders', 'الطلبات.txt')">تصدير الطلبات</button>
-            <button class="btn" onclick="exportData('Active_Stores', 'المتاجر.txt')">تصدير المتاجر</button>
+
+        <div class="stat-card" style="border-top-color: #27ae60;">
+            <h3>💰 مبيعات اليوم</h3>
+            <p id="s-total">0</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>📈 عمولتك الصافية (5%)</h3>
+            <p id="s-profit" style="color: #27ae60;">0</p>
+        </div>
+
+        <div class="stat-card" style="border-top-color: #e67e22;">
+            <h3>📦 طلبات نشطة حالياً</h3>
+            <p id="s-orders">0</p>
         </div>
     </div>
 
+    <div class="card" style="margin-top: 30px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <h3>🛡️ مركز التحكم في البيانات</h3>
+        <button class="btn" onclick="exportData('Orders', 'الطلبات.txt')">تصدير سجل الطلبات</button>
+        <button class="btn" onclick="exportData('Active_Stores', 'المتاجر.txt')">تصدير قائمة المتاجر</button>
+        <button class="btn" onclick="exportData('Deliveries', 'المناديب.txt')">تصدير فريق التوصيل</button>
+    </div>
+</div>
     <div id="sec-stores" class="section">
         <h1>🏪 طلبات الانضمام الجديدة</h1>
         <div id="pending-list">جاري التحميل...</div>
@@ -162,8 +197,18 @@
     }
 
     // 1. الإحصائيات
+    // 1. الإحصائيات الشاملة (أرباح + زوار)
     function loadStats() {
         const today = new Date().toLocaleDateString('en-CA');
+        
+        // --- مراقبة الزوار (تأكد أن المسار Site_Stats/totalVisits) ---
+        db.ref("Site_Stats/totalVisits").on("value", snap => {
+    const visits = snap.val() || 0;
+    document.getElementById("s-visits").innerText = visits.toLocaleString();
+            console.log("الزوار المحدثون: " + visits);
+        });
+
+        // مراقبة الطلبات والأرباح
         db.ref("Orders").on("value", snap => {
             let total = 0, active = 0;
             snap.forEach(c => {
@@ -279,6 +324,11 @@
             a.href = URL.createObjectURL(blob); a.download = file; a.click();
         });
     }
+// مراقبة عداد الزوار من قاعدة البيانات
+db.ref("Site_Stats/totalVisits").on("value", snap => {
+    const visits = snap.val() || 0;
+    document.getElementById("s-visits").innerText = visits.toLocaleString();
+});
 </script>
 
 </body>
