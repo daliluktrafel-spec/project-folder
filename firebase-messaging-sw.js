@@ -3,13 +3,12 @@ importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js')
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
 
 firebase.initializeApp({
-  // ضع هنا بيانات مشروعك من ملف firebase.js
   apiKey: "AIzaSyAMEoUTIMAS0mh06_SxrM2T_efDxEmEoxg",
+  databaseURL: "https://wafaseiyunshop-default-rtdb.firebaseio.com", // أضف هذا السطر ضروري جداً
   projectId: "wafaseiyunshop",
   messagingSenderId: "101115796279",
   appId: "1:101115796279:web:3753efad2a443c9b6098b2"
 });
-
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
