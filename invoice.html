@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>فاتورة متاجر البلاد</title>
+    <style>
+        :root { --gold: #b89b4a; --dark: #1b1e33; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f4; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        
+        .invoice-box {
+            background: white; padding: 30px; border-radius: 15px;
+            max-width: 450px; width: 100%; border: 1px solid #ddd;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .header { text-align: center; border-bottom: 3px solid var(--gold); padding-bottom: 15px; margin-bottom: 20px; }
+        .header h2 { margin: 5px 0; color: var(--dark); }
+
+        /* جعل الحقول قابلة للكتابة بشكل جميل */
+        .editable-field {
+            border-bottom: 1px dashed #ccc;
+            padding: 2px 5px;
+            display: inline-block;
+            min-width: 50px;
+            outline: none;
+            color: #333;
+        }
+        .editable-field:focus { background: #fffde7; border-bottom-color: var(--gold); }
+
+        .details { margin: 20px 0; line-height: 2.5; font-size: 16px; }
+        .details b { color: var(--dark); }
+
+        .total { 
+            font-size: 26px; font-weight: bold; color: var(--gold); 
+            text-align: center; border-top: 2px solid #eee; 
+            padding-top: 15px; margin-top: 10px;
+        }
+
+        .footer { text-align: center; font-size: 13px; color: #888; margin-top: 25px; border-top: 1px solid #eee; padding-top: 10px; }
+
+        .no-print { margin-top: 20px; display: flex; gap: 10px; }
+        .btn { 
+            padding: 12px 25px; border-radius: 10px; border: none; 
+            font-weight: bold; cursor: pointer; transition: 0.3s; 
+        }
+        .btn-print { background: var(--dark); color: white; }
+        .btn-edit { background: var(--gold); color: white; }
+
+        /* إخفاء الأزرار عند الطباعة */
+        @media print {
+            .no-print { display: none; }
+            body { background: white; padding: 0; }
+            .invoice-box { box-shadow: none; border: none; max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="invoice-box" id="print-area">
+        <div class="header">
+            <img src="logo.png" alt="" style="width: 60px; display: block; margin: 0 auto;">
+            <h2>متاجر البلاد 🏪</h2>
+            <small>إيصال طلب رقم: <b id="inv-id" class="editable-field" contenteditable="true">جارِ التحميل..</b></small>
+        </div>
+
+        <div class="details">
+            📍 المنطـقـة: <b id="inv-region" class="editable-field" contenteditable="true">..</b><br>
+            👤 الزبــــون: <b id="inv-customer" class="editable-field" contenteditable="true">..</b><br>
+            🏪 المتجـــر: <b id="inv-store" class="editable-field" contenteditable="true">..</b><br>
+            📦 المـنتـج: <b id="inv-pname" class="editable-field" contenteditable="true">..</b><br>
+            🛵 المندوب: <b id="inv-driver" class="editable-field" contenteditable="true">..</b>
+        </div>
+
+        <div class="total">
+            المبلغ: <span id="inv-price" class="editable-field" contenteditable="true">0</span> ر.ي
+        </div>
+
+        <div class="footer">
+            شكراً لثقتكم بمنصتنا المحلية<br>
+            <b>سيئون  - حضرموت</b>
+        </div>
+    </div>
+
+    <div class="no-print">
+        <button class="btn btn-edit" onclick="alert('يمكنك الآن الضغط على أي نص في الفاتورة وتعديله يدوياً!')">✍️ تعديل يدوي</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ طباعة الفاتورة</button>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="firebase.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('orderId');
+
+        if(orderId) {
+            database.ref("Orders/" + orderId).once("value", snap => {
+                const ord = snap.val();
+                if(!ord) {
+                    document.getElementById("inv-id").innerText = "طلب غير معروف";
+                    return;
+                }
+                document.getElementById("inv-id").innerText = ord.id || orderId;
+                document.getElementById("inv-region").innerText = ord.region || "غير محدد";
+                document.getElementById("inv-customer").innerText = ord.customer || "زبون متجر";
+                document.getElementById("inv-store").innerText = ord.store || "متاجر البلاد";
+                document.getElementById("inv-pname").innerText = ord.pName || "منتج عام";
+                document.getElementById("inv-driver").innerText = ord.driverName || "لم يحدد بعد";
+                document.getElementById("inv-price").innerText = ord.price || "0";
+            });
+        }
+    </script>
+</body>
+</html>
