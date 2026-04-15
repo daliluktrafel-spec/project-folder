@@ -241,6 +241,27 @@ function changeMyRegion() {
     if (n) { localStorage.setItem("userRegion", n.trim()); location.reload(); }
 }
 loadProducts();
+
+// --- كود عداد الزوار الذكي (هنا السر) ---
+function countVisit() {
+    if (typeof database !== 'undefined') {
+        // التحقق هل الزائر مسجل في هذه الجلسة (Session)؟
+        if (!sessionStorage.getItem("hasVisited")) {
+            const statsRef = database.ref("Site_Stats/totalVisits");
+            statsRef.transaction((currentValue) => {
+                return (currentValue || 0) + 1;
+            });
+            
+            // نضع علامة "تم الحساب" لهذا الزائر
+            sessionStorage.setItem("hasVisited", "true");
+            console.log("زائر جديد: تم تسجيل الزيارة ✅");
+        } else {
+            console.log("زائر مكرر: لن يتم زيادة العداد ✋");
+        }
+    }
+}
+// تشغيل العداد
+window.addEventListener('load', countVisit);
 </script>
 </body>
 </html>
