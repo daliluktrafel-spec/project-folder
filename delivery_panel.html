@@ -71,6 +71,30 @@
                 const list = document.getElementById("orders-list");
                 list.innerHTML = "";
                 const data = snap.val() || {};
+// كود مراقبة الطلبات الجديدة والمفاجئة
+database.ref("Orders").on("child_added", snap => {
+    const newOrder = snap.val();
+    
+    // الشرط: الطلب جديد + في منطقة المندوب + لم يمر عليه أكثر من دقيقة (عشان ما يرن على الطلبات القديمة)
+    const orderTime = newOrder.timestamp || 0;
+    const currentTime = Date.now();
+    
+    if (newOrder.status === "waiting" && 
+        newOrder.region === myRegion && 
+        (currentTime - orderTime) < 60000) { 
+        
+        // تشغيل صوت الجرس فوراً
+        const soundEffect = document.getElementById("notif-sound");
+        if(soundEffect) {
+            soundEffect.play().catch(e => console.log("انتظر تفاعل المندوب أولاً"));
+        }
+        
+        // اهتزاز الجوال
+        if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
+        
+        console.log("🔔 طلب جديد في منطقتك يا بطل!");
+    }
+});
                 
                 // تحويل البيانات لمصفوفة لسهولة الفلترة والترتيب
                 const ordersArray = Object.keys(data).map(key => ({
@@ -230,6 +254,14 @@ function requestNotificationPermission() {
 }
 // نطلب الإذن بمجرد دخول المندوب
 window.onload = requestNotificationPermission;
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('firebase-messaging-sw.js')
+    .then((registration) => {
+      console.log('تم تسجيل ملف الخلفية بنجاح ✅', registration.scope);
+    }).catch((err) => {
+      console.log('فشل تسجيل ملف الخلفية ❌', err);
+    });
+}
     </script>
 </body>
 </html>
