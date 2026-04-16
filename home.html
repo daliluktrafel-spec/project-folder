@@ -219,9 +219,12 @@ let lastSearchQuery = "";
 
 async function smartSearch() {
     const input = document.getElementById("searchInput").value.trim();
-    
+    const allContainer = document.getElementById("all");
+
+    // 1. إذا فرغ حقل البحث، امسح كل شيء وأعد تحميل المنتجات الأصلية
     if (!input) { 
         clearTimeout(searchTimeout);
+        allContainer.innerHTML = ""; // مسح الشاشة
         loadProducts(); 
         return; 
     }
@@ -229,10 +232,11 @@ async function smartSearch() {
     if (input === lastSearchQuery) return;
     lastSearchQuery = input;
 
+    // إظهار رسالة بسيطة للزبون أنه جاري البحث
+    allContainer.innerHTML = "<div style='grid-column:1/-1; text-align:center; padding:50px; color:var(--gold);'>🔍 جاري البحث عن أفضل الخيارات...</div>";
+
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(async () => {
-        const allContainer = document.getElementById("all");
-
         try {
             const response = await fetch('https://belad-ai-server.onrender.com/ai-search', {
                 method: 'POST',
@@ -243,23 +247,32 @@ async function smartSearch() {
             if (!response.ok) throw new Error("Server error");
             const aiResults = await response.json();
             
+            // تحديث الشاشة فقط إذا كان النص في المربع ما زال هو نفسه
             if (document.getElementById("searchInput").value.trim() === input) {
-                allContainer.innerHTML = "";
-                displayAIResults(aiResults);
+                allContainer.innerHTML = ""; // مسح رسالة "جاري البحث"
+                if (aiResults.length === 0) {
+                    allContainer.innerHTML = "<div style='grid-column:1/-1; text-align:center; padding:50px;'>لم نجد منتجات مشابهة تماماً 😅</div>";
+                } else {
+                    displayAIResults(aiResults);
+                }
                 console.log("✅ نتائج ذكية من السحاب");
             }
+
         } catch (err) {
-            console.log("⚠️ السيرفر مشغول، الانتقال للقاموس المحلي..");
+            console.log("⚠️ الانتقال للقاموس المحلي..");
             const resultIds = aiSafeSearch(products, input);
             const resultsSet = new Set(resultIds.map(String));
+            
+            allContainer.innerHTML = ""; // مسح الشاشة قبل عرض نتائج القاموس
             renderProducts("all", p => resultsSet.has(String(p.id)));
         }
-    }, 400); 
+    }, 500); 
 }
 
 function displayAIResults(aiResults) {
     const c = document.getElementById("all");
-    c.innerHTML = ""; // تأكيد مسح الحاوية قبل العرض
+    c.innerHTML = ""; // الضمان النهائي لمسح أي منتج قديم قبل عرض الجديد
+    
     aiResults.forEach(p => {
         const isFav = favorites.includes(String(p.id));
         const d = document.createElement("div");
