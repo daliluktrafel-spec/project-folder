@@ -53,7 +53,7 @@
 </div>
 
 <div class="search-container">
-    <input type="text" id="searchInput" placeholder="🔍 ابحث عن منتج أو متجر..." oninput="smartSearch()" class="search-input">
+    <input type="text" id="searchInput" placeholder="🔍 ابحث عن منتج أو متجر..." oninput="localSmartSearch()" class="search-input">
 </div>
 
 <div id="favorites" class="container" style="display:none;"></div>
@@ -139,12 +139,18 @@ function closeWallet() { document.getElementById("wallet-modal").style.display =
 function renderProducts(containerId, filter = () => true){
     const c = document.getElementById(containerId);
     if(!c) return;
-    c.innerHTML = "";
+    
+    // هذا السطر يضمن مسح أي منتجات قديمة قبل عرض نتائج البحث الجديدة
+    c.innerHTML = ""; 
+
     const filtered = products.filter(filter);
+    
+    // إذا لم يجد البحث شيئاً، نظهر رسالة
     if(filtered.length === 0) {
-        c.innerHTML = "<div style='grid-column:1/-1; padding:40px; color:#888; text-align:center;'>لا يوجد منتجات هنا حالياً 🛒</div>";
+        c.innerHTML = "<div style='grid-column:1/-1; padding:40px; color:#888; text-align:center;'>لا توجد نتائج مطابقة 🔍</div>";
         return;
     }
+
     filtered.forEach(p => {
         const isFav = favorites.includes(String(p.id));
         const isFlashActive = p.isFlash && p.flashExpiry > Date.now();
@@ -160,8 +166,12 @@ function renderProducts(containerId, filter = () => true){
             </div>
             <div class="product-store">📍 ${p.store}</div>
             <button class="fav-btn" style="background:${isFav?'#ffebee':'#f2f2f2'}">${isFav ? '❌ حذف' : '🛒 إضافة'}</button>`;
+        
         d.onclick = (e) => { if(e.target.tagName !== 'BUTTON') location.href = `product.html?productId=${p.id}`; };
-        d.querySelector(".fav-btn").onclick = (e) => { e.stopPropagation(); toggleFav(String(p.id), containerId, filter); };
+        d.querySelector(".fav-btn").onclick = (e) => { 
+            e.stopPropagation(); 
+            toggleFav(String(p.id), containerId, filter); 
+        };
         c.appendChild(d);
     });
 }
@@ -217,72 +227,21 @@ function showSection(id, el){
 let searchTimeout; 
 let lastSearchQuery = ""; 
 
-async function smartSearch() {
+function localSmartSearch() {
     const input = document.getElementById("searchInput").value.trim();
-    const allContainer = document.getElementById("all");
-
-    // 1. إذا فرغ الحقل، امسح الشاشة وأعد كل المنتجات
+    
+    // إذا كان المربع فارغاً، نعيد عرض الكل ونخرج
     if (!input) { 
-        clearTimeout(searchTimeout);
-        allContainer.innerHTML = ""; 
         loadProducts(); 
         return; 
     }
 
-    // 2. أهم سطر: مسح المنتجات القديمة فوراً وإظهار رسالة انتظار
-    allContainer.innerHTML = "<div style='grid-column:1/-1; text-align:center; padding:50px; color:var(--gold);'>🔍 جاري البحث عن " + input + "...</div>";
+    // جلب المعرفات (IDs) من ملف search-dictionary.js
+    const resultIds = aiSafeSearch(products, input);
+    const resultsSet = new Set(resultIds.map(String));
 
-    if (input === lastSearchQuery) return;
-    lastSearchQuery = input;
-
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(async () => {
-        try {
-            const response = await fetch('https://belad-ai-server.onrender.com/ai-search', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: input, products: products })
-            });
-
-            if (!response.ok) throw new Error("السيرفر لا يستجيب");
-            const aiResults = await response.json();
-            
-            // التأكد أن المستخدم لم يمسح النص أثناء البحث
-            if (document.getElementById("searchInput").value.trim() !== "") {
-                allContainer.innerHTML = ""; 
-                if (aiResults.length === 0) {
-                    allContainer.innerHTML = "<div style='grid-column:1/-1; text-align:center; padding:50px;'>لم نجد نتائج مطابقة 😅</div>";
-                } else {
-                    displayAIResults(aiResults);
-                }
-            }
-
-        } catch (err) {
-            console.log("⚠️ فشل السيرفر، جاري استخدام القاموس المحلي..");
-            const resultIds = aiSafeSearch(products, input);
-            const resultsSet = new Set(resultIds.map(String));
-            allContainer.innerHTML = ""; // مسح رسالة الانتظار قبل عرض نتائج القاموس
-            renderProducts("all", p => resultsSet.has(String(p.id)));
-        }
-    }, 500); 
-}
-function displayAIResults(aiResults) {
-    const c = document.getElementById("all");
-    c.innerHTML = ""; // الضمان النهائي لمسح أي منتج قديم قبل عرض الجديد
-    
-    aiResults.forEach(p => {
-        const isFav = favorites.includes(String(p.id));
-        const d = document.createElement("div");
-        d.className = "card";
-        d.innerHTML = `
-            <div class="product-img" style="background-image:url('${p.image || "no-image.png"}')"></div>
-            <div class="product-name">${p.name}</div>
-            <div class="product-price"><span>${p.price}</span></div>
-            <div class="product-store">📍 ${p.store}</div>
-            <button class="fav-btn" onclick="event.stopPropagation(); toggleFav('${p.id}', 'all')">${isFav ? '❌ حذف' : '🛒 إضافة'}</button>`;
-        d.onclick = () => location.href = `product.html?productId=${p.id}`;
-        c.appendChild(d);
-    });
+    // تنفيذ الرندر بالفلترة المحلية فوراً
+    renderProducts("all", p => resultsSet.has(String(p.id)));
 }
 function renderCategories() {
     const categoriesDiv = document.getElementById("categories"); categoriesDiv.innerHTML = "";
