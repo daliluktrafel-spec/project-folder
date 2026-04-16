@@ -221,19 +221,19 @@ async function smartSearch() {
     const input = document.getElementById("searchInput").value.trim();
     const allContainer = document.getElementById("all");
 
-    // 1. إذا فرغ حقل البحث، امسح كل شيء وأعد تحميل المنتجات الأصلية
+    // 1. إذا فرغ الحقل، امسح الشاشة وأعد كل المنتجات
     if (!input) { 
         clearTimeout(searchTimeout);
-        allContainer.innerHTML = ""; // مسح الشاشة
+        allContainer.innerHTML = ""; 
         loadProducts(); 
         return; 
     }
 
+    // 2. أهم سطر: مسح المنتجات القديمة فوراً وإظهار رسالة انتظار
+    allContainer.innerHTML = "<div style='grid-column:1/-1; text-align:center; padding:50px; color:var(--gold);'>🔍 جاري البحث عن " + input + "...</div>";
+
     if (input === lastSearchQuery) return;
     lastSearchQuery = input;
-
-    // إظهار رسالة بسيطة للزبون أنه جاري البحث
-    allContainer.innerHTML = "<div style='grid-column:1/-1; text-align:center; padding:50px; color:var(--gold);'>🔍 جاري البحث عن أفضل الخيارات...</div>";
 
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(async () => {
@@ -244,31 +244,28 @@ async function smartSearch() {
                 body: JSON.stringify({ query: input, products: products })
             });
 
-            if (!response.ok) throw new Error("Server error");
+            if (!response.ok) throw new Error("السيرفر لا يستجيب");
             const aiResults = await response.json();
             
-            // تحديث الشاشة فقط إذا كان النص في المربع ما زال هو نفسه
-            if (document.getElementById("searchInput").value.trim() === input) {
-                allContainer.innerHTML = ""; // مسح رسالة "جاري البحث"
+            // التأكد أن المستخدم لم يمسح النص أثناء البحث
+            if (document.getElementById("searchInput").value.trim() !== "") {
+                allContainer.innerHTML = ""; 
                 if (aiResults.length === 0) {
-                    allContainer.innerHTML = "<div style='grid-column:1/-1; text-align:center; padding:50px;'>لم نجد منتجات مشابهة تماماً 😅</div>";
+                    allContainer.innerHTML = "<div style='grid-column:1/-1; text-align:center; padding:50px;'>لم نجد نتائج مطابقة 😅</div>";
                 } else {
                     displayAIResults(aiResults);
                 }
-                console.log("✅ نتائج ذكية من السحاب");
             }
 
         } catch (err) {
-            console.log("⚠️ الانتقال للقاموس المحلي..");
+            console.log("⚠️ فشل السيرفر، جاري استخدام القاموس المحلي..");
             const resultIds = aiSafeSearch(products, input);
             const resultsSet = new Set(resultIds.map(String));
-            
-            allContainer.innerHTML = ""; // مسح الشاشة قبل عرض نتائج القاموس
+            allContainer.innerHTML = ""; // مسح رسالة الانتظار قبل عرض نتائج القاموس
             renderProducts("all", p => resultsSet.has(String(p.id)));
         }
     }, 500); 
 }
-
 function displayAIResults(aiResults) {
     const c = document.getElementById("all");
     c.innerHTML = ""; // الضمان النهائي لمسح أي منتج قديم قبل عرض الجديد
