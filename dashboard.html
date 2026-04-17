@@ -142,17 +142,12 @@ async function processProduct() {
     const price = document.getElementById("price").value.trim();
     const file = document.getElementById("imageFile").files[0];
 
-    // 1. فحص النصوص أولاً
     const textCheck = checkTextSafety(name);
-    if (!textCheck.safe) {
-        alert(textCheck.reason);
-        return;
-    }
-
+    if (!textCheck.safe) return alert(textCheck.reason);
     if (!name || !price) return alert("الاسم والسعر مطلوبان");
     
     document.getElementById("loader").style.display = "flex";
-    document.getElementById("loader").querySelector("p").innerText = "جاري فحص أمان الصورة... 🛡️";
+    document.getElementById("loader").querySelector("p").innerText = "جاري تجهيز الصورة... 🛠️";
 
     if (file) {
         const reader = new FileReader();
@@ -168,45 +163,33 @@ async function processProduct() {
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 
                 canvas.toBlob(async (blob) => {
-                    // --- فحص العري بالذكاء الاصطناعي (التصحيح هنا) ---
+                    // فحص أمان الصورة (SightEngine)
                     const safetyData = new FormData();
                     safetyData.append('media', blob);
                     safetyData.append('models', 'nudity-2.0');
-                    safetyData.append('api_user', '1038750179'); // مفتاحك الصحيح
-                    safetyData.append('api_secret', 'bYq2ManntpCX4uJ6f5x8nHcbYvz2dRYo'); // مفتاحك السري الصحيح
+                    safetyData.append('api_user', '1038750179');
+                    safetyData.append('api_secret', 'bYq2ManntpCX4uJ6f5x8nHcbYvz2dRYo');
 
                     try {
-                        const safetyResponse = await fetch('https://api.sightengine.com/1.0/check.json', {
-                            method: 'POST',
-                            body: safetyData
-                        });
+                        const safetyResponse = await fetch('https://api.sightengine.com/1.0/check.json', { method: 'POST', body: safetyData });
                         const safetyResult = await safetyResponse.json();
-
-                        // إذا اكتشف الذكاء الاصطناعي محتوى غير لائق
                         if (safetyResult.status === 'success' && safetyResult.nudity.sexual_activity > 0.5) {
                             document.getElementById("loader").style.display = "none";
-                            alert("⚠️ عذراً! تم رفض الصورة لأنها تحتوي على محتوى غير لائق. يرجى اختيار صورة محترمة.");
-                            return;
+                            return alert("⚠️ الصورة مرفوضة لاحتوائها على محتوى غير لائق.");
                         }
-                    } catch (err) {
-                        console.log("فشل فحص الأمان، سيتم التجاوز بحذر");
-                    }
+                    } catch (err) { console.log("تجاوز فحص الأمان"); }
 
-                    // --- إذا نجح الفحص، نرفع لـ ImgBB ---
-                    document.getElementById("loader").querySelector("p").innerText = "جاري رفع المنتج... 🚀";
+                    // الرفع لـ ImgBB
+                    document.getElementById("loader").querySelector("p").innerText = "جاري النشر... 🚀";
                     const formData = new FormData();
                     formData.append("image", blob);
                     
-                    fetch("https://api.imgbb.com/1/upload?key=aeb82e4e9c181792029180c0c851a869", {
-                        method: "POST",
-                        body: formData
-                    })
+                    fetch("https://api.imgbb.com/1/upload?key=aeb82e4e9c181792029180c0c851a869", { method: "POST", body: formData })
                     .then(r => r.json())
                     .then(res => {
                         if(res.success) finalSave(res.data.url);
-                        else { alert("فشل الرفع"); finalSave(null); }
-                    })
-                    .catch(() => finalSave(null));
+                        else finalSave(null);
+                    }).catch(() => finalSave(null));
                 }, "image/jpeg", 0.7);
             };
             img.src = e.target.result;
@@ -216,37 +199,38 @@ async function processProduct() {
         finalSave(null);
     }
 }
-    function finalSave(newImageUrl) {
-        const editKey = document.getElementById("edit-key").value;
-        const isFlash = document.getElementById("isFlash").value === 'true';
-        const hours = parseInt(document.getElementById("flashHours").value) || 0;
-        const flashExpiry = isFlash ? Date.now() + (hours * 60 * 60 * 1000) : 0;
 
-        const data = {
-            name: document.getElementById("name").value,
-            price: document.getElementById("price").value,
-            status: document.getElementById("status").value,
-            category: document.getElementById("category").value,
-            isFlash: isFlash,
-            flashPrice: document.getElementById("flashPrice").value,
-            flashExpiry: flashExpiry,
-            store: store
-        };
-        
-        if (newImageUrl) data.image = newImageUrl;
-        else if (!editKey) data.image = "https://placehold.co/100";
+// هذه الدالة الآن خارج الدالة السابقة لتعمل بشكل صحيح
+function finalSave(newImageUrl) {
+    const editKey = document.getElementById("edit-key").value;
+    const isFlash = document.getElementById("isFlash").value === 'true';
+    const hours = parseInt(document.getElementById("flashHours").value) || 0;
+    const flashExpiry = isFlash ? Date.now() + (hours * 60 * 60 * 1000) : 0;
 
-        const ref = editKey ? database.ref("products/" + editKey) : database.ref("products").push();
-        
-        // إذا كان منتجاً جديداً، نحتاج لإضافة ID فريد له ليعمل في الهوم
-        if(!editKey) data.id = Date.now();
+    const data = {
+        name: document.getElementById("name").value.trim(),
+        price: document.getElementById("price").value.trim(),
+        status: document.getElementById("status").value,
+        category: document.getElementById("category").value,
+        isFlash: isFlash,
+        flashPrice: document.getElementById("flashPrice").value || "",
+        flashExpiry: flashExpiry,
+        store: store
+    };
+    
+    if (newImageUrl) data.image = newImageUrl;
+    const ref = editKey ? database.ref("products/" + editKey) : database.ref("products").push();
+    if(!editKey) data.id = Date.now(); 
 
-        ref.update(data).then(() => {
-            alert("تم الحفظ بنجاح ✅");
-            location.reload();
-        });
-    }
-
+    ref.update(data).then(() => {
+        document.getElementById("loader").style.display = "none"; // إغلاق اللودر
+        alert("تم الحفظ بنجاح ✅");
+        location.reload();
+    }).catch(() => {
+        document.getElementById("loader").style.display = "none";
+        alert("فشل في قاعدة البيانات");
+    });
+}
     function loadMyProducts() {
         const list = document.getElementById("edit-list");
         database.ref("products").orderByChild("store").equalTo(store).once("value", snap => {
