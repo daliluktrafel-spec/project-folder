@@ -91,6 +91,7 @@
             <h3>👥 إجمالي زوار المنصة</h3>
             <p id="s-visits" style="font-size: 28px; color: #3498db;">0</p>
         </div>
+<div id="stats-summary" style="margin-top: 20px;"></div>
 
         <div class="stat-card" style="border-top-color: #27ae60;">
             <h3>💰 مبيعات اليوم</h3>
@@ -189,39 +190,44 @@
     }
 
     // --- تهيئة البيانات ---
-    function initSystem() {
-        loadStats();
-        loadPendingStores();
-        loadPointsData();
-        loadOps();
-    }
+    // استدعاء كل الوظائف عند الدخول
+function initSystem() {
+    loadStats();
+    loadPendingStores();
+    loadPointsData();
+    loadOps();
+    generateReports(); // استدعاء التقارير لملء الخانات الجديدة
+}
 
-    // 1. الإحصائيات
-    // 1. الإحصائيات الشاملة (أرباح + زوار)
-    function loadStats() {
-        const today = new Date().toLocaleDateString('en-CA');
-        
-        // --- مراقبة الزوار (تأكد أن المسار Site_Stats/totalVisits) ---
-        db.ref("Site_Stats/totalVisits").on("value", snap => {
-    const visits = snap.val() || 0;
-    document.getElementById("s-visits").innerText = visits.toLocaleString();
-            console.log("الزوار المحدثون: " + visits);
+// تحديث الإحصائيات مع إضافة عمولة الـ 5% بدقة
+function loadStats() {
+    const today = new Date().toLocaleDateString('en-CA');
+    
+    // مراقبة الزوار
+    db.ref("Site_Stats/totalVisits").on("value", snap => {
+        const visits = snap.val() || 0;
+        document.getElementById("s-visits").innerText = visits.toLocaleString();
+    });
+
+    // مراقبة المبيعات اليومية
+    db.ref("Orders").on("value", snap => {
+        let dailyTotal = 0, activeOrders = 0;
+        snap.forEach(child => {
+            const o = child.val();
+            // حساب مبيعات اليوم فقط
+            if(o.status === "delivered" && o.deliveryDate === today) {
+                dailyTotal += parseInt(o.price || 0);
+            }
+            // حساب الطلبات التي لم تنتهِ بعد
+            if(o.status === "waiting" || o.status === "picked") {
+                activeOrders++;
+            }
         });
-
-        // مراقبة الطلبات والأرباح
-        db.ref("Orders").on("value", snap => {
-            let total = 0, active = 0;
-            snap.forEach(c => {
-                const o = c.val();
-                if(o.status === "delivered" && o.deliveryDate === today) total += parseInt(o.price || 0);
-                if(o.status === "waiting" || o.status === "picked") active++;
-            });
-            document.getElementById("s-total").innerText = total + " ر.ي";
-            document.getElementById("s-profit").innerText = (total * 0.05) + " ر.ي";
-            document.getElementById("s-orders").innerText = active;
-        });
-    }
-
+        document.getElementById("s-total").innerText = dailyTotal.toLocaleString() + " ر.ي";
+        document.getElementById("s-profit").innerText = (dailyTotal * 0.05).toLocaleString() + " ر.ي";
+        document.getElementById("s-orders").innerText = activeOrders;
+    });
+}
     // 2. المتاجر
     function loadPendingStores() {
         db.ref("Pending_Stores").on("value", snap => {
@@ -324,11 +330,48 @@
             a.href = URL.createObjectURL(blob); a.download = file; a.click();
         });
     }
-// مراقبة عداد الزوار من قاعدة البيانات
+// 1. تحديث عداد الزوار تلقائياً
 db.ref("Site_Stats/totalVisits").on("value", snap => {
     const visits = snap.val() || 0;
-    document.getElementById("s-visits").innerText = visits.toLocaleString();
+    const el = document.getElementById("s-visits");
+    if(el) el.innerText = visits.toLocaleString();
 });
+
+// 2. دالة التقارير الشاملة (النسخة الريضة)
+function generateReports() {
+    db.ref("Orders").once("value", snap => {
+        const orders = snap.val() || {};
+        let totalRevenue = 0, deliveredCount = 0;
+        let storeStats = {}, regionStats = {};
+
+        Object.values(orders).forEach(o => {
+            if (o.status === "delivered") {
+                deliveredCount++;
+                totalRevenue += parseInt(o.price) || 0;
+                if(o.store) storeStats[o.store] = (storeStats[o.store] || 0) + 1;
+                if(o.region) regionStats[o.region] = (regionStats[o.region] || 0) + 1;
+            }
+        });
+
+        const summary = document.getElementById("stats-summary");
+        if(summary) {
+            summary.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                    <div class="stat-card" style="border-top: 4px solid #8e44ad;">💰 مبيعات المنصة الكلية: <br> <b>${totalRevenue.toLocaleString()} ر.ي</b></div>
+                    <div class="stat-card" style="border-top: 4px solid #16a085;">✅ إجمالي الإنجاز: <br> <b>${deliveredCount} طلب</b></div>
+                    <div class="stat-card" style="border-top: 4px solid #f39c12;">🏆 الأكثر مبيعاً: <br> <b>${getTop(storeStats)}</b></div>
+                    <div class="stat-card" style="border-top: 4px solid #c0392b;">🗺️ أنشط منطقة: <br> <b>${getTop(regionStats)}</b></div>
+                </div>
+            `;
+        }
+    });
+}
+
+// 3. دالة حساب المركز الأول
+function getTop(obj) {
+    if (!obj || Object.keys(obj).length === 0) return "لا يوجد بيانات";
+    return Object.keys(obj).reduce((a, b) => obj[a] > obj[b] ? a : b);
+}
 </script>
 
 </body>
