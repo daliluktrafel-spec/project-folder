@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>مساعد البلاد الذكي - Groq AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root { --gold: #b89b4a; --dark: #1b1e33; --light: #f7f6f2; }
+      .ai-product-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: white;
+    color: var(--dark);
+    padding: 10px;
+    border-radius: 12px;
+    margin-top: 8px;
+    text-decoration: none;
+    border: 1px solid var(--gold);
+    transition: 0.3s;
+}
+.ai-product-link:hover { transform: scale(1.02); background: var(--light); }
+.ai-product-img { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; }
+.ai-product-info { font-size: 13px; font-weight: bold; }
+  body { margin: 0; font-family: "Segoe UI", sans-serif; background: var(--dark); color: white; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        .chat-header { padding: 20px; background: linear-gradient(45deg, var(--gold), #d4bc7d); text-align: center; color: var(--dark); position: relative; font-weight: bold; }
+        .back-btn { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: var(--dark); color: var(--gold); border: none; padding: 5px 12px; border-radius: 10px; cursor: pointer; }
+        #chat-box { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        .msg { padding: 12px 18px; border-radius: 18px; max-width: 85%; font-size: 15px; line-height: 1.6; animation: fadeIn 0.3s ease; }
+        .ai-msg { background: #2c2f4a; align-self: flex-start; border-bottom-right-radius: 2px; }
+        .user-msg { background: var(--gold); color: var(--dark); align-self: flex-end; border-bottom-left-radius: 2px; font-weight: bold; }
+        .input-area { padding: 20px; background: #15182d; display: flex; gap: 10px; }
+        input { flex: 1; padding: 15px; border-radius: 15px; border: none; background: #2c2f4a; color: white; outline: none; }
+        button { background: var(--gold); border: none; padding: 0 25px; border-radius: 15px; font-weight: bold; cursor: pointer; color: var(--dark); }
+        .typing { font-size: 12px; color: var(--gold); display: none; margin: 10px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="chat-header">
+    <button class="back-btn" onclick="location.href='home.html'">✕</button>
+    <span>🤖 مساعد البلاد الذكي</span>
+</div>
+
+<div id="chat-box">
+    <div class="msg ai-msg">أهلاً بك يا حسين! أنا ذكاء "متاجر البلاد".. اطلب أي منتج وسأبحث لك عنه في ثوانٍ. ✨</div>
+</div>
+
+<div id="typing" class="typing">جاري فحص المتاجر... ⚡</div>
+
+<div class="input-area">
+    <input type="text" id="userInput" placeholder="اكتب سؤالك هنا..." onkeypress="if(event.key==='Enter') askAI()">
+    <button onclick="askAI()">إرسال</button>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="firebase.js"></script>
+
+<script>
+    let products = [];
+    
+    // جلب المنتجات فور تحميل الصفحة
+    database.ref("products").once("value", snap => {
+        const data = snap.val() || {};
+        products = Object.values(data);
+        console.log("تم تحميل " + products.length + " منتج للذكاء الاصطناعي.");
+    });
+async function askAI() {
+    const input = document.getElementById("userInput");
+    const box = document.getElementById("chat-box");
+    const typing = document.getElementById("typing");
+    const query = input.value.trim();
+
+    if(!query) return;
+
+    box.innerHTML += `<div class="msg user-msg">${query}</div>`;
+    input.value = "";
+    typing.style.display = "block";
+    box.scrollTop = box.scrollHeight;
+
+    // نرسل للذكاء قائمة المنتجات مع الـ IDs والأسماء
+    const productContext = products.map(p => `ID:${p.id} - Name:${p.name}`).join(", "); 
+
+    try {
+        const response = await fetch("/api/chat", { 
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+messages: [
+    { 
+        role: "system", 
+        content: `أنت مساعد مبيعات يمني خبير في "متاجر البلاد".
+        مهمتك:
+        1. الرد على المستخدم بلهجة يمنية ترحيبية ومهذبة.
+        2. ابحث في هذه المنتجات: [${productContext}].
+        3. إذا وجدت منتجات مطابقة أو قريبة لطلب المستخدم، استخرج الـ ID الخاص بها بدقة.
+        4. يجب (ضروري جداً) أن تضع الـ IDs في نهاية ردك بهذا الشكل بالضبط: FOUND_IDS:[id1, id2].
+        5. إذا لم تجد أي منتج، لا تكتب FOUND_IDS.` 
+    },
+    { role: "user", content: query }
+]
+            })
+        });
+
+        const data = await response.json();
+        const aiReply = data.choices[0].message.content;
+        typing.style.display = "none";
+
+        // استخراج الـ IDs من رد الذكاء
+        const idMatch = aiReply.match(/FOUND_IDS:\[(.*?)\]/);
+        let cleanReply = aiReply.replace(/FOUND_IDS:\[.*?\]/g, ""); // تنظيف الرد من الـ IDs التقنية
+
+        let aiMsgDiv = document.createElement("div");
+        aiMsgDiv.className = "msg ai-msg";
+        aiMsgDiv.innerHTML = cleanReply;
+
+        // إذا وجد الذكاء منتجات، نقوم بإظهارها كروابط داخل الدردشة
+        if (idMatch) {
+            const foundIds = idMatch[1].split(",").map(id => id.trim());
+            foundIds.forEach(id => {
+                const product = products.find(p => String(p.id) === id);
+                if (product) {
+                    aiMsgDiv.innerHTML += `
+                        <a href="product.html?productId=${product.id}" class="ai-product-link">
+                            <img src="${product.image || 'no-image.png'}" class="ai-product-img">
+                            <div class="ai-product-info">
+                                <div>${product.name}</div>
+                                <div style="color:var(--gold)">${product.price} ر.ي</div>
+                            </div>
+                        </a>`;
+                }
+            });
+        }
+
+        box.appendChild(aiMsgDiv);
+        box.scrollTop = box.scrollHeight;
+
+    } catch (e) { 
+        typing.style.display = "none";
+        box.innerHTML += `<div class="msg ai-msg">وقع خطأ.. جرب مرة ثانية يا غالي.</div>`;
+    }
+}    
+</script>
+</body>
+</html>
