@@ -1,13 +1,17 @@
 export default async function handler(req, res) {
-    // المفتاح سيتم قراءته من "البيئة" وليس من الكود
-    const apiKey = process.env.GROQ_API_KEY; 
+    // جلب المفتاح من إعدادات Vercel المخفية
+    const apiKey = process.env.GROQ_API_KEY;
+
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method Not Allowed' });
+    }
 
     try {
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
-            headers: { 
-                "Content-Type": "application/json", 
-                "Authorization": `Bearer ${apiKey}` 
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${apiKey}`
             },
             body: JSON.stringify(req.body)
         });
@@ -15,6 +19,6 @@ export default async function handler(req, res) {
         const data = await response.json();
         res.status(200).json(data);
     } catch (error) {
-        res.status(500).json({ error: "خطأ في الاتصال بالسيرفر" });
+        res.status(500).json({ error: "خطأ في السيرفر الوسيط" });
     }
 }
