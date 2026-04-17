@@ -53,7 +53,12 @@
 </div>
 
 <div class="search-container">
-    <input type="text" id="searchInput" placeholder="🔍 ابحث عن منتج أو متجر..." oninput="localSmartSearch()" class="search-input">
+    <div style="position: relative; max-width: 600px; margin: auto;">
+        <input type="text" id="searchInput" placeholder="🔍 ابحث عن منتج أو متجر..." oninput="localSmartSearch()" class="search-input" style="padding-right: 50px;">
+       <div id="ai-trigger" onclick="location.href='ai-assistant.html'" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 24px;">
+    🤖
+</div>
+    </div>
 </div>
 
 <div id="favorites" class="container" style="display:none;"></div>
@@ -79,7 +84,22 @@
     <div class="tab" onclick="showSection('stores',this)">المتاجر</div>
     <div class="tab" onclick="openAddProduct()">إضافة منتج</div>
 </div>
-
+<div id="ai-chat-window" style="display:none; position:fixed; bottom:90px; right:20px; width:320px; height:420px; background:white; border-radius:20px; box-shadow:0 10px 40px rgba(0,0,0,0.2); z-index:10001; flex-direction:column; overflow:hidden; border:2px solid var(--gold); animation: fadeIn 0.3s ease;">
+    <div style="background:var(--dark); color:var(--gold); padding:15px; font-weight:bold; display:flex; justify-content:space-between; align-items:center;">
+        <span>✨ مساعد البلاد الذكي</span>
+        <button onclick="toggleAIChat()" style="background:none; border:none; color:white; cursor:pointer; font-size:18px;">✕</button>
+    </div>
+    <div id="ai-messages" style="flex:1; padding:15px; overflow-y:auto; background:#fdfdfd; display:flex; flex-direction:column; gap:10px; font-size:13px;">
+        <div style="background:#eee; padding:10px; border-radius:12px; align-self:flex-start; color:#333;">
+            أهلاً بك يا حسين! أنا ذكاء المنصة، كيف أساعدك في العثور على طلبك اليوم؟
+        </div>
+    </div>
+    <div id="ai-typing" style="display:none; padding:5px 15px; font-size:11px; color:var(--gold);">جاري التفكير في مئات المتاجر... 🤔</div>
+    <div style="padding:10px; border-top:1px solid #eee; display:flex; gap:8px;">
+        <input type="text" id="ai-user-input" placeholder="اكتب سؤالك هنا..." style="flex:1; padding:10px; border-radius:10px; border:1px solid #ddd; outline:none;">
+        <button onclick="askSmartAI()" style="background:var(--gold); border:none; color:white; padding:10px; border-radius:10px; cursor:pointer; font-weight:bold;">إرسال</button>
+    </div>
+</div>
 <script src="dictionary.js"></script>
 <script src="search-dictionary.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -101,20 +121,31 @@ function loadProducts() {
         let productsArray = Object.values(data);
         
         let interests = JSON.parse(localStorage.getItem("userInterests") || "{}");
+
         productsArray.sort((a, b) => {
             let scoreA = interests[a.category] || 0;
             let scoreB = interests[b.category] || 0;
-            if (scoreB === scoreA) return b.id - a.id;
+            if (scoreB === scoreA) {
+                return b.id - a.id; 
+            }
             return scoreB - scoreA; 
         });
 
         products = productsArray;
         renderCategories(); 
-        updateFavCount();
         renderProducts("all");
-        loadMyPoints();
+
+        // --- كود فحص القادم من الذكاء الاصطناعي ---
+        const params = new URLSearchParams(window.location.search);
+        const aiQuery = params.get('search');
+        if (aiQuery) {
+            document.getElementById("searchInput").value = aiQuery;
+            setTimeout(() => {
+                localSmartSearch(); 
+            }, 500);
+        }
     });
-}
+} // <--- هذا القوس كان ناقصاً عندك
 
 function openWallet() {
     const pts = parseInt(document.getElementById("my-points-count").innerText) || 0;
@@ -134,18 +165,15 @@ function openWallet() {
             </div>`).join('');
     }
 }
+
 function closeWallet() { document.getElementById("wallet-modal").style.display = "none"; }
 
 function renderProducts(containerId, filter = () => true){
     const c = document.getElementById(containerId);
     if(!c) return;
-    
-    // هذا السطر يضمن مسح أي منتجات قديمة قبل عرض نتائج البحث الجديدة
     c.innerHTML = ""; 
-
     const filtered = products.filter(filter);
     
-    // إذا لم يجد البحث شيئاً، نظهر رسالة
     if(filtered.length === 0) {
         c.innerHTML = "<div style='grid-column:1/-1; padding:40px; color:#888; text-align:center;'>لا توجد نتائج مطابقة 🔍</div>";
         return;
@@ -167,17 +195,22 @@ function renderProducts(containerId, filter = () => true){
             <div class="product-store">📍 ${p.store}</div>
             <button class="fav-btn" style="background:${isFav?'#ffebee':'#f2f2f2'}">${isFav ? '❌ حذف' : '🛒 إضافة'}</button>`;
         
-        d.onclick = (e) => { if(e.target.tagName !== 'BUTTON') location.href = `product.html?productId=${p.id}`; };
+        d.onclick = (e) => { 
+            if(e.target.tagName !== 'BUTTON') {
+                boostInterest(p.category, 1); 
+                location.href = `product.html?productId=${p.id}`; 
+            }
+        };
+
         d.querySelector(".fav-btn").onclick = (e) => { 
             e.stopPropagation(); 
-            toggleFav(String(p.id), containerId, filter); 
+            toggleFav(String(p.id), containerId, filter, p.category); 
         };
         c.appendChild(d);
     });
 }
 
 function shareApp() {
-    const myName = localStorage.getItem("userName") || "عميل مميز";
     const fullMessage = `🌟 منصة متاجر البلاد - تسوق بذكاء 🌟\nرابط المنصة: https://www.beladshop.com`;
     if (navigator.share) { navigator.share({ title: 'متاجر البلاد', text: fullMessage }); }
 }
@@ -192,7 +225,14 @@ function loadMyPoints() {
 
 function showPointsAlert() { alert(`🪙 رصيدك الحالي: ${document.getElementById("my-points-count").innerText} نقطة`); }
 function toggleDropdown() { document.getElementById("userDropdown").classList.toggle("show"); }
-window.onclick = function(e) { if (!e.target.matches('.user-btn') && !e.target.matches('.user-btn span')) { let ds = document.getElementsByClassName("dropdown-content"); for (let i = 0; i < ds.length; i++) if (ds[i].classList.contains('show')) ds[i].classList.remove('show'); } }
+
+window.onclick = function(e) { 
+    if (!e.target.matches('.user-btn') && !e.target.matches('.user-btn span')) { 
+        let ds = document.getElementsByClassName("dropdown-content"); 
+        for (let i = 0; i < ds.length; i++) if (ds[i].classList.contains('show')) ds[i].classList.remove('show'); 
+    } 
+}
+
 document.getElementById("display-user-name").innerText = localStorage.getItem("userName") || "حسابي";
 
 function renderStores() {
@@ -206,12 +246,25 @@ function renderStores() {
     });
 }
 
-function toggleFav(id, containerId, filter) {
-    if(favorites.includes(id)) favorites = favorites.filter(f => f !== id);
-    else favorites.push(id);
-    localStorage.setItem("favorites", JSON.stringify(favorites));
-    updateFavCount(); renderProducts(containerId, filter);
+function boostInterest(category, weight) {
+    if (!category) return;
+    let interests = JSON.parse(localStorage.getItem("userInterests") || "{}");
+    interests[category] = (interests[category] || 0) + weight;
+    localStorage.setItem("userInterests", JSON.stringify(interests));
 }
+
+function toggleFav(id, containerId, filter, category) {
+    if(favorites.includes(id)) {
+        favorites = favorites.filter(f => f !== id);
+    } else {
+        favorites.push(id);
+        if(category) boostInterest(category, 5);
+    }
+    localStorage.setItem("favorites", JSON.stringify(favorites));
+    updateFavCount(); 
+    renderProducts(containerId, filter);
+}
+
 function updateFavCount() { document.getElementById("favCount").innerText = favorites.length; }
 
 function showSection(id, el){
@@ -224,25 +277,14 @@ function showSection(id, el){
     else if(id === "stores") renderStores();
 }
 
-let searchTimeout; 
-let lastSearchQuery = ""; 
-
 function localSmartSearch() {
     const input = document.getElementById("searchInput").value.trim();
-    
-    // إذا كان المربع فارغاً، نعيد عرض الكل ونخرج
-    if (!input) { 
-        loadProducts(); 
-        return; 
-    }
-
-    // جلب المعرفات (IDs) من ملف search-dictionary.js
+    if (!input) { loadProducts(); return; }
     const resultIds = aiSafeSearch(products, input);
     const resultsSet = new Set(resultIds.map(String));
-
-    // تنفيذ الرندر بالفلترة المحلية فوراً
     renderProducts("all", p => resultsSet.has(String(p.id)));
 }
+
 function renderCategories() {
     const categoriesDiv = document.getElementById("categories"); categoriesDiv.innerHTML = "";
     const allBtn = document.createElement("div"); allBtn.className = "category-btn"; allBtn.innerText = "🏠 الكل"; allBtn.onclick = () => showSection('all'); categoriesDiv.appendChild(allBtn);
@@ -253,35 +295,29 @@ function renderCategories() {
         categoriesDiv.appendChild(btn);
     });
 }
+
 function openAddProduct(){ window.location.href = "stores.html"; }
 document.getElementById("current-region-display").innerText = localStorage.getItem("userRegion") || "حدد منطقتك";
+
 function changeMyRegion() {
     const old = localStorage.getItem("userRegion") || "";
     const n = prompt("تعديل منطقة التوصيل:", old);
     if (n) { localStorage.setItem("userRegion", n.trim()); location.reload(); }
 }
-loadProducts();
 
-// --- كود عداد الزوار الذكي (هنا السر) ---
 function countVisit() {
     if (typeof database !== 'undefined') {
-        // التحقق هل الزائر مسجل في هذه الجلسة (Session)؟
         if (!sessionStorage.getItem("hasVisited")) {
             const statsRef = database.ref("Site_Stats/totalVisits");
-            statsRef.transaction((currentValue) => {
-                return (currentValue || 0) + 1;
-            });
-            
-            // نضع علامة "تم الحساب" لهذا الزائر
+            statsRef.transaction((currentValue) => { return (currentValue || 0) + 1; });
             sessionStorage.setItem("hasVisited", "true");
-            console.log("زائر جديد: تم تسجيل الزيارة ✅");
-        } else {
-            console.log("زائر مكرر: لن يتم زيادة العداد ✋");
         }
     }
 }
-// تشغيل العداد
+
 window.addEventListener('load', countVisit);
+loadProducts();
+loadMyPoints();
 </script>
 </body>
 </html>
