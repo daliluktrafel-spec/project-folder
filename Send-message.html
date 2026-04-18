@@ -98,11 +98,12 @@
     };
 
     // --- الدوال الأساسية (بقيت كما هي) ---
-    async function generateMerchantReport(merchantName) {
-        const snapshot = await database.ref("orders").once("value");
-        const allOrders = snapshot.val() ? Object.values(snapshot.val()) : [];
-        const successfulOrders = allOrders.filter(order => order.status === "picked");
-        let reportData = { topProducts: {}, totalRevenue: 0, regions: {}, totalOrders: successfulOrders.length };
+   async function generateMerchantReport(merchantName) {
+   
+    const snapshot = await database.ref("Orders").once("value"); 
+    const allOrders = snapshot.val() ? Object.values(snapshot.val()) : [];
+    const successfulOrders = allOrders.filter(order => order.status === "picked");
+       let reportData = { topProducts: {}, totalRevenue: 0, regions: {}, totalOrders: successfulOrders.length };
         successfulOrders.forEach(order => {
             reportData.topProducts[order.pName] = (reportData.topProducts[order.pName] || 0) + 1;
             reportData.regions[order.region] = (reportData.regions[order.region] || 0) + 1;
