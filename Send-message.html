@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>مركز إدارة تقارير التجار - متاجر البلاد</title>
+    <style>
+        :root { --gold: #b89b4a; --dark: #1b1e33; --light: #f7f6f2; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--light); margin: 0; padding: 20px; color: var(--dark); }
+        .container { max-width: 900px; margin: auto; }
+        h1 { text-align: center; color: var(--dark); border-bottom: 3px solid var(--gold); padding-bottom: 10px; }
+        
+        /* قائمة التجار */
+        .merchant-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .merchant-card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; transition: 0.3s; border: 1px solid transparent; }
+        .merchant-card:hover { border-color: var(--gold); transform: translateY(-3px); }
+        .merchant-card.active { background: var(--gold); color: white; }
+        
+        /* منطقة التقرير */
+        .report-section { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: none; }
+        .report-section.show { display: block; animation: fadeIn 0.5s; }
+        
+        textarea { width: 100%; height: 250px; padding: 15px; border-radius: 10px; border: 1px solid #ccc; font-size: 16px; font-family: inherit; line-height: 1.6; resize: vertical; margin-top: 15px; }
+        
+        .actions { display: flex; gap: 15px; margin-top: 20px; }
+        .btn { flex: 1; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; }
+        .btn-generate { background: var(--dark); color: white; }
+        .btn-send { background: #25D366; color: white; } /* لون الواتساب */
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .loading { font-style: italic; color: var(--gold); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🚀 إدارة تقارير التجار الذكية</h1>
+
+    <div id="merchants-grid" class="merchant-list">
+        </div>
+
+    <div id="report-area" class="report-section">
+        <h3 id="target-merchant">تقرير متجر: ...</h3>
+        <p id="status-msg" class="loading"></p>
+        
+        <textarea id="ai-text-area" placeholder="الرسالة ستظهر هنا بعد التحليل..."></textarea>
+        
+        <div class="actions">
+            <button class="btn btn-generate" onclick="prepareReport()">🔄 إعادة توليد بالذكاء</button>
+            <button class="btn btn-send" onclick="sendToWhatsApp()">📲 إرسال عبر واتساب</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="firebase.js"></script>
+
+<script>
+    // 1. قائمة التجار (مباشرة من طلبك)
+    const merchantsList = [
+        { merchantId: "M001", ownerName: "حسين السقاف", storeName: "متاجر البلاد - الفرع الرئيسي", phone: "967773733883" },
+        { merchantId: "M002", ownerName: "صالح محمد", storeName: "محل ركن العطور", phone: "967770000000" }
+    ];
+
+    let selectedMerchant = null;
+
+    // 2. توليد بطاقات التجار عند فتح الصفحة
+    const grid = document.getElementById('merchants-grid');
+    merchantsList.forEach(m => {
+        const div = document.createElement('div');
+        div.className = 'merchant-card';
+        div.innerHTML = `<strong>${m.storeName}</strong><br><small>${m.ownerName}</small>`;
+        div.onclick = () => selectMerchant(m, div);
+        grid.appendChild(div);
+    });
+
+    // 3. اختيار التاجر وبدء التحليل
+    async function selectMerchant(merchant, element) {
+        selectedMerchant = merchant;
+        
+        // تمييز البطاقة المختارة
+        document.querySelectorAll('.merchant-card').forEach(c => c.classList.remove('active'));
+        element.classList.add('active');
+
+        // إظهار منطقة التقرير
+        document.getElementById('report-area').classList.add('show');
+        document.getElementById('target-merchant').innerText = `تقرير متجر: ${merchant.storeName}`;
+        document.getElementById('ai-text-area').value = "";
+        
+        await prepareReport();
+    }
+
+    // 4. دالة التحليل وصياغة الرسالة (تستخدم الدوال التي كتبتها أنت)
+    async function prepareReport() {
+        if(!selectedMerchant) return;
+        
+        const status = document.getElementById('status-msg');
+        status.innerText = "⏳ جاري تحليل مبيعات الفايربيس وصياغة الرسالة...";
+        
+        try {
+            // استدعاء دالة التجميع (التي شرحناها سابقاً)
+            const stats = await generateMerchantReport(selectedMerchant.ownerName);
+            
+            // استدعاء دالة الذكاء الاصطناعي
+            const message = await craftAIWhatsAppMessage(selectedMerchant, stats);
+            
+            document.getElementById('ai-text-area').value = message;
+            status.innerText = "✅ تم تجهيز التقرير. يمكنك التعديل عليه الآن.";
+        } catch (e) {
+            status.innerText = "❌ حدث خطأ أثناء التحليل.";
+            console.error(e);
+        }
+    }
+
+    // 5. دالة الإرسال (واتساب مجاني مباشر)
+    function sendToWhatsApp() {
+        const text = document.getElementById('ai-text-area').value;
+        const phone = selectedMerchant.phone;
+        
+        if(!text) return alert("لا توجد رسالة لإرسالها!");
+
+        const url = `https://web.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(text)}`;
+        window.open(url, '_blank');
+    }
+
+    // --- الدوال التي أرفقتها أنت في السؤال (نفسها تماماً مع التأكد من تعريف database) ---
+    async function generateMerchantReport(merchantName) {
+        const snapshot = await database.ref("orders").once("value");
+        const allOrders = snapshot.val() ? Object.values(snapshot.val()) : [];
+        const successfulOrders = allOrders.filter(order => order.status === "picked");
+
+        let reportData = {
+            topProducts: {}, totalRevenue: 0, regions: {}, totalOrders: successfulOrders.length
+        };
+
+        successfulOrders.forEach(order => {
+            reportData.topProducts[order.pName] = (reportData.topProducts[order.pName] || 0) + 1;
+            reportData.regions[order.region] = (reportData.regions[order.region] || 0) + 1;
+            const priceValue = parseInt(order.price.replace(/[^\d]/g, '')) || 0;
+            reportData.totalRevenue += priceValue;
+        });
+        return reportData;
+    }
+
+    async function craftAIWhatsAppMessage(merchantData, reportData) {
+        const statsSummary = `التاجر:${merchantData.ownerName}, المتجر:${merchantData.storeName}, الطلبات:${reportData.totalOrders}, الدخل:${reportData.totalRevenue}, المنتجات:${JSON.stringify(reportData.topProducts)}`;
+
+        const response = await fetch("/api/chat", { 
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                model: "llama-3.3-70b-versatile",
+                messages: [
+                    { 
+                        role: "system", 
+                        content: `أنت خبير مبيعات يمني. اكتب رسالة واتساب للتاجر بناءً على مبيعاته بلهجة ترحيبية مهذبة. اذكر الأكثر طلباً، وانصح بمنتج راكد، واستخدم إيموجي.` 
+                    },
+                    { role: "user", content: statsSummary }
+                ]
+            })
+        });
+        const data = await response.json();
+        return data.choices[0].message.content;
+    }
+</script>
+</body>
+</html>
