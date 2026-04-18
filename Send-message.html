@@ -113,21 +113,59 @@
         return reportData;
     }
 
-    async function craftAIWhatsAppMessage(merchantData, reportData) {
-        const statsSummary = `التاجر:${merchantData.ownerName}, المتجر:${merchantData.storeName}, الطلبات:${reportData.totalOrders}, الدخل:${reportData.totalRevenue}, المنتجات:${JSON.stringify(reportData.topProducts)}`;
-        const response = await fetch("/api/chat", { 
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                model: "llama-3.3-70b-versatile",
-                messages: [
-                    { role: "system", content: `أنت خبير مبيعات يمني. اكتب رسالة واتساب للتاجر بلهجة ترحيبية مهذبة.` },
-                    { role: "user", content: statsSummary }
-                ]
-            })
-        });
-        const data = await response.json();
-        return data.choices[0].message.content;
+   async function craftAIWhatsAppMessage(merchantData, reportData) {
+        // تجهيز ملخص البيانات ليقرأه الذكاء الاصطناعي
+        const statsSummary = `
+            التاجر: ${merchantData.ownerName}
+            المتجر: ${merchantData.storeName}
+            عدد الطلبات الناجحة: ${reportData.totalOrders}
+            إجمالي الدخل: ${reportData.totalRevenue} ريال
+            المنتجات المباعة تكرارها: ${JSON.stringify(reportData.topProducts)}
+            المناطق: ${JSON.stringify(reportData.regions)}
+        `;
+
+        try {
+            const response = await fetch("/api/chat", { 
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    model: "llama-3.3-70b-versatile",
+                    messages: [
+                        { 
+                            role: "system", 
+                            content: `أنت خبير تحليل مبيعات في منصة "متاجر البلاد". 
+                            مهمتك كتابة تقرير أسبوعي للتاجر بالهجة اليمنية الحبيبة.
+                            يجب أن تلتزم بهذا القالب تماماً:
+
+                            حياك الله يا [اسم التاجر] ([اسم المتجر]) 🌸
+                            إليك تقريرك الذكي من منصة متاجر البلاد:
+                            ✅ الأكثر طلباً: [اذكر المنتج الأكثر تكراراً] (اكتب تعليق تشجيعي قصير).
+                            ⚠️ منتج راكد: [اختر منتجاً لم يذكر في المبيعات أو مبيعاته 1 فقط] (انصحه بعمل خصم أو تحسين عرضه).
+                            💡 نصيحة البلاد: [اعطه نصيحة تجارية بناءً على منطقته أو مبيعاته].
+                            مستمرون بدعم نجاحك! 🚀
+
+                            ملاحظات صرامة:
+                            1. لا تضف أي مقدمات خارج القالب.
+                            2. استخدم الرموز التعبيرية (Emojis) كما في القالب.
+                            3. اللهجة يجب أن تكون يمنية محترمة (يا غالي، يا صاحب المتجر، بارك الله فيك).` 
+                        },
+                        { role: "user", content: `حلل هذه البيانات واصنع الرسالة: ${statsSummary}` }
+                    ]
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('API Response not OK');
+            }
+
+            const data = await response.json();
+            // التأكد من جلب نص الرسالة فقط
+            return data.choices[0].message.content;
+
+        } catch (error) {
+            console.error("Error in AI Message:", error);
+            return `حياك الله يا ${merchantData.ownerName}.. مبيعاتك هذا الأسبوع بلغت ${reportData.totalOrders} طلبات ناجحة بإجمالي ${reportData.totalRevenue} ريال. (حدث خطأ في جلب النصيحة الذكية).`;
+        }
     }
 </script>
 </body>
