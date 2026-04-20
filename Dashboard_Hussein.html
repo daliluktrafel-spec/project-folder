@@ -304,25 +304,30 @@ function loadStats() {
 
     // 6. مراقبة العمليات
     function loadOps() {
-        db.ref("Orders").on("value", snap => {
-            const tbody = document.getElementById("ops-table");
-            tbody.innerHTML = "";
-            snap.forEach(c => {
-                const o = c.val();
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${o.id || c.key}</td>
-                        <td>${o.pName}</td>
-                        <td>${o.driverName || 'معلق'}</td>
-                        <td>${o.customer}</td>
-                        <td>${o.status}</td>
-                        <td>${o.status === 'delivered' && !o.hussain_paid ? 
-                            `<button class="btn" onclick="db.ref('Orders/${c.key}').update({hussain_paid:true})">تحصيل</button>` : '---'}</td>
-                    </tr>`;
-            });
+    db.ref("Orders").on("value", snap => {
+        const tbody = document.getElementById("ops-table");
+        tbody.innerHTML = "";
+        snap.forEach(c => {
+            const o = c.val();
+            tbody.innerHTML += `
+                <tr>
+                    <td>${o.id || c.key}</td>
+                    <td>${o.pName}</td>
+                    <td>${o.driverName || 'معلق'}</td>
+                    <td>${o.customer}</td>
+                    <td>
+                        <b>${o.price} ر.ي</b><br>
+                        ${o.walletUsed > 0 ? `<small style="color:red;">(خصم محفظة: ${o.walletUsed})</small>` : ''}
+                    </td>
+                    <td>${o.status}</td>
+                    <td>
+                        ${o.status === 'delivered' && !o.hussain_paid ? 
+                        `<button class="btn" onclick="db.ref('Orders/${c.key}').update({hussain_paid:true})">تحصيل</button>` : 'سددت ✅'}
+                    </td>
+                </tr>`;
         });
-    }
-
+    });
+}
     function exportData(path, file) {
         db.ref(path).once("value").then(s => {
             const blob = new Blob([JSON.stringify(s.val(), null, 4)], {type: "text/plain"});

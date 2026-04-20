@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>إدارة جوائز البلاد - خاص بحسين</title>
+    <style>
+        :root { --gold: #b89b4a; --dark: #1b1e33; --red: #d45d5d; }
+        body { font-family: 'Cairo', sans-serif; background: #f0f2f5; padding: 20px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 18px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-top: 6px solid var(--gold); position: relative; }
+        .card.urgent { border-top-color: var(--red); background: #fff8f8; }
+        .user-name { font-size: 18px; font-weight: bold; color: var(--dark); }
+        .prize-name { display: inline-block; padding: 5px 15px; background: var(--gold); color: white; border-radius: 50px; margin: 10px 0; font-weight: bold; }
+        .time { font-size: 12px; color: #888; }
+        .actions { margin-top: 15px; display: flex; gap: 10px; }
+        .btn { flex: 1; padding: 10px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-wa { background: #25D366; color: white; } /* واتساب */
+        .btn-approve { background: var(--dark); color: white; }
+        .status-done { color: #27ae60; font-weight: bold; text-align: center; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🚩 لوحة تحكم فائزين العجلة</h1>
+        <p>راقب، تواصل، واعتمد الجوائز يدوياً</p>
+    </div>
+
+    <div id="adminGrid" class="grid">
+        </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="firebase.js"></script>
+
+    <script>
+        database.ref("Admin_Notifications/LuckyWheel").on("value", snap => {
+            const grid = document.getElementById("adminGrid");
+            grid.innerHTML = "";
+            const data = snap.val();
+
+            if (data) {
+                // ترتيب التنبيهات من الأحدث للأقدم
+                Object.entries(data).reverse().forEach(([id, item]) => {
+                    const isUrgent = item.prize.includes("500") || item.prize.includes("توصيل") || item.prize.includes("إعلان");
+                    
+                    const card = document.createElement("div");
+                    card.className = `card ${isUrgent && item.status === 'pending' ? 'urgent' : ''}`;
+                    
+                    const timeString = new Date(item.time).toLocaleString('ar-YE');
+
+                    card.innerHTML = `
+                        <div class="user-name">👤 ${item.user}</div>
+                        <div class="prize-name">🎁 ${item.prize}</div>
+                        <div class="time">📅 ${timeString}</div>
+                        
+                        ${item.status === 'pending' ? `
+                            <div class="actions">
+                                <button class="btn btn-wa" onclick="contactUser('${item.user}', '${item.prize}')">واتساب 💬</button>
+                                <button class="btn btn-approve" onclick="approvePrize('${id}')">اعتماد ✅</button>
+                            </div>
+                        ` : `<div class="status-done">تم التواصل والاعتماد ✅</div>`}
+                    `;
+                    grid.appendChild(card);
+                });
+            } else {
+                grid.innerHTML = "<p style='text-align:center; grid-column:1/-1;'>لا توجد بيانات حالياً</p>";
+            }
+        });
+
+        function contactUser(userName, prize) {
+            // هنا نبحث عن رقم الجوال من جدول المستخدمين
+            database.ref("Users/" + userName).once("value").then(snap => {
+                const userData = snap.val();
+                if (userData && (userData.phone || userData.name)) {
+                    const phone = userData.phone || ""; // تأكد من أنك تخزن الرقم في جدول Users
+                    const msg = encodeURIComponent(`حياك الله يا غالي، معك حسين من إدارة متاجر البلاد. مبروك فوزك بـ (${prize}) في عجلة الحظ! تواصلت معك لترتيب استلام جائزتك.`);
+                    window.open(`https://wa.me/${phone}?text=${msg}`);
+                } else {
+                    alert("عفواً، لم يتم العثور على رقم جوال مسجل لهذا الاسم.");
+                }
+            });
+        }
+
+        function approvePrize(id) {
+            if (confirm("هل أنت متأكد من اعتماد الجائزة وتسليمها؟")) {
+                database.ref("Admin_Notifications/LuckyWheel/" + id).update({
+                    status: "completed"
+                });
+            }
+        }
+    </script>
+</body>
+</html>

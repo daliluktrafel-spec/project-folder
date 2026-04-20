@@ -45,7 +45,10 @@
             <div onclick="showSection('favorites')"><span>🛒 المفضلة</span><span id="favCount" style="background:#d45d5d; color:white; padding:2px 8px; border-radius:10px; font-size:11px;">0</span></div>
             <div onclick="changeMyRegion()"><span>📍 المنطقة</span><small id="current-region-display" style="color:var(--gold); font-size:10px;">..</small></div>
             <div onclick="showPointsAlert()"><span>🪙 نقاطي</span><b id="my-points-count" style="color:#27ae60;">0</b></div>
-            <div onclick="openWallet()" style="background: #eef2ff;"><span>💳 محفظتي</span><small style="color:var(--gold)">💰</small></div>
+           <div onclick="location.href='wallet.html'" style="background: #eef2ff; cursor: pointer;">
+    <span>💳 محفظتي</span>
+    <small style="color:var(--gold)">💰</small>
+</div>
             <div onclick="shareApp()" style="background: #fff9e6;"><span>📢 شارك واربح</span><span>🎁</span></div>
             <div onclick="location.href='my-orders.html'"><span>📦 سجل طلباتي</span><span>⬅</span></div>
         </div>
@@ -147,24 +150,6 @@ function loadProducts() {
     });
 } // <--- هذا القوس كان ناقصاً عندك
 
-function openWallet() {
-    const pts = parseInt(document.getElementById("my-points-count").innerText) || 0;
-    const rewardMoney = pts * 2; 
-    document.getElementById("total-saved").innerText = rewardMoney.toLocaleString();
-    document.getElementById("wallet-modal").style.display = "flex";
-    
-    let spendHistory = JSON.parse(localStorage.getItem("spendHistory") || "[]");
-    const historyDiv = document.getElementById("wallet-history");
-    if(spendHistory.length === 0) {
-        historyDiv.innerHTML = "<p style='text-align:center;'>لا توجد عمليات مسجلة</p>";
-    } else {
-        historyDiv.innerHTML = "<b>آخر المشتريات:</b><br>" + spendHistory.map(h => `
-            <div style="border-bottom:1px solid #ddd; padding:8px 0; display:flex; justify-content:space-between;">
-                <span>🛍️ ${h.item}</span>
-                <span style="color:#d45d5d; font-weight:bold;">-${h.price} ر.ي</span>
-            </div>`).join('');
-    }
-}
 
 function closeWallet() { document.getElementById("wallet-modal").style.display = "none"; }
 
@@ -304,6 +289,29 @@ function changeMyRegion() {
     const n = prompt("تعديل منطقة التوصيل:", old);
     if (n) { localStorage.setItem("userRegion", n.trim()); location.reload(); }
 }
+// دالة فحص النقاط وتحويلها لرصيد
+function checkPointsAndAwardWallet(userName) {
+    const userRef = database.ref("Users/" + userName);
+    userRef.once("value").then(snap => {
+        const data = snap.val() || {};
+        let points = data.points || 0;
+        let wallet = data.wallet || 0;
+
+        if (points >= 500) {
+            let numCoupons = Math.floor(points / 500);
+            let rewardAmount = numCoupons * 5000;
+            let remainingPoints = points % 500;
+
+            // تحديث المحفظة والنقاط
+            userRef.update({
+                wallet: wallet + rewardAmount,
+                points: remainingPoints
+            }).then(() => {
+                alert(`🎊 تهانينا! حصلت على قسيمة شرائية بقيمة ${rewardAmount} ر.ي تم إضافتها لمحفظتك.`);
+            });
+        }
+    });
+}
 
 function countVisit() {
     if (typeof database !== 'undefined') {
@@ -314,10 +322,13 @@ function countVisit() {
         }
     }
 }
-
-window.addEventListener('load', countVisit);
-loadProducts();
-loadMyPoints();
+window.onload = function() {
+    loadProducts();
+    loadMyPoints();
+    countVisit();
+    // استدعاء فحص النقاط فوراً
+    checkPointsAndAwardWallet(localStorage.getItem("userName"));
+};
 </script>
 </body>
 </html>

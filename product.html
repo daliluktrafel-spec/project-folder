@@ -14,23 +14,18 @@
     .favorite-btn { left: 15px; color: #ccc; }
     .favorite-btn.active { color: #e74c3c; }
     .share-btn { right: 15px; color: var(--dark); }
-    .related-section { margin-top: 20px; padding: 15px; text-align: right; }
-    .related-title { font-size: 18px; font-weight: bold; color: var(--dark); border-right: 4px solid var(--gold); padding-right: 10px; margin-bottom: 15px; }
-    .related-container { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
-    .related-container::-webkit-scrollbar { display: none; }
-    .related-card { min-width: 130px; background: white; border-radius: 12px; padding: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); cursor: pointer; text-align: center; }
-    .related-img { width: 100%; aspect-ratio: 1/1; border-radius: 8px; object-fit: cover; }
-    .related-name { font-size: 11px; font-weight: bold; margin-top: 5px; height: 30px; overflow: hidden; color: var(--dark); }
-    .related-price { color: var(--gold); font-size: 11px; font-weight: bold; }
     .info-section { padding: 20px; }
     .product-name { font-size: 26px; font-weight: bold; color: #8b5e3c; margin-bottom: 10px; }
-    .product-price { margin-bottom: 15px; }
     .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed #eee; font-size: 15px; }
     .btn-group { display: flex; flex-direction: column; gap: 12px; padding: 20px; }
     .btn-main { border: none; border-radius: 12px; padding: 15px; font-weight: bold; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 16px; text-decoration: none; }
     .btn-wa { background: #25D366; color: white; }
     .btn-delivery { background: #e67e22; color: white; }
     .btn-back { background: #eee; color: #666; }
+    
+    /* ستايل الخصم المتطور */
+    #wallet-deduction-area { background: #fffde7; border: 1px dashed var(--gold); padding: 15px; border-radius: 15px; margin: 15px; display: none; flex-direction: column; gap: 10px; }
+    .discount-select { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #ddd; font-weight: bold; }
 </style>
 </head>
 <body>
@@ -43,18 +38,39 @@
     </div>
     <div class="info-section">
         <div class="product-name" id="product-name">جاري التحميل...</div>
-        <div id="product-price">--</div>
+        <div id="product-price" style="font-size:24px; font-weight:bold; color:var(--gold);">--</div>
+
+        <div id="wallet-deduction-area">
+            <div style="font-weight:bold; font-size:14px;">💰 رصيدك المتاح: <span id="user-wallet-balance">0</span> ر.ي</div>
+            <select id="discount-amount-list" class="discount-select">
+                <option value="0">--- اختر مبلغ الخصم ---</option>
+                <option value="1000">خصم 1000 ر.ي</option>
+                <option value="2000">خصم 2000 ر.ي</option>
+                <option value="3000">خصم 3000 ر.ي</option>
+                <option value="4000">خصم 4000 ر.ي</option>
+                <option value="5000">خصم 5000 ر.ي</option>
+                <option value="10000">خصم 10000 ر.ي</option>
+            </select>
+            <button class="btn-main" style="background:var(--gold); color:white; padding:8px; font-size:14px;" onclick="applySelectedDiscount()">تطبيق الخصم الآن</button>
+        </div>
+        
+        <div id="final-price-display" style="display:none; color: #27ae60; font-weight: bold; margin: 10px 0; padding:10px; border:2px solid #27ae60; border-radius:10px;">
+            صافي السعر للدفع: <span id="new-price">0</span> ر.ي
+        </div>
+
         <div class="detail-row"><span>الحالة:</span><b id="product-status">--</b></div>
         <div class="detail-row"><span>المتجر:</span><b id="product-store">--</b></div>
     </div>
+
     <div class="btn-group" id="main-btn-group">
         <button class="btn-main btn-wa" id="order-wa">🟢 طلب مباشر عبر واتساب</button>
-        <button class="btn-main btn-delivery" id="order-delivery">🛵 طلب عبر مندوب (منطقتي)</button>
+        <button class="btn-main btn-delivery" id="order-delivery-btn" onclick="sendOrderToDriver()">🛵 طلب عبر مندوب (منطقتي)</button>
         <button class="btn-main btn-back" onclick="window.history.back()">رجوع للخلف</button>
     </div>
+
     <div class="related-section">
         <div class="related-title">منتجات قد تعجبك 🛍️</div>
-        <div id="related-list" class="related-container"></div>
+        <div id="related-list" class="related-container" style="display: flex; gap: 12px; overflow-x: auto; padding: 10px;"></div>
     </div>
 </div>
 
@@ -66,9 +82,11 @@
 const urlParams = new URLSearchParams(window.location.search);
 const productId = String(urlParams.get('productId'));
 let currentProduct = null;
+let discountValue = 0;
+const userName = localStorage.getItem("userName");
 const userRegion = localStorage.getItem("userRegion") || "";
 
-// --- 1. تحميل المنتج والذكاء الاصطناعي ---
+// 1. تحميل البيانات الأساسية
 database.ref("products").once("value").then(snap => {
     const data = snap.val() || {};
     currentProduct = Object.values(data).find(p => String(p.id) === productId);
@@ -77,27 +95,95 @@ database.ref("products").once("value").then(snap => {
     document.getElementById("product-name").innerText = currentProduct.name;
     document.getElementById("product-status").innerText = currentProduct.status;
     document.getElementById("product-store").innerText = currentProduct.store;
-    document.getElementById("product-img").src = currentProduct.image || "https://placehold.co/400?text=No+Image";
+    document.getElementById("product-img").src = currentProduct.image || "";
+    document.getElementById("product-price").innerText = currentProduct.price + " ريال";
 
-    const isFlashActive = currentProduct.isFlash && currentProduct.flashExpiry > Date.now();
-    if (isFlashActive) {
-        document.getElementById("product-price").innerHTML = `<div style="color:red; font-size:26px; font-weight:bold;">⚡ ${currentProduct.flashPrice} ريال</div>`;
-    } else {
-        document.getElementById("product-price").innerHTML = `<div style="font-size:22px; font-weight:bold; color:var(--gold);">${currentProduct.price} ريال</div>`;
-    }
-
-    // تشغيل الأنظمة
-    boostInterest(currentProduct.category, 1);
+    loadWalletInfo();
     initFavorite();
     checkActiveOrder();
     loadRelatedProducts(currentProduct);
 });
 
-// --- 2. نظام المفضلة ---
+// 2. جلب رصيد المحفظة
+function loadWalletInfo() {
+    if(!userName) return;
+    database.ref("Users/" + userName + "/wallet").on("value", snap => {
+        const balance = snap.val() || 0;
+        if (balance > 0) {
+            document.getElementById("wallet-deduction-area").style.display = "flex";
+            document.getElementById("user-wallet-balance").innerText = balance;
+        }
+    });
+}
+
+// 3. تطبيق الخصم من القائمة
+function applySelectedDiscount() {
+    // جلب الرصيد من النص وتنظيفه من أي كلمات أو مسافات
+    const balanceText = document.getElementById("user-wallet-balance").innerText;
+    const balance = parseInt(balanceText.replace(/\D/g, '')) || 0; 
+    
+    // جلب القيمة المختارة من القائمة
+    const selectedAmount = parseInt(document.getElementById("discount-amount-list").value) || 0;
+    
+    // جلب سعر المنتج وتنظيفه
+    const priceText = document.getElementById("product-price").innerText;
+    const originalPrice = parseInt(priceText.replace(/\D/g, '')) || 0;
+
+    console.log("الرصيد المحسوب:", balance); // للتأكد في الكونسول
+    console.log("الخصم المختار:", selectedAmount);
+
+    if (selectedAmount > 0 && selectedAmount <= balance) {
+        if (selectedAmount >= originalPrice) {
+            alert("⚠️ لا يمكن أن يكون الخصم أكبر من أو يساوي سعر المنتج نفسه!");
+            return;
+        }
+        discountValue = selectedAmount;
+        document.getElementById("new-price").innerText = (originalPrice - discountValue).toLocaleString();
+        document.getElementById("final-price-display").style.display = "block";
+        alert("✅ تم تطبيق الخصم بنجاح!");
+    } else {
+        alert("⚠️ عذراً، رصيدك الحالي (" + balance + ") لا يكفي لخصم مبلغ (" + selectedAmount + ")");
+    }
+}
+// 4. إرسال الطلب للمندوب (الخصم الفعلي)
+function sendOrderToDriver() {
+    if(!userName) return alert("يرجى تسجيل الدخول أولاً");
+    
+    const orderID = "ORD-" + Date.now();
+    const originalPriceNum = parseInt(currentProduct.price.replace(/\D/g,''));
+    
+    const orderData = {
+        id: orderID,
+        customer: userName,
+        pName: currentProduct.name,
+        originalPrice: originalPriceNum,
+        price: originalPriceNum - discountValue,
+        walletUsed: discountValue,
+        region: userRegion,
+        store: currentProduct.store,
+        status: "waiting",
+        timestamp: Date.now()
+    };
+
+    database.ref("Orders/" + orderID).set(orderData).then(() => {
+        if(discountValue > 0) {
+            database.ref("Users/" + userName + "/wallet").transaction(b => (b || 0) - discountValue);
+        }
+        alert("تم إرسال طلبك بنجاح! جاري تحويلك للتتبع والدردشة...");
+        location.href = `track-order.html?orderId=${orderID}`;
+    });
+}
+
+// 5. واتساب مباشر
+document.getElementById("order-wa").onclick = () => {
+    const msg = `حياكم الله، أريد شراء: ${currentProduct.name}\nالسعر: ${currentProduct.price}\nالمنطقة: ${userRegion}`;
+    window.open(`https://wa.me/967774257557?text=${encodeURIComponent(msg)}`, '_blank');
+};
+
+// 6. المفضلة
 function initFavorite() {
     const favBtn = document.getElementById("favBtn");
     let favorites = JSON.parse(localStorage.getItem("favorites") || "[]").map(String);
-
     if (favorites.includes(productId)) favBtn.classList.add("active");
 
     favBtn.onclick = () => {
@@ -108,49 +194,27 @@ function initFavorite() {
         } else {
             currentFavs.push(productId);
             favBtn.classList.add("active");
-            boostInterest(currentProduct.category, 5);
         }
         localStorage.setItem("favorites", JSON.stringify(currentFavs));
     };
 }
 
-// --- 3. نظام طلب المندوب والانتقال للدردشة ---
-document.getElementById("order-delivery").onclick = () => {
-    const userName = localStorage.getItem("userName");
-    if(!userName) return alert("يرجى تسجيل الدخول أولاً");
-
-    const orderID = "ORD-" + Date.now(); 
-    const orderData = {
-        id: orderID,
-        customer: userName,
-        pName: currentProduct.name,
-        price: currentProduct.price,
-        region: userRegion,
-        status: "waiting",
-        driverPhone: "none",
-        timestamp: Date.now()
-    };
-
-    database.ref("Orders/" + orderID).set(orderData).then(() => {
-        alert("تم إرسال طلبك بنجاح! جاري تحويلك لصفحة التتبع...");
-        location.href = `track-order.html?orderId=${orderID}`;
-    });
+// 7. نشر الرابط
+document.getElementById("copyBtn").onclick = () => {
+    navigator.clipboard.writeText(window.location.href);
+    alert("✅ تم نسخ رابط المنتج!");
 };
 
-// --- 4. فحص الطلبات النشطة للدردشة المباشرة ---
+// 8. فحص الطلبات النشطة (للتحويل للدردشة)
 function checkActiveOrder() {
-    const myName = localStorage.getItem("userName");
-    if(!myName || !currentProduct) return;
-
-    database.ref("Orders").orderByChild("customer").equalTo(myName).on("value", snap => {
+    database.ref("Orders").orderByChild("customer").equalTo(userName).on("value", snap => {
         const orders = snap.val();
         if (orders) {
-            Object.keys(orders).forEach(key => {
-                const ord = orders[key];
+            Object.values(orders).forEach(ord => {
                 if (ord.pName === currentProduct.name && ord.status !== "delivered") {
                     document.getElementById("main-btn-group").innerHTML = `
                         <div style="background:#fff3e0; padding:15px; border-radius:12px; border:1.5px solid #e67e22; margin-bottom:10px;">
-                            <p style="margin:0; font-size:14px; color:#e67e22; font-weight:bold;">لديك طلب نشط لهذا المنتج!</p>
+                            <p style="margin:0; font-weight:bold; color:#e67e22;">لديك طلب جاري الآن!</p>
                             <button class="btn-main" style="background:#e67e22; color:white; margin-top:10px;" 
                                 onclick="location.href='track-order.html?orderId=${ord.id}'">💬 تتبع الطلب والدردشة</button>
                         </div>
@@ -161,50 +225,19 @@ function checkActiveOrder() {
     });
 }
 
-// --- 5. نظام الواتساب المباشر ---
-document.getElementById("order-wa").onclick = () => {
-    const message = `أرجو شراء المنتج: ${currentProduct.name}\nالسعر: ${currentProduct.price}\nالمتجر: ${currentProduct.store}`;
-    window.open(`https://wa.me/967774257557?text=${encodeURIComponent(message)}`, '_blank');
-};
-
-// --- 6. منتجات قد تعجبك (الذكاء الاصطناعي) ---
 function loadRelatedProducts(currentP) {
-    const relatedList = document.getElementById("related-list");
     database.ref("products").once("value").then(snap => {
-        const data = snap.val() || {};
-        const allProducts = Object.values(data);
-        const related = allProducts.filter(p => p.category === currentP.category && String(p.id) !== String(currentP.id)).slice(0, 6);
-
-        relatedList.innerHTML = "";
+        const all = Object.values(snap.val() || {});
+        const related = all.filter(p => p.category === currentP.category && String(p.id) !== productId).slice(0, 5);
+        const list = document.getElementById("related-list");
+        list.innerHTML = "";
         related.forEach(rp => {
-            const card = document.createElement("div");
-            card.className = "related-card";
-            card.onclick = () => {
-                boostInterest(rp.category, 1);
-                location.href = `product.html?productId=${rp.id}`;
-            };
-            card.innerHTML = `
-                <img src="${rp.image || 'https://placehold.co/100'}" class="related-img" onerror="this.src='https://placehold.co/100'">
-                <div class="related-name">${rp.name}</div>
-                <div class="related-price">${rp.price} ر.ي</div>
-            `;
-            relatedList.appendChild(card);
+            list.innerHTML += `<div onclick="location.href='product.html?productId=${rp.id}'" style="min-width:120px; background:white; padding:10px; border-radius:10px; text-align:center; font-size:12px; box-shadow:0 2px 5px rgba(0,0,0,0.1);">
+                <img src="${rp.image}" style="width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:5px;"><br><b>${rp.name}</b><br><span style="color:var(--gold)">${rp.price}</span>
+            </div>`;
         });
     });
 }
-
-// --- 7. دوال مساعدة (نسخ، ذكاء) ---
-function boostInterest(category, weight) {
-    if (!category) return;
-    let interests = JSON.parse(localStorage.getItem("userInterests") || "{}");
-    interests[category] = (interests[category] || 0) + weight;
-    localStorage.setItem("userInterests", JSON.stringify(interests));
-}
-
-document.getElementById("copyBtn").onclick = () => {
-    navigator.clipboard.writeText(window.location.href);
-    alert("✅ تم نسخ رابط المنتج بنجاح!");
-};
 </script>
 </body>
 </html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>محفظتي الذكية | متاجر البلاد</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<style>
+    :root { --gold: #b89b4a; --dark: #1b1e33; --light: #f7f6f2; --white: #ffffff; }
+    body { margin: 0; font-family: 'Cairo', sans-serif; background: var(--light); color: var(--dark); padding-bottom: 20px; }
+    
+    /* الهيدر */
+    .header { background: var(--dark); color: var(--gold); padding: 20px; text-align: center; font-size: 20px; font-weight: bold; border-bottom: 3px solid var(--gold); position: sticky; top: 0; z-index: 100; }
+    .back-btn { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: var(--gold); color: var(--dark); border: none; padding: 5px 12px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; }
+
+    .container { padding: 20px; max-width: 500px; margin: auto; }
+
+    /* بطاقة الرصيد */
+    .balance-card { background: linear-gradient(135deg, #1b1e33 0%, #2c2f4a 100%); color: var(--gold); padding: 30px; border-radius: 25px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid rgba(184, 155, 74, 0.3); margin-bottom: 25px; position: relative; overflow: hidden; }
+    .balance-card::before { content: "AL-BELAD"; position: absolute; top: -10px; left: -10px; font-size: 40px; opacity: 0.05; transform: rotate(-20deg); }
+    .balance-label { color: white; font-size: 14px; opacity: 0.8; margin-bottom: 10px; display: block; }
+    .balance-amount { font-size: 42px; font-weight: bold; margin: 0; }
+    .balance-currency { font-size: 16px; margin-right: 5px; color: white; }
+
+    /* قسم النقاط */
+    .points-section { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    .section-title { font-weight: bold; font-size: 16px; display: flex; align-items: center; gap: 8px; margin-bottom: 15px; }
+    
+    .progress-container { background: #eee; height: 12px; border-radius: 10px; margin: 15px 0; overflow: hidden; }
+    .progress-bar { background: var(--gold); height: 100%; width: 0%; transition: 1s ease-in-out; }
+    .points-info { display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; }
+
+    /* البطاقات التعريفية */
+    .info-box { background: #fffde7; border-right: 4px solid var(--gold); padding: 15px; border-radius: 12px; font-size: 13px; line-height: 1.6; margin-bottom: 15px; }
+    .info-box b { color: var(--dark); }
+
+    /* سجل العمليات بسيط */
+    .history-title { font-weight: bold; margin: 20px 0 10px; color: #666; font-size: 14px; }
+    .history-item { display: flex; justify-content: space-between; background: white; padding: 12px 15px; border-radius: 12px; margin-bottom: 8px; font-size: 13px; border: 1px solid #eee; }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <button class="back-btn" onclick="window.history.back()">⬅ رجوع</button>
+    محفظتي الرقمية
+</div>
+
+<div class="container">
+    <div class="balance-card">
+        <span class="balance-label">الرصيد المتاح للاستخدام</span>
+        <h1 class="balance-amount"><span id="wallet-balance">0</span><small class="balance-currency">ر.ي</small></h1>
+    </div>
+
+    <div class="points-section">
+        <div class="section-title">🪙 رصيد النقاط الحالي</div>
+        <div class="points-info">
+            <span>جمعت: <b id="current-points">0</b> نقطة</span>
+            <span>الهدف: <b>500</b></span>
+        </div>
+        <div class="progress-container">
+            <div id="points-progress" class="progress-bar"></div>
+        </div>
+        <p id="remaining-text" style="font-size: 12px; color: #888; margin: 0; text-align: center;">يتبقى لك 500 نقطة للحصول على قسيمة 5000 ر.ي</p>
+    </div>
+
+    <div class="info-box">
+        <b>💡 كيف تحصل على النقاط؟</b><br>
+        1. عند كل عملية شراء ناجحة يمنحك القائد حسين 10 نقاط أو أكثر.<br>
+        2. من خلال "عجلة الحظ" اليومية في صفحة الأقسام.<br>
+        3. دعوة أصدقائك لاستخدام المنصة.
+    </div>
+
+    <div class="info-box" style="background: #e8f5e9; border-right-color: #27ae60;">
+        <b>💸 كيف تستفيد من رصيد المحفظة؟</b><br>
+        عند فتح أي منتج، سيظهر لك زر "خصم من المحفظة". يمكنك خصم أي مبلغ تريده من رصيدك لتقليل سعر المنتج فوراً!
+    </div>
+
+    <div class="history-title">آخر التحركات</div>
+    <div id="history-list">
+        <div class="history-item" style="color: #888; justify-content: center;">لا توجد عمليات مسجلة حالياً</div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="firebase.js"></script>
+
+<script>
+    const userName = localStorage.getItem("userName");
+
+    if(!userName) {
+        window.location.href = "index.html";
+    }
+
+    function loadWalletData() {
+        // الاستماع المباشر لبيانات المستخدم
+        database.ref("Users/" + userName).on("value", snap => {
+            const data = snap.val() || {};
+            const wallet = data.wallet || 0;
+            const points = data.points || 0;
+
+            // تحديث الرصيد المالي
+            document.getElementById("wallet-balance").innerText = wallet.toLocaleString();
+            
+            // تحديث النقاط
+            document.getElementById("current-points").innerText = points;
+            
+            // تحديث شريط التقدم
+            let progress = (points / 500) * 100;
+            if (progress > 100) progress = 100;
+            document.getElementById("points-progress").style.width = progress + "%";
+
+            // تحديث النص المتبقي
+            let remaining = 500 - points;
+            if(remaining > 0) {
+                document.getElementById("remaining-text").innerText = `يتبقى لك ${remaining} نقطة للحصول على قسيمة 5000 ر.ي`;
+            } else {
+                document.getElementById("remaining-text").innerText = "🎉 مبروك! وصلت للهدف، افتح الهوم لاستلام جائزتك";
+                document.getElementById("remaining-text").style.color = "#27ae60";
+            }
+        });
+    }
+
+    // تشغيل الجلب عند التحميل
+    window.onload = loadWalletData;
+</script>
+
+</body>
+</html>

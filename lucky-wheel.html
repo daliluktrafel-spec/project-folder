@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>عجلة الحظ - متاجر البلاد</title>
+    <style>
+        body { margin: 0; font-family: 'Cairo', sans-serif; background: #1b1e33; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        .wheel-box { position: relative; width: 320px; height: 320px; }
+        canvas { width: 100%; height: 100%; border: 8px solid #b89b4a; border-radius: 50%; transition: transform 5s cubic-bezier(0.1, 0, 0.1, 1); }
+        .arrow { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 30px solid #ff4757; z-index: 10; }
+        .spin-btn { margin-top: 30px; padding: 15px 40px; background: #b89b4a; border: none; border-radius: 50px; font-size: 20px; font-weight: bold; cursor: pointer; color: #1b1e33; }
+        #win-msg { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <h2>🎡 جرب حظك اليومي</h2>
+    <div class="wheel-box">
+        <div class="arrow"></div>
+        <canvas id="wheel" width="500" height="500"></canvas>
+    </div>
+    <button id="spin-btn" class="spin-btn" onclick="startSpin()">إبرم العجلة</button>
+
+    <div id="win-msg">
+        <h1 id="prize-name" style="color:#b89b4a"></h1>
+        <p id="prize-desc"></p>
+        <button onclick="exit()" style="padding:10px 30px; border-radius:10px; border:none; cursor:pointer;">العودة للمتجر</button>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="firebase.js"></script>
+
+    <script>
+        const canvas = document.getElementById('wheel');
+        const ctx = canvas.getContext('2d');
+        const prizes = [
+            { text: "10 نقاط", color: "#1b1e33", weight: 40 },
+            { text: "توصيل مجاني", color: "#b89b4a", weight: 10 },
+            { text: "20 نقطة", color: "#1b1e33", weight: 20 },
+            { text: "إعلان مجاني", color: "#b89b4a", weight: 5 },
+            { text: "500 ر.ي", color: "#1b1e33", weight: 5 },
+            { text: "حظ أوفر", color: "#b89b4a", weight: 20 }
+        ];
+
+        function draw() {
+            const arc = (Math.PI * 2) / 6;
+            prizes.forEach((p, i) => {
+                ctx.beginPath(); ctx.fillStyle = p.color;
+                ctx.moveTo(250, 250); ctx.arc(250, 250, 250, i * arc, (i + 1) * arc); ctx.fill();
+                ctx.save(); ctx.translate(250, 250); ctx.rotate(i * arc + arc/2);
+                ctx.fillStyle = "white"; ctx.font = "24px Cairo"; ctx.fillText(p.text, 100, 10); ctx.restore();
+            });
+        }
+        draw();
+
+        function startSpin() {
+            const last = localStorage.getItem("lastSpinTime");
+            // if(last && (Date.now() - last < 86400000)) { alert("عد إلينا بعد 24 ساعة يا غالي!"); return; }
+
+            document.getElementById('spin-btn').disabled = true;
+            // خوارزمية الحظ بناءً على الوزن
+            const totalWeight = prizes.reduce((sum, p) => sum + p.weight, 0);
+            let random = Math.random() * totalWeight;
+            let selectedIndex = 0;
+            for (let i = 0; i < prizes.length; i++) {
+                if (random < prizes[i].weight) { selectedIndex = i; break; }
+                random -= prizes[i].weight;
+            }
+
+            const stopAngle = 360 - (selectedIndex * 60) - 30; 
+            const totalRotation = 1800 + stopAngle; 
+            canvas.style.transform = `rotate(${totalRotation}deg)`;
+
+            setTimeout(() => finalize(prizes[selectedIndex]), 5000);
+        }
+
+        function finalize(prize) {
+    const user = localStorage.getItem("userName");
+    localStorage.setItem("lastSpinTime", Date.now());
+
+    // 1. إذا كانت الجائزة نقاط (10 أو 20)، أضفها فوراً للقاعدة
+    // 1. إذا كانت الجائزة تحتوي على كلمة نقاط، نستخرج الرقم ونضيفه
+    if (prize.text.includes("نقاط")) {
+        const pointsToAdd = parseInt(prize.text.match(/\d+/)[0]); // يستخرج أي رقم موجود في النص بدقة
+        database.ref("Users/" + user + "/points").transaction(p => (p || 0) + pointsToAdd);
+    }
+
+    // 2. إذا فاز بـ 500 ريال، فعل مفتاح الرسالة التنبيهية في الهوم
+    if(prize.text === "500 ر.ي") {
+        localStorage.setItem("won500", "true");
+    }
+
+    // 3. إرسال السجل الكامل لك في لوحة الإدارة للمراقبة والتوثيق
+    database.ref("Admin_Notifications/LuckyWheel").push({
+        user: user, 
+        prize: prize.text, 
+        time: Date.now(), 
+        status: (prize.type === "points" || prize.text === "حظ أوفر") ? "completed" : "pending"
+    });
+
+    document.getElementById('prize-name').innerText = "ربحت: " + prize.text;
+    document.getElementById('prize-desc').innerText = prize.text.includes("نقاط") ? 
+        "تمت إضافة النقاط لحسابك آلياً! ✅" : 
+        "سيتم المراجعة من قبل الإدارة لتفعيل الجائزة ⏳";
+    document.getElementById('win-msg').style.display = "flex";
+}
+        function exit() { window.location.replace("fields.html"); }
+    </script>
+</body>
+</html>

@@ -7,71 +7,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
 
 <style>
-    body {
-        margin: 0;
-        font-family: 'Cairo', sans-serif;
-        background-color: #f7f6f2;
-        overflow-x: hidden;
-    }
-
-    /* شريط التنقل العلوي */
-    .top-navbar {
-        display: flex;
-        justify-content: space-around;
-        align-items: center;
-        background: linear-gradient(45deg, #c9b36a, #b89b4a);
-        padding: 12px 0;
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    }
-
-    .nav-link {
-        color: #1b1e33;
-        text-decoration: none;
-        text-align: center;
-        flex: 1;
-        font-size: 13px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: 0.3s;
-        opacity: 0.7;
-    }
-/* نقطة الإشعارات الحمراء */
-.notif-badge {
-    position: absolute;
-    top: 5px;
-    right: 25%; /* ضبط المكان حسب الحاجة */
-    background-color: #d45d5d;
-    color: white;
-    font-size: 10px;
-    padding: 2px 6px;
-    border-radius: 50%;
-    display: none; /* مخفية حتى يوجد جديد */
-    border: 1px solid #fff;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-}
-.nav-link { position: relative; } /* ضروري لضبط مكان النقطة */
-
-    .nav-link.active {
-        opacity: 1;
-        transform: scale(1.1);
-    }
-
-    .nav-link i {
-        display: block;
-        font-size: 22px;
-        margin-bottom: 3px;
-    }
-
-    /* حاوية المحتوى المغير */
-    #main-frame {
-        width: 100%;
-        height: calc(100vh - 70px); /* طرح طول الناف بار */
-        border: none;
-        display: block;
-    }
+    body { margin: 0; font-family: 'Cairo', sans-serif; background-color: #f7f6f2; overflow-x: hidden; }
+    .top-navbar { display: flex; justify-content: space-around; align-items: center; background: linear-gradient(45deg, #c9b36a, #b89b4a); padding: 12px 0; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+    .nav-link { color: #1b1e33; text-decoration: none; text-align: center; flex: 1; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.3s; opacity: 0.7; position: relative; }
+    .notif-badge { position: absolute; top: 5px; right: 25%; background-color: #d45d5d; color: white; font-size: 10px; padding: 2px 6px; border-radius: 50%; display: none; border: 1px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+    .nav-link.active { opacity: 1; transform: scale(1.1); }
+    #main-frame { width: 100%; height: calc(100vh - 70px); border: none; display: block; }
 </style>
 </head>
 <body>
@@ -80,10 +21,10 @@
     <div class="nav-link active" onclick="loadPage('home.html', this)">
         <span>🏠</span><br>الرئيسية
     </div>
-  <div class="nav-link" onclick="loadPage('notifications.html', this); markAsRead();">
-    <span id="notif-dot" class="notif-badge">!</span>
-    <span>🔔</span><br>الإشعارات
-</div>
+    <div class="nav-link" onclick="loadPage('notifications.html', this); markAsRead();">
+        <span id="notif-dot" class="notif-badge">!</span>
+        <span>🔔</span><br>الإشعارات
+    </div>
     <div class="nav-link" onclick="loadPage('contact.html', this)">
         <span>📞</span><br>اتصل بنا
     </div>
@@ -97,52 +38,67 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="firebase.js"></script>
-<script>
-    function loadPage(pageUrl, element) {
-        // تغيير الصفحة داخل الإطار
-        document.getElementById('main-frame').src = pageUrl;
 
-        // تحديث شكل الأزرار (تحديد الزر النشط)
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.classList.remove('active');
-        });
+<script>
+    // 1. دالة تحميل الصفحات
+    function loadPage(pageUrl, element) {
+        document.getElementById('main-frame').src = pageUrl;
+        document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
         element.classList.add('active');
     }
 
-    // كود لحل مشكلة الارتفاع في بعض المتصفحات
+    // 2. فحص الإشعارات
+    function checkNewNews() {
+        const database = firebase.database();
+        database.ref("news").on("value", snap => {
+            const data = snap.val();
+            if (!data) return;
+            const newsCount = Object.keys(data).length;
+            const lastSeen = localStorage.getItem("lastSeenNewsCount") || 0;
+            if (newsCount > lastSeen) document.getElementById("notif-dot").style.display = "block";
+        });
+    }
+
+    // 3. دالة قراءة الإشعارات
+    function markAsRead() {
+        firebase.database().ref("news").once("value", snap => {
+            if (snap.val()) {
+                localStorage.setItem("lastSeenNewsCount", Object.keys(snap.val()).length);
+                document.getElementById("notif-dot").style.display = "none";
+            }
+        });
+    }
+
+    // 4. التشغيل عند فتح الصفحة (دمج كل الوظائف)
+    window.onload = function() {
+    checkNewNews();
+
+    // فحص إذا فاز بـ 500 ريال مؤخراً
+    if (localStorage.getItem("won500") === "true") {
+        const msg = document.createElement("div");
+        msg.style = "position:fixed; top:80px; left:5%; width:90%; background:#d45d5d; color:white; padding:15px; border-radius:15px; z-index:10000; text-align:center; font-weight:bold; box-shadow:0 5px 15px rgba(0,0,0,0.3);";
+        msg.innerHTML = "🎁 مبروك! لديك مكافأة 500 ر.ي بانتظار موافقة الإشراف لاستخدامها في مشترياتك";
+        document.body.appendChild(msg);
+        
+        setTimeout(() => { 
+            msg.style.display = "none"; 
+            localStorage.removeItem("won500"); // حذفها لكي لا تظهر دائماً
+        }, 5000);
+    }
+
+    // منطق العجلة كل 24 ساعة
+    const lastSpin = localStorage.getItem("lastSpinTime");
+    const now = Date.now();
+    if (localStorage.getItem("introShown") === "true") {
+        if (!lastSpin || (now - lastSpin >= 86400000)) {
+            setTimeout(() => { window.location.href = "lucky-wheel.html"; }, 5000);
+        }
+    }
+};
+    // حل مشكلة الارتفاع
     window.addEventListener('resize', function() {
-        let h = window.innerHeight - 70;
-        document.getElementById('main-frame').style.height = h + "px";
+        document.getElementById('main-frame').style.height = (window.innerHeight - 70) + "px";
     });
-// نربط مع قاعدة البيانات (تأكد من وجود استدعاءات Firebase في الملف)
-function checkNewNews() {
-    const database = firebase.database();
-    database.ref("news").on("value", snap => {
-        const data = snap.val();
-        if (!data) return;
-
-        const newsCount = Object.keys(data).length;
-        const lastSeen = localStorage.getItem("lastSeenNewsCount") || 0;
-
-        if (newsCount > lastSeen) {
-            document.getElementById("notif-dot").style.display = "block";
-        }
-    });
-}
-
-function markAsRead() {
-    // عندما يضغط الزبون على الزر، نصفر التنبيه ونحفظ العدد الحالي
-    database.ref("news").once("value", snap => {
-        if (snap.val()) {
-            localStorage.setItem("lastSeenNewsCount", Object.keys(snap.val()).length);
-            document.getElementById("notif-dot").style.display = "none";
-        }
-    });
-}
-
-// تشغيل الفحص عند فتح الصفحة
-window.onload = checkNewNews;
 </script>
-
 </body>
 </html>
