@@ -129,15 +129,17 @@ const filteredOrders = ordersArray.filter(ord =>
                                 ${isWaiting ? '🔔 طلب جديد (متاح)' : (isDelivered ? '✅ مكتمل' : '🚚 قيد التوصيل')}
                             </span>
                             
-                            <div class="order-info">
-                                <b>${ord.pName || ord.product || 'منتج'}</b>
-                                <p>
-                                    👤 الزبون: <b>${ord.customer}</b><br>
-                                    🏪 المتجر: ${ord.store || 'غير محدد'}<br>
-                                    💰 السعر: <span style="color:var(--green); font-weight:bold;">${ord.price}</span>
-                                </p>
-                            </div>
-
+                   
+<div class="order-info">
+    <b>${ord.pName}</b>
+    <div style="background: #fff3e0; padding: 10px; border-radius: 8px; border: 1px solid #ffe0b2; margin: 10px 0; font-size:13px;">
+        📌 <b>حسبة التوصيل:</b><br>
+        - ادفع للمحل: <span style="color:red; font-weight:bold;">${ord.originalPrice || ord.price} ر.ي</span><br>
+        - خذ من الزبون: <span style="color:green; font-weight:bold;">${ord.price} ر.ي</span><br>
+        ${ord.walletUsed > 0 ? `<small style="color:#e67e22;">* الإدارة ستعوضك بـ (${ord.walletUsed})</small>` : ''}
+    </div>
+    <p>👤 الزبون: ${ord.customer} | 🏪 المتجر: ${ord.store}</p>
+</div>
                             ${isWaiting ? 
                                 `<button class="btn btn-accept" onclick="acceptOrder('${ord.id}')">✅ قبول الطلب (خطف)</button>` : 
                                 (!isDelivered ? `
