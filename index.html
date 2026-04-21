@@ -10,9 +10,27 @@
 <script src="firebase.js"></script>
 
 <script>
-  // ✅ فحص التجاوز التلقائي
-  if(localStorage.getItem("userName") && localStorage.getItem("introShown") === "true"){
-      window.location.replace("fields.html"); 
+  // ✅ نظام التحديث الإجباري ونظام الهروب للمدير
+  const currentVersion = "2.0"; // رقم إصدار نظام كلمة السر الجديد
+  const urlParams = new URLSearchParams(window.location.search);
+  
+  // 1. إذا كان المدير يريد الخروج يدوياً عبر الرابط
+  if(urlParams.has('logout')) {
+      localStorage.clear();
+      window.history.replaceState({}, document.title, window.location.pathname);
+  } 
+  // 2. الفحص الأهم: إذا كان المستخدم قديم ولم يسجل بكلمة سر بعد
+  else if (localStorage.getItem("userName") && localStorage.getItem("appVersion") !== currentVersion) {
+      // مسح ذاكرة المستخدم القديم فوراً لإجباره على نظام كلمة السر
+      localStorage.clear();
+      alert("⚠️ تم تحديث نظام الأمان في متاجر البلاد، يرجى تسجيل الدخول مجدداً لحماية حسابك.");
+      location.reload(); 
+  }
+  // 3. التجاوز التلقائي (فقط للمسجلين بنظام كلمة السر الجديد)
+  else {
+      if(localStorage.getItem("userName") && localStorage.getItem("introShown") === "true"){
+          window.location.replace("fields.html"); 
+      }
   }
 </script>
 
@@ -22,8 +40,9 @@
     body { margin: 0; font-family: "Segoe UI", sans-serif; background: #1c1f33; height: 100vh; display: flex; justify-content: center; align-items: center; color: white; }
     .box { background: #ffffff; padding: 30px; border-radius: 22px; width: 90%; max-width: 400px; text-align: center; color: #333; }
     .welcome-line2 { font-family: 'Lateef', cursive; font-size: 38px; color: #bfa14a; font-weight: bold; }
-    input { width:100%; padding:13px; margin-bottom:16px; border-radius:12px; border:1px solid #ddd; box-sizing: border-box; }
-    .btn-main { width:100%; padding:14px; border:none; border-radius:16px; font-size:18px; font-weight:bold; cursor:pointer; background: #bfa14a; color: white; }
+    input { width:100%; padding:13px; margin-bottom:16px; border-radius:12px; border:1px solid #ddd; box-sizing: border-box; font-size: 15px; }
+    .btn-main { width:100%; padding:14px; border:none; border-radius:16px; font-size:18px; font-weight:bold; cursor:pointer; background: #b89b4a; color: white; transition: 0.3s; }
+    .btn-main:active { transform: scale(0.98); }
     .old-user-link { display: block; margin-top: 15px; font-size: 13px; color: #888; cursor: pointer; text-decoration: underline; }
 </style>
 </head>
@@ -31,52 +50,81 @@
 
 <div class="box">
     <div class="welcome-line2">متاجر البلاد</div>
-    <p>أدخل اسمك الرباعي للمتابعة</p>
+    <p style="margin-bottom: 20px; color: #666;">سجل بياناتك للبدء</p>
     
     <input type="text" id="name" placeholder="الاسم الرباعي">
     <input type="text" id="region" placeholder="المنطقة (مثال: سيئون - القرن)">
+    <input type="password" id="password" placeholder="كلمة سر الحساب"> 
     
-    <button class="btn-main" onclick="go()">دخول 🚀</button>
-    <span class="old-user-link" onclick="loginOldUser()">لدي حساب سابق </span>
-    <div id="loader" style="display:none; color: #bfa14a; margin-top: 10px;">جاري الفحص...</div>
+    <button class="btn-main" onclick="go()">تسجيل دخول جديد 🚀</button>
+    <span class="old-user-link" onclick="loginOldUser()">لدي حساب سابق (تسجيل دخول)</span>
+    <div id="loader" style="display:none; color: #bfa14a; margin-top: 10px;">جاري التحميل...</div>
 </div>
 
 <script>
+function cleanName(name) {
+    return name.trim().replace(/\s+/g, ' ');
+}
+
+// ... (الأكواد العلوية كما هي)
+
 function go(){
-    const name = document.getElementById("name").value.trim();
+    const name = cleanName(document.getElementById("name").value);
     const region = document.getElementById("region").value.trim();
+    const password = document.getElementById("password").value.trim();
 
     if(name.length < 10){ alert("يرجى كتابة الاسم الرباعي كاملاً"); return; }
     if(!region){ alert("يرجى كتابة المنطقة"); return; }
+    if(password.length < 4){ alert("كلمة السر يجب أن تكون 4 أرقام أو حروف على الأقل"); return; }
 
-    localStorage.setItem("userName", name);
-    localStorage.setItem("userRegion", region);
-    
-    // حفظ في داتابيز لضمان وجود الحساب مستقبلاً
-    database.ref("Users/" + name).update({
-        region: region,
-        lastLogin: Date.now()
-    }).then(() => {
-        location.href = "intro.html";
+    document.getElementById("loader").style.display = "block";
+
+    database.ref("Users/" + name).once("value").then(snap => {
+        if(snap.exists()) {
+            alert("هذا الاسم مسجل مسبقاً، استخدم 'تسجيل دخول'");
+            document.getElementById("loader").style.display = "none";
+        } else {
+            database.ref("Users/" + name).set({
+                name: name,
+                region: region,
+                password: password,
+                lastLogin: Date.now(),
+                wallet: 0,
+                points: 0
+            }).then(() => {
+                localStorage.setItem("userName", name);
+                localStorage.setItem("userRegion", region);
+                // ✅ السطر المضاف لكي لا يطرده النظام
+                localStorage.setItem("appVersion", "2.0"); 
+                location.href = "intro.html";
+            });
+        }
     });
 }
 
 function loginOldUser() {
-    const name = document.getElementById("name").value.trim();
-    if(!name) { alert("اكتب اسمك القديم أولاً في الخانة"); return; }
+    const name = cleanName(document.getElementById("name").value);
+    const password = document.getElementById("password").value.trim();
+
+    if(!name || !password) { alert("اكتب الاسم وكلمة السر أولاً"); return; }
     document.getElementById("loader").style.display = "block";
 
-    // محاولة جلب البيانات بالاسم
     database.ref("Users/" + name).once("value").then(snap => {
         if(snap.exists()) {
             const d = snap.val();
-            localStorage.setItem("userName", name);
-            localStorage.setItem("userRegion", d.region);
-            localStorage.setItem("introShown", "true");
-            alert("أهلاً بك مجدداً يا " + name);
-            window.location.href = "fields.html";
+            if(d.password === password) {
+                localStorage.setItem("userName", name);
+                localStorage.setItem("userRegion", d.region);
+                localStorage.setItem("introShown", "true");
+                // ✅ السطر المضاف لكي لا يطرده النظام
+                localStorage.setItem("appVersion", "2.0"); 
+                window.location.href = "fields.html";
+            } else {
+                alert("كلمة السر خطأ ❌");
+                document.getElementById("loader").style.display = "none";
+            }
         } else {
-            alert("الاسم غير موجود، تأكد من كتابته بدقة أو سجل كجديد");
+            alert("الاسم غير موجود");
             document.getElementById("loader").style.display = "none";
         }
     });
