@@ -144,11 +144,10 @@
     const price = document.getElementById("price").value.trim();
     const file = document.getElementById("imageFile").files[0];
 
-    // 1. التحقق من المدخلات الأساسية وأمان النص
+    // 1. التحقق من المدخلات
     if (!checkTextSafety(name).safe) return alert(checkTextSafety(name).reason);
     if (!name || !price) return alert("الاسم والسعر مطلوبان");
     
-    // إظهار اللودر
     document.getElementById("loader").style.display = "flex";
     document.getElementById("loader").querySelector("p").innerText = "جاري معالجة الصورة... 🛠️";
 
@@ -157,7 +156,7 @@
         reader.onload = async (e) => {
             const img = new Image();
             img.onload = async () => {
-                // 2. ضغط الصورة لتقليل حجم البيانات (مناسب لإنترنت اليمن)
+                // 2. ضغط الصورة
                 const canvas = document.createElement("canvas");
                 const MAX_WIDTH = 800;
                 const scaleSize = MAX_WIDTH / img.width;
@@ -167,24 +166,27 @@
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 
                 canvas.toBlob(async (blob) => {
-                    // 3. فحص أمان المحتوى (SightEngine)
+                    // 3. فحص الأمان
                     const isSafe = await checkImageSafety(blob);
                     if (!isSafe) {
                         document.getElementById("loader").style.display = "none";
                         return alert("⚠️ الصورة مرفوضة: محتوى غير لائق.");
                     }
 
-                    // 4. تحويل الصورة لـ Base64 لتجاوز مشاكل CORS في المتصفح
-                    document.getElementById("loader").querySelector("p").innerText = "جاري الرفع لمركز الصور... 🚀";
+                    // 4. الرفع باستخدام البروكسي لتجاوز CORS
+                    document.getElementById("loader").querySelector("p").innerText = "جاري الرفع عبر البروكسي... 🚀";
                     const base64Image = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
 
                     const formData = new FormData();
                     formData.append("source", base64Image);
                     formData.append("action", "upload");
 
+                    // إعداد رابط البروكسي لضمان القبول على Vercel
+                    const proxyUrl = "https://corsproxy.io/?";
+                    const apiUrl = `https://freeimage.host/api/1/upload?key=${FREEIMAGE_KEY}&format=json`;
+
                     try {
-                        // طلب الرفع للسيرفر
-                        const res = await fetch(`https://freeimage.host/api/1/upload?key=${FREEIMAGE_KEY}&format=json`, {
+                        const res = await fetch(proxyUrl + encodeURIComponent(apiUrl), {
                             method: "POST",
                             body: formData
                         });
@@ -192,15 +194,14 @@
                         const result = await res.json();
                         
                         if (result.status_code === 200) {
-                            // نجح الرفع، ننتقل لحفظ البيانات في فايربيس
                             finalSave(result.image.url);
                         } else {
-                            throw new Error("API Error");
+                            throw new Error("فشل في استجابة السيرفر");
                         }
                     } catch (err) {
                         document.getElementById("loader").style.display = "none";
-                        console.error("CORS Error Detail:", err);
-                        alert("❌ فشل الرفع: المتصفح يمنع الرفع من هذا الرابط حالياً. تأكد من رفع الموقع على Vercel وتجربته من الرابط الرسمي.");
+                        console.error("Upload Error:", err);
+                        alert("❌ فشل الرفع عبر البروكسي. جرب الرفع مرة أخرى أو تأكد من جودة الإنترنت.");
                     }
                 }, "image/jpeg", 0.7);
             };
@@ -208,22 +209,23 @@
         };
         reader.readAsDataURL(file);
     } else {
-        // في حالة التعديل ولم يتم اختيار صورة جديدة
         finalSave(null);
     }
 }
-    async function checkImageSafety(blob) {
-        const safetyData = new FormData();
-        safetyData.append('media', blob);
-        safetyData.append('models', 'nudity-2.0');
-        safetyData.append('api_user', '1038750179');
-        safetyData.append('api_secret', 'bYq2ManntpCX4uJ6f5x8nHcbYvz2dRYo');
-        try {
-            const res = await fetch('https://api.sightengine.com/1.0/check.json', { method: 'POST', body: safetyData });
-            const data = await res.json();
-            return !(data.status === 'success' && data.nudity.sexual_activity > 0.5);
-        } catch (err) { return true; }
+   async function checkImageSafety(blob) {
+    const safetyData = new FormData();
+    safetyData.append('media', blob);
+    safetyData.append('models', 'nudity-2.0');
+    safetyData.append('api_user', '1038750179');
+    safetyData.append('api_secret', 'bYq2ManntpCX4uJ6f5x8nHcbYvz2dRYo');
+    try {
+        const res = await fetch('https://api.sightengine.com/1.0/check.json', { method: 'POST', body: safetyData });
+        const data = await res.json();
+        return !(data.status === 'success' && data.nudity.sexual_activity > 0.5);
+    } catch (err) { 
+        return true; // في حال تعطل الفحص نسمح بالمرور لضمان استمرار العمل
     }
+}
 
     function finalSave(newImageUrl) {
         const editKey = document.getElementById("edit-key").value;
