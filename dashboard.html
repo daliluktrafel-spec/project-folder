@@ -1,108 +1,198 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
-    <meta charset="UTF-8">
-    <title>دخول المتجر - متاجر البلاد</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        :root { --gold: #b89b4a; --dark: #1b1e33; }
-        body { 
-            margin: 0; font-family: 'Cairo', sans-serif; 
-            background: linear-gradient(135deg, #f7f6f2 0%, #d1c7a3 100%);
-            display: flex; justify-content: center; align-items: center; height: 100vh; 
-        }
-        .login-box { 
-            background: white; padding: 40px 30px; border-radius: 25px; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1); width: 90%; max-width: 350px; 
-            text-align: center; border-top: 5px solid var(--gold);
-        }
-        .login-box h2 { color: var(--dark); margin-bottom: 5px; font-size: 22px; }
-        .store-tag { color: var(--gold); font-weight: bold; margin-bottom: 25px; display: block; }
-        .login-box input { 
-            width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #eee; 
-            border-radius: 12px; box-sizing: border-box; outline: none; font-size: 16px; transition: 0.3s;
-            text-align: center;
-        }
-        .login-box input:focus { border-color: var(--gold); }
-        .login-box button { 
-            width: 100%; padding: 15px; background: var(--dark); color: white; 
-            border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 15px;
-        }
-        .login-box button:hover { background: #2c2f4a; transform: translateY(-2px); }
-        #error-msg { color: #e74c3c; font-size: 14px; margin-top: 15px; font-weight: bold; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>المتاجر</title>
+
+<!-- خط كوفي جميل -->
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700&display=swap" rel="stylesheet">
+
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Cairo', sans-serif;
+    background: linear-gradient(to bottom,#f7f6f2,#e9e4cf);
+}
+
+/* العنوان */
+h2 {
+    text-align: center;
+    margin-top: 30px;
+    font-size: 26px;
+    color: #1b1e33;
+}
+
+/* شبكة المتاجر */
+.store-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 18px;
+    padding: 30px;
+    max-width: 900px;
+    margin: auto;
+}
+.orders-badge {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #1b1e33;
+    color: #e6d38a;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 1000;
+    border: 2px solid #b89b4a;
+    transition: 0.3s;
+}
+
+.orders-badge:hover {
+    transform: scale(1.1);
+    background: #b89b4a;
+    color: #1b1e33;
+}
+
+/* فقاعة تنبيه حمراء صغيرة */
+.dot {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: #d45d5d;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 2px solid white;
+    display: none; /* ستظهر فقط عند وجود طلبات */
+}
+
+/* بطاقة المتجر */
+.store-card {
+    background: linear-gradient(145deg,#e6d38a,#c9b36a,#b89b4a);
+    color: #1b1e33;
+    padding: 22px 10px;
+    border-radius: 18px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.25);
+    transition: 0.25s;
+}
+
+/* تأثير عند المرور */
+.store-card:hover {
+    transform: translateY(-6px) scale(1.04);
+    box-shadow: 0 12px 22px rgba(0,0,0,0.35);
+}
+</style>
 </head>
+
 <body>
 
-<div class="login-box">
-    <h2>تسجيل الدخول</h2>
-    <span id="store-name" class="store-tag">اسم المتجر</span>
-    <input type="password" id="password" placeholder="أدخل كلمة السر الخاصة بمتجرك">
-    <button id="login-btn">دخول للوحة التحكم</button>
-    <div id="error-msg"></div>
+<h2>اختر المتجر لإضافة المنتجات</h2>
+
+<div class="store-list" id="store-list"></div>
+<div class="orders-badge" onclick="goToMerchantOrders()" title="طلبات متجري">
+    📦الطلبات 
+    <div id="notif-dot" class="dot"></div>
 </div>
 
+<!-- Firebase App (core) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<!-- Firebase Realtime Database -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="firebase.js"></script>
 
 <script>
-    // جلب البيانات المخزنة من صفحة المتاجر
-    const storeName = localStorage.getItem("selectedStore");
-    // تنظيف المعرف فوراً من أي مسافات زائدة قد تأتي من صفحة المتاجر
-    const identifier = localStorage.getItem("storeID") ? localStorage.getItem("storeID").trim() : null;
-    const type = localStorage.getItem("storeType");
+window.onload = function(){
+    const container = document.getElementById("store-list");
+    container.innerHTML = "جاري تحميل المتاجر...";
 
-    // إذا لم تتوفر بيانات المتجر، نرجعه لصفحة الاختيار
-    if (!storeName || !identifier) {
-        window.location.href = "stores.html";
-    }
-
-    document.getElementById("store-name").innerText = "🏪 " + storeName;
-
-    document.getElementById("login-btn").onclick = () => {
-        const inputPass = document.getElementById("password").value.trim();
-        const errorMsg = document.getElementById("error-msg");
-
-        if(!inputPass) {
-            errorMsg.innerText = "⚠️ يرجى إدخال كلمة السر";
+    // نراقب المتاجر النشطة بشكل مباشر (Realtime)
+    database.ref("Active_Stores").on("value", snapshot => {
+        container.innerHTML = ""; // تنظيف القائمة
+        
+        if (!snapshot.exists()) {
+            container.innerHTML = "لا توجد متاجر مفعلة حالياً.";
             return;
         }
 
-        // تحديد المسار الصحيح
-        // ملاحظة: تأكد أن "password" في Firebase مكتوبة بهذا الشكل تماماً (الصغيرة p)
-        const path = (type === "new") ? `Active_Stores/${identifier}/password` : `storePasswords/${identifier}`;
+        const activeStores = snapshot.val();
 
-        console.log("جارٍ فحص المسار:", path); // للتحقق في الـ Console
-
-        database.ref(path).once("value").then(snap => {
-            if(snap.exists()){
-                const realPass = String(snap.val()).trim(); // تحويل للقيمة لنص وتنظيفها
-                
-                if(inputPass === realPass) {
-                    // ✅ نجاح الدخول
-                    localStorage.setItem("storeLoggedIn", storeName);
-                    localStorage.setItem("selectedStore", storeName); // نؤكد التخزين للوحة التحكم
-                    
-                    errorMsg.style.color = "green";
-                    errorMsg.innerText = "✅ تم التحقق.. جاري الدخول";
-                    
-                    // توجيه لداشبورد بعد نصف ثانية
-                    setTimeout(() => {
-                        window.location.href = "dashboard.html";
-                    }, 500);
-                } else {
-                    errorMsg.innerText = "❌ كلمة السر خاطئة!";
-                }
-            } else {
-                errorMsg.innerText = "❌ لم يتم العثور على كلمة سر.. تواصل مع الإدارة";
-                console.log("المسار غير موجود في Firebase:", path);
+        Object.keys(activeStores).forEach(phone => {
+            const store = activeStores[phone];
+            // التأكد من أن المتجر يحتوي على اسم قبل العرض
+            if (store.bizName) {
+                createStoreCard(store.bizName, phone, "new");
             }
-        }).catch(err => {
-            console.error(err);
-            errorMsg.innerText = "🌐 خطأ في الاتصال.. تأكد من إنترنت سيئون!";
         });
-    };
+    }, error => {
+        console.error("خطأ في جلب البيانات:", error);
+        container.innerHTML = "فشل في تحميل المتاجر، تأكد من الاتصال.";
+    });
+
+    // جلب المتاجر القديمة (اختياري إذا كانت لا تزال موجودة)
+    database.ref("storePasswords").once("value", snapshot => {
+        if (snapshot.exists()) {
+            const oldStores = snapshot.val();
+            Object.keys(oldStores).forEach(storeName => {
+                createStoreCard(storeName, storeName, "old");
+            });
+        }
+    });
+
+    function createStoreCard(displayName, identifier, type) {
+        // نتحقق إذا كان المتجر موجوداً مسبقاً لمنع التكرار
+        const existingCards = Array.from(container.querySelectorAll('.store-card'));
+        if (existingCards.some(c => c.innerText === displayName)) return;
+
+        const card = document.createElement("div");
+        card.className = "store-card";
+        card.innerText = displayName;
+        card.onclick = () => {
+            localStorage.setItem("selectedStore", displayName);
+            localStorage.setItem("storeType", type);
+            localStorage.setItem("storeID", identifier);
+            window.location.href = "store-login.html";
+        };
+        container.appendChild(card);
+    }
+}
+function goToMerchantOrders() {
+    // نتحقق أولاً إذا كان التاجر قد اختار متجره ودخل
+    const selectedStore = localStorage.getItem("selectedStore");
+    if(!selectedStore) {
+        alert("يرجى اختيار المتجر أولاً");
+    } else {
+        // نتوجه لملف لوحة التحكم الجديد الذي سنسميه merchant-dashboard.html
+        window.location.href = "merchant-dashboard.html";
+    }
+}
+
+// كود إضافي لجعل النقطة الحمراء تظهر إذا كان هناك طلبات "قيد الانتظار" لمتجره
+function checkNewOrders() {
+    const storeName = localStorage.getItem("selectedStore");
+    if(!storeName) return;
+
+    database.ref("Orders").on("value", snap => {
+        const data = snap.val() || {};
+        // فحص إذا كان هناك أي طلب لمتجري وحالته waiting (بانتظار مندوب)
+        const hasNew = Object.values(data).some(ord => ord.store === storeName && ord.status === "waiting");
+        document.getElementById("notif-dot").style.display = hasNew ? "block" : "none";
+    });
+}
+
+// تشغيل الفحص
+checkNewOrders();
 </script>
+
+
 </body>
 </html>
