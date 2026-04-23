@@ -140,71 +140,78 @@
     }
 
   async function processProduct() {
-        const name = document.getElementById("name").value.trim();
-        const price = document.getElementById("price").value.trim();
-        const file = document.getElementById("imageFile").files[0];
+    const name = document.getElementById("name").value.trim();
+    const price = document.getElementById("price").value.trim();
+    const file = document.getElementById("imageFile").files[0];
 
-        if (!checkTextSafety(name).safe) return alert(checkTextSafety(name).reason);
-        if (!name || !price) return alert("الاسم والسعر مطلوبان");
-        
-        document.getElementById("loader").style.display = "flex";
-        document.getElementById("loader").querySelector("p").innerText = "جاري معالجة الصورة... 🛠️";
+    // 1. التحقق من المدخلات الأساسية وأمان النص
+    if (!checkTextSafety(name).safe) return alert(checkTextSafety(name).reason);
+    if (!name || !price) return alert("الاسم والسعر مطلوبان");
+    
+    // إظهار اللودر
+    document.getElementById("loader").style.display = "flex";
+    document.getElementById("loader").querySelector("p").innerText = "جاري معالجة الصورة... 🛠️";
 
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const img = new Image();
-                img.onload = async () => {
-                    const canvas = document.createElement("canvas");
-                    const MAX_WIDTH = 800;
-                    const scaleSize = MAX_WIDTH / img.width;
-                    canvas.width = MAX_WIDTH;
-                    canvas.height = img.height * scaleSize;
-                    const ctx = canvas.getContext("2d");
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    
-                    canvas.toBlob(async (blob) => {
-                        // 1. فحص الأمان أولاً
-                        const isSafe = await checkImageSafety(blob);
-                        if (!isSafe) {
-                            document.getElementById("loader").style.display = "none";
-                            return alert("⚠️ الصورة مرفوضة محتوى غير لائق.");
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const img = new Image();
+            img.onload = async () => {
+                // 2. ضغط الصورة لتقليل حجم البيانات (مناسب لإنترنت اليمن)
+                const canvas = document.createElement("canvas");
+                const MAX_WIDTH = 800;
+                const scaleSize = MAX_WIDTH / img.width;
+                canvas.width = MAX_WIDTH;
+                canvas.height = img.height * scaleSize;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                
+                canvas.toBlob(async (blob) => {
+                    // 3. فحص أمان المحتوى (SightEngine)
+                    const isSafe = await checkImageSafety(blob);
+                    if (!isSafe) {
+                        document.getElementById("loader").style.display = "none";
+                        return alert("⚠️ الصورة مرفوضة: محتوى غير لائق.");
+                    }
+
+                    // 4. تحويل الصورة لـ Base64 لتجاوز مشاكل CORS في المتصفح
+                    document.getElementById("loader").querySelector("p").innerText = "جاري الرفع لمركز الصور... 🚀";
+                    const base64Image = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
+
+                    const formData = new FormData();
+                    formData.append("source", base64Image);
+                    formData.append("action", "upload");
+
+                    try {
+                        // طلب الرفع للسيرفر
+                        const res = await fetch(`https://freeimage.host/api/1/upload?key=${FREEIMAGE_KEY}&format=json`, {
+                            method: "POST",
+                            body: formData
+                        });
+                        
+                        const result = await res.json();
+                        
+                        if (result.status_code === 200) {
+                            // نجح الرفع، ننتقل لحفظ البيانات في فايربيس
+                            finalSave(result.image.url);
+                        } else {
+                            throw new Error("API Error");
                         }
-
-                        // 2. تحويل الصورة لـ Base64 لتجاوز مشاكل CORS
-                        document.getElementById("loader").querySelector("p").innerText = "جاري الرفع لمركز الصور... 🚀";
-                        const base64Image = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
-
-                        const formData = new FormData();
-                        formData.append("source", base64Image);
-                        formData.append("action", "upload");
-
-                        try {
-                            const res = await fetch(`https://freeimage.host/api/1/upload?key=${FREEIMAGE_KEY}&format=json`, {
-                                method: "POST",
-                                body: formData
-                            });
-                            
-                            const result = await res.json();
-                            if (result.status_code === 200) {
-                                finalSave(result.image.url);
-                            } else {
-                                throw new Error("API Error");
-                            }
-                        } catch (err) {
-                            document.getElementById("loader").style.display = "none";
-                            alert("❌ فشل الرفع: المتصفح يمنع الرفع من ملف محلي. ارفع الكود على Vercel وسيعمل فوراً!");
-                        }
-                    }, "image/jpeg", 0.7);
-                };
-                img.src = e.target.result;
+                    } catch (err) {
+                        document.getElementById("loader").style.display = "none";
+                        console.error("CORS Error Detail:", err);
+                        alert("❌ فشل الرفع: المتصفح يمنع الرفع من هذا الرابط حالياً. تأكد من رفع الموقع على Vercel وتجربته من الرابط الرسمي.");
+                    }
+                }, "image/jpeg", 0.7);
             };
-            reader.readAsDataURL(file);
-        } else {
-            // في حالة التعديل بدون تغيير الصورة
-            finalSave(null);
-        }
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    } else {
+        // في حالة التعديل ولم يتم اختيار صورة جديدة
+        finalSave(null);
     }
+}
     async function checkImageSafety(blob) {
         const safetyData = new FormData();
         safetyData.append('media', blob);
