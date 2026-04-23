@@ -117,7 +117,26 @@ const normalizeText = (text) => {
     if (!text) return "";
     return text.trim().replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي").toLowerCase();
 };
+// دالة إظهار وإخفاء القائمة المنسدلة للمستخدم
+function toggleDropdown() {
+    const dropdown = document.getElementById("userDropdown");
+    if (dropdown) {
+        dropdown.classList.toggle("show");
+    }
+}
 
+// كود إضافي: لإغلاق القائمة إذا ضغط المستخدم في أي مكان خارجها
+window.onclick = function(event) {
+    if (!event.target.matches('.user-btn') && !event.target.matches('.user-btn span')) {
+        var dropdowns = document.getElementsByClassName("dropdown-content");
+        for (var i = 0; i < dropdowns.length; i++) {
+            var openDropdown = dropdowns[i];
+            if (openDropdown.classList.contains('show')) {
+                openDropdown.classList.remove('show');
+            }
+        }
+    }
+}
 function loadProducts() {
     database.ref("products").orderByChild("id").limitToLast(100).once("value", snap => {
         const data = snap.val() || {};
@@ -208,16 +227,10 @@ function loadMyPoints() {
     });
 }
 
-function showPointsAlert() { alert(`🪙 رصيدك الحالي: ${document.getElementById("my-points-count").innerText} نقطة`); }
-function toggleDropdown() { document.getElementById("userDropdown").classList.toggle("show"); }
-
-window.onclick = function(e) { 
-    if (!e.target.matches('.user-btn') && !e.target.matches('.user-btn span')) { 
-        let ds = document.getElementsByClassName("dropdown-content"); 
-        for (let i = 0; i < ds.length; i++) if (ds[i].classList.contains('show')) ds[i].classList.remove('show'); 
-    } 
+function showPointsAlert() {
+    // بدلاً من التنبيه العادي، ننتقل لصفحة النقاط الجديدة
+    window.location.href = 'points.html';
 }
-
 document.getElementById("display-user-name").innerText = localStorage.getItem("userName") || "حسابي";
 
 function renderStores() {

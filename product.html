@@ -164,7 +164,7 @@ function sendOrderToDriver() {
         status: "waiting",
         timestamp: Date.now()
     };
-
+database.ref("Users/" + userName + "/points").transaction(p => (p || 0) + 10);
     database.ref("Orders/" + orderID).set(orderData).then(() => {
         if(discountValue > 0) {
             database.ref("Users/" + userName + "/wallet").transaction(b => (b || 0) - discountValue);

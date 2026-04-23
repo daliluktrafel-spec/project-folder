@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>مركز المكافآت | متاجر البلاد</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #b89b4a; --dark: #1b1e33; --light: #f7f6f2; }
+        body { margin: 0; font-family: 'Cairo', sans-serif; background: var(--light); color: var(--dark); padding-bottom: 30px; }
+        
+        .header { background: var(--dark); color: var(--gold); padding: 20px; text-align: center; font-size: 20px; font-weight: bold; border-bottom: 3px solid var(--gold); position: sticky; top: 0; z-index: 100; }
+        .back-btn { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: var(--gold); color: var(--dark); border: none; padding: 5px 12px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+        .container { padding: 20px; max-width: 500px; margin: auto; }
+
+        /* بطاقة عرض النقاط */
+        .points-hero { background: linear-gradient(135deg, #1b1e33 0%, #2c2f4a 100%); color: var(--gold); padding: 30px; border-radius: 25px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); margin-bottom: 25px; border: 1px solid var(--gold); }
+        .points-val { font-size: 50px; font-weight: bold; display: block; margin: 10px 0; }
+        .points-label { color: white; opacity: 0.8; font-size: 14px; }
+
+        /* شريط التقدم للهدف */
+        .goal-box { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 20px; text-align: center; }
+        .progress-container { background: #eee; height: 15px; border-radius: 10px; margin: 15px 0; overflow: hidden; border: 1px solid #ddd; }
+        .progress-bar { background: linear-gradient(to left, var(--gold), #e6d38a); height: 100%; width: 0%; transition: 1.5s cubic-bezier(0.1, 0, 0.1, 1); }
+
+        /* تعليمات الحصول على النقاط */
+        .instruction-card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+        .icon-circle { width: 50px; height: 50px; background: #fff9e6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; border: 1px solid var(--gold); }
+        .text-info b { color: var(--dark); display: block; margin-bottom: 4px; }
+        .text-info p { margin: 0; font-size: 13px; color: #666; }
+
+        .btn-action { background: var(--dark); color: var(--gold); border: 2px solid var(--gold); padding: 15px; width: 100%; border-radius: 15px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <button class="back-btn" onclick="window.history.back()">⬅</button>
+    مركز مكافآت البلاد
+</div>
+
+<div class="container">
+    <div class="points-hero">
+        <span class="points-label">رصيد نقاطك الحالي</span>
+        <span class="points-val" id="current-points-display">0</span>
+        <span style="color: white; font-size: 12px;">نقطة ذهبية 🪙</span>
+    </div>
+
+    <div class="goal-box">
+        <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:bold;">
+            <span>هدفك القادم</span>
+            <span style="color:var(--gold)">500 نقطة</span>
+        </div>
+        <div class="progress-container">
+            <div id="points-bar" class="progress-bar"></div>
+        </div>
+        <p id="status-text" style="font-size:13px; color:#888;">اجمع المزيد من النقاط لتحويلها إلى رصيد مالي!</p>
+    </div>
+
+    <h3 style="margin: 25px 0 15px; font-size: 18px;">كيف تجمع النقاط؟ ✨</h3>
+
+    <div class="instruction-card">
+        <div class="icon-circle">🎡</div>
+        <div class="text-info">
+            <b>عجلة الحظ اليومية</b>
+            <p>أبرم العجلة يومياً واربح حتى 20 نقطة أو جوائز نقدية فورية.</p>
+        </div>
+    </div>
+
+    <div class="instruction-card">
+        <div class="icon-circle">🛍️</div>
+        <div class="text-info">
+            <b>الشراء من المتاجر</b>
+            <p>تحصل على 10 نقاط تلقائياً عند كل عملية شراء ناجحة عبر المنصة.</p>
+        </div>
+    </div>
+
+    <div class="instruction-card">
+        <div class="icon-circle">📢</div>
+        <div class="text-info">
+            <b>شارك واربح</b>
+            <p>شارك رابط المنتجات مع أصدقائك لزيادة فرصك في الحصول على هدايا من الإدارة.</p>
+        </div>
+    </div>
+
+    <div style="background: #fff3e0; padding: 20px; border-radius: 20px; border: 1px dashed #e67e22; margin-top: 20px;">
+        <b style="color: #e67e22;">💡 قاعدة الـ 500:</b><br>
+        <p style="font-size: 13px; margin: 10px 0;">عند وصولك لـ <b>500 نقطة</b>، سيقوم النظام تلقائياً بتحويلها إلى <b>5000 ريال يمني</b> في محفظتك لاستخدامها في مشترياتك!</p>
+    </div>
+
+   <button class="btn-action" id="convert-btn" onclick="convertPointsToCash()">💰 تحويل النقاط إلى مبالغ مالية</button>
+ 
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="firebase.js"></script>
+
+<script>
+    const userName = localStorage.getItem("userName");
+    if(!userName) window.location.href = "index.html";
+
+    // مزامنة البيانات وعرضها
+    function syncPoints() {
+        database.ref("Users/" + userName).on("value", snap => {
+            const data = snap.val() || {};
+            const points = data.points || 0;
+            
+            document.getElementById("current-points-display").innerText = points;
+
+            // تحديث شريط التقدم للـ 500 (الجائزة الكبرى)
+            let percent = (points / 500) * 100;
+            if (percent > 100) percent = 100;
+            document.getElementById("points-bar").style.width = percent + "%";
+
+            // تحديث نص الحالة
+            const statusLabel = document.getElementById("status-text");
+            if(points >= 500) {
+                statusLabel.innerText = "🎉 مبروك! وصلت للـ 500 نقطة، سيتم تحويلها لـ 5000 ريال تلقائياً";
+                statusLabel.style.color = "#27ae60";
+            } else {
+                statusLabel.innerText = `يتبقى لك ${500 - points} نقطة للحصول على قسيمة الـ 5000 ريال`;
+                statusLabel.style.color = "#888";
+            }
+        });
+    }
+
+    // دالة التحويل اليدوي (10 نقاط = 10 ريال)
+    function convertPointsToCash() {
+        const userRef = database.ref("Users/" + userName);
+
+        userRef.once("value").then(snap => {
+            const data = snap.val() || {};
+            let points = data.points || 0;
+            let wallet = data.wallet || 0;
+
+            if (points < 10) {
+                alert("⚠️ عذراً، يجب أن تملك 10 نقاط على الأقل للتحويل");
+                return;
+            }
+
+            if (confirm(`هل تريد تحويل نقاطك إلى رصيد؟\nسيتم تحويل كل 10 نقاط إلى 10 ريال.`)) {
+                // تنفيذ العملية عبر Transaction لضمان الدقة
+                userRef.transaction(current => {
+                    if (current) {
+                        let p = current.points || 0;
+                        let w = current.wallet || 0;
+                        
+                        // حسبة التحويل اليدوي
+                        let amountToConvert = Math.floor(p / 10) * 10; // نأخذ العشرات فقط
+                        let cashGained = amountToConvert; // 10 نقاط = 10 ريال
+                        
+                        current.points = p - amountToConvert;
+                        current.wallet = w + cashGained;
+                    }
+                    return current;
+                }).then(() => {
+                    alert("✅ تمت عملية التحويل بنجاح إلى محفظتك!");
+                });
+            }
+        });
+    }
+
+    window.onload = syncPoints;
+</script> 
+</body>
+</html>
