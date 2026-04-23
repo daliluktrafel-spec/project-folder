@@ -47,12 +47,11 @@
 <script src="firebase.js"></script>
 
 <script>
-    // جلب البيانات المخزنة من صفحة المتاجر
     const storeName = localStorage.getItem("selectedStore");
-    const identifier = localStorage.getItem("storeID");
-    const type = localStorage.getItem("storeType");
+    const rawIdentifier = localStorage.getItem("storeID");
+    // تنظيف المعرف تماماً من أي مسافات داخلية
+    const identifier = rawIdentifier ? rawIdentifier.replace(/\s+/g, '').trim() : null;
 
-    // إذا لم تتوفر بيانات المتجر، نرجعه لصفحة الاختيار
     if (!storeName || !identifier) {
         window.location.href = "stores.html";
     }
@@ -68,23 +67,30 @@
             return;
         }
 
-        // تحديد المسار الصحيح بناءً على نوع المتجر (قديم أو جديد)
-        const path = (type === "new") ? `Active_Stores/${identifier}/password` : `storePasswords/${identifier}`;
-
-        database.ref(path).once("value").then(snap => {
+        // البحث في Active_Stores باستخدام المعرف النظيف
+        database.ref(`Active_Stores/${identifier}`).once("value").then(snap => {
             if(snap.exists()){
-                const realPass = String(snap.val());
+                const storeData = snap.val();
+                const realPass = String(storeData.password).trim();
+
                 if(inputPass === realPass) {
-                    localStorage.setItem("storeLoggedIn", storeName);
-                    window.location.href = "dashboard.html";
+                    // ✅ نجاح الدخول - تخزين البيانات اللازمة للداشبورد
+                    localStorage.setItem("storeLoggedIn", "true");
+                    localStorage.setItem("selectedStore", storeName);
+                    
+                    errorMsg.style.color = "green";
+                    errorMsg.innerText = "✅ تم التحقق.. جاري الدخول";
+                    
+                    setTimeout(() => {
+                        window.location.href = "dashboard.html";
+                    }, 500);
                 } else {
                     errorMsg.innerText = "❌ كلمة السر خاطئة!";
                 }
             } else {
-                errorMsg.innerText = "❌ لم يتم العثور على كلمة سر لهذا المتجر";
+                errorMsg.innerText = "❌ المتجر غير موجود أو غير مفعل";
             }
         }).catch(err => {
-            console.error(err);
             errorMsg.innerText = "🌐 خطأ في الاتصال بقاعدة البيانات";
         });
     };
