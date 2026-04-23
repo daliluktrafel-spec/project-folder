@@ -117,48 +117,45 @@
 <script src="firebase.js"></script>
 
 <script>
-  const store = localStorage.getItem("selectedStore");
+    const store = localStorage.getItem("selectedStore");
     document.getElementById("title").innerText = "متجر: " + store;
 
-    // --- إعدادات الرفع الجديدة ---
-    const FREEIMAGE_KEY = '6d207e02198a847aa98d0a2a901485a5';
     function showSection(type) {
         document.getElementById("add-box").style.display = (type === 'add' ? 'block' : 'none');
         document.getElementById("edit-box").style.display = (type === 'edit' ? 'block' : 'none');
         if(type === 'edit') loadMyProducts();
     }
-
-    function checkTextSafety(text) {
-        const forbiddenWords = ["كلمة1", "كلمة2", "سب", "شتيمة"]; 
-        const normalizedText = text.toLowerCase();
-        for (let word of forbiddenWords) {
-            if (normalizedText.includes(word)) {
-                return { safe: false, reason: "الاسم يحتوي على كلمات غير لائقة ❌" };
-            }
+function checkTextSafety(text) {
+    // قائمة تجريبية للكلمات الممنوعة (يمكنك زيادتها)
+    const forbiddenWords = ["كلمة1", "كلمة2", "سب", "شتيمة"]; 
+    const normalizedText = text.toLowerCase();
+    
+    for (let word of forbiddenWords) {
+        if (normalizedText.includes(word)) {
+            return { safe: false, reason: "الاسم يحتوي على كلمات غير لائقة ❌" };
         }
-        return { safe: true };
     }
-
-  async function processProduct() {
+    return { safe: true };
+}
+async function processProduct() {
     const name = document.getElementById("name").value.trim();
     const price = document.getElementById("price").value.trim();
     const file = document.getElementById("imageFile").files[0];
 
-    // 1. التحقق من المدخلات
-    if (!checkTextSafety(name).safe) return alert(checkTextSafety(name).reason);
+    const textCheck = checkTextSafety(name);
+    if (!textCheck.safe) return alert(textCheck.reason);
     if (!name || !price) return alert("الاسم والسعر مطلوبان");
     
     document.getElementById("loader").style.display = "flex";
-    document.getElementById("loader").querySelector("p").innerText = "جاري معالجة الصورة... 🛠️";
+    document.getElementById("loader").querySelector("p").innerText = "جاري تجهيز الصورة... 🛠️";
 
     if (file) {
         const reader = new FileReader();
         reader.onload = async (e) => {
             const img = new Image();
             img.onload = async () => {
-                // 2. ضغط الصورة
                 const canvas = document.createElement("canvas");
-                const MAX_WIDTH = 800;
+                const MAX_WIDTH = 600;
                 const scaleSize = MAX_WIDTH / img.width;
                 canvas.width = MAX_WIDTH;
                 canvas.height = img.height * scaleSize;
@@ -166,43 +163,33 @@
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 
                 canvas.toBlob(async (blob) => {
-                    // 3. فحص الأمان
-                    const isSafe = await checkImageSafety(blob);
-                    if (!isSafe) {
-                        document.getElementById("loader").style.display = "none";
-                        return alert("⚠️ الصورة مرفوضة: محتوى غير لائق.");
-                    }
-
-                    // 4. الرفع باستخدام البروكسي لتجاوز CORS
-                    document.getElementById("loader").querySelector("p").innerText = "جاري الرفع عبر البروكسي... 🚀";
-                    const base64Image = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
-
-                    const formData = new FormData();
-                    formData.append("source", base64Image);
-                    formData.append("action", "upload");
-
-                    // إعداد رابط البروكسي لضمان القبول على Vercel
-                    const proxyUrl = "https://corsproxy.io/?";
-                    const apiUrl = `https://freeimage.host/api/1/upload?key=${FREEIMAGE_KEY}&format=json`;
+                    // فحص أمان الصورة (SightEngine)
+                    const safetyData = new FormData();
+                    safetyData.append('media', blob);
+                    safetyData.append('models', 'nudity-2.0');
+                    safetyData.append('api_user', '1038750179');
+                    safetyData.append('api_secret', 'bYq2ManntpCX4uJ6f5x8nHcbYvz2dRYo');
 
                     try {
-                        const res = await fetch(proxyUrl + encodeURIComponent(apiUrl), {
-                            method: "POST",
-                            body: formData
-                        });
-                        
-                        const result = await res.json();
-                        
-                        if (result.status_code === 200) {
-                            finalSave(result.image.url);
-                        } else {
-                            throw new Error("فشل في استجابة السيرفر");
+                        const safetyResponse = await fetch('https://api.sightengine.com/1.0/check.json', { method: 'POST', body: safetyData });
+                        const safetyResult = await safetyResponse.json();
+                        if (safetyResult.status === 'success' && safetyResult.nudity.sexual_activity > 0.5) {
+                            document.getElementById("loader").style.display = "none";
+                            return alert("⚠️ الصورة مرفوضة لاحتوائها على محتوى غير لائق.");
                         }
-                    } catch (err) {
-                        document.getElementById("loader").style.display = "none";
-                        console.error("Upload Error:", err);
-                        alert("❌ فشل الرفع عبر البروكسي. جرب الرفع مرة أخرى أو تأكد من جودة الإنترنت.");
-                    }
+                    } catch (err) { console.log("تجاوز فحص الأمان"); }
+
+                    // الرفع لـ ImgBB
+                    document.getElementById("loader").querySelector("p").innerText = "جاري النشر... 🚀";
+                    const formData = new FormData();
+                    formData.append("image", blob);
+                    
+                    fetch("https://api.imgbb.com/1/upload?key=aeb82e4e9c181792029180c0c851a869", { method: "POST", body: formData })
+                    .then(r => r.json())
+                    .then(res => {
+                        if(res.success) finalSave(res.data.url);
+                        else finalSave(null);
+                    }).catch(() => finalSave(null));
                 }, "image/jpeg", 0.7);
             };
             img.src = e.target.result;
@@ -212,52 +199,38 @@
         finalSave(null);
     }
 }
-   async function checkImageSafety(blob) {
-    const safetyData = new FormData();
-    safetyData.append('media', blob);
-    safetyData.append('models', 'nudity-2.0');
-    safetyData.append('api_user', '1038750179');
-    safetyData.append('api_secret', 'bYq2ManntpCX4uJ6f5x8nHcbYvz2dRYo');
-    try {
-        const res = await fetch('https://api.sightengine.com/1.0/check.json', { method: 'POST', body: safetyData });
-        const data = await res.json();
-        return !(data.status === 'success' && data.nudity.sexual_activity > 0.5);
-    } catch (err) { 
-        return true; // في حال تعطل الفحص نسمح بالمرور لضمان استمرار العمل
-    }
+
+// هذه الدالة الآن خارج الدالة السابقة لتعمل بشكل صحيح
+function finalSave(newImageUrl) {
+    const editKey = document.getElementById("edit-key").value;
+    const isFlash = document.getElementById("isFlash").value === 'true';
+    const hours = parseInt(document.getElementById("flashHours").value) || 0;
+    const flashExpiry = isFlash ? Date.now() + (hours * 60 * 60 * 1000) : 0;
+
+    const data = {
+        name: document.getElementById("name").value.trim(),
+        price: document.getElementById("price").value.trim(),
+        status: document.getElementById("status").value,
+        category: document.getElementById("category").value,
+        isFlash: isFlash,
+        flashPrice: document.getElementById("flashPrice").value || "",
+        flashExpiry: flashExpiry,
+        store: store
+    };
+    
+    if (newImageUrl) data.image = newImageUrl;
+    const ref = editKey ? database.ref("products/" + editKey) : database.ref("products").push();
+    if(!editKey) data.id = Date.now(); 
+
+    ref.update(data).then(() => {
+        document.getElementById("loader").style.display = "none"; // إغلاق اللودر
+        alert("تم الحفظ بنجاح ✅");
+        location.reload();
+    }).catch(() => {
+        document.getElementById("loader").style.display = "none";
+        alert("فشل في قاعدة البيانات");
+    });
 }
-
-    function finalSave(newImageUrl) {
-        const editKey = document.getElementById("edit-key").value;
-        const isFlash = document.getElementById("isFlash").value === 'true';
-        const hours = parseInt(document.getElementById("flashHours").value) || 0;
-        const flashExpiry = isFlash ? Date.now() + (hours * 60 * 60 * 1000) : 0;
-
-        const data = {
-            name: document.getElementById("name").value.trim(),
-            price: document.getElementById("price").value.trim(),
-            status: document.getElementById("status").value,
-            category: document.getElementById("category").value,
-            isFlash: isFlash,
-            flashPrice: document.getElementById("flashPrice").value || "",
-            flashExpiry: flashExpiry,
-            store: store
-        };
-        
-        if (newImageUrl) data.image = newImageUrl;
-        const ref = editKey ? database.ref("products/" + editKey) : database.ref("products").push();
-        if(!editKey) data.id = Date.now(); 
-
-        ref.update(data).then(() => {
-            document.getElementById("loader").style.display = "none";
-            alert("تم الحفظ بنجاح في متاجر البلاد ✅");
-            location.reload();
-        }).catch(() => {
-            document.getElementById("loader").style.display = "none";
-            alert("فشل في قاعدة البيانات");
-        });
-    }
-
     function loadMyProducts() {
         const list = document.getElementById("edit-list");
         database.ref("products").orderByChild("store").equalTo(store).once("value", snap => {
@@ -266,8 +239,8 @@
                 const p = child.val();
                 list.innerHTML += `
                 <div class="product-edit-item">
-                    <img src="${p.image}" style="width:50px; height:50px; border-radius:5px; object-fit:cover;">
-                    <div class="product-info"><b>${p.name}</b><br><small>${p.price} ر.ي</small></div>
+                    <img src="${p.image}" style="width:50px; height:50px; border-radius:5px;">
+                    <div class="product-info"><b>${p.name}</b><br><small>${p.price}</small></div>
                     <button class="btn-edit-trigger" onclick="fillEditForm('${child.key}')">تعديل</button>
                     <button class="btn-delete" onclick="deleteProduct('${child.key}')">حذف</button>
                 </div>`;
@@ -295,7 +268,7 @@
     }
 
     function resetForm() { location.reload(); }
-    function deleteProduct(k) { if(confirm("هل أنت متأكد من حذف هذا المنتج؟")) database.ref("products/"+k).remove().then(()=>loadMyProducts()); }
+    function deleteProduct(k) { if(confirm("حذف؟")) database.ref("products/"+k).remove().then(()=>loadMyProducts()); }
     function logout() { localStorage.clear(); window.location.href = "stores.html"; }
 </script>
 </body>
