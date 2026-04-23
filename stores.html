@@ -115,36 +115,51 @@ window.onload = function(){
     const container = document.getElementById("store-list");
     container.innerHTML = "جاري تحميل المتاجر...";
 
-    // جلب البيانات من القسمين في نفس الوقت
-    Promise.all([
-        database.ref("Active_Stores").once("value"),
-        database.ref("storePasswords").once("value")
-    ]).then(snapshots => {
-        container.innerHTML = "";
-        const activeStores = snapshots[0].val() || {};
-        const oldStores = snapshots[1].val() || {};
+    // نراقب المتاجر النشطة بشكل مباشر (Realtime)
+    database.ref("Active_Stores").on("value", snapshot => {
+        container.innerHTML = ""; // تنظيف القائمة
+        
+        if (!snapshot.exists()) {
+            container.innerHTML = "لا توجد متاجر مفعلة حالياً.";
+            return;
+        }
 
-        // 1. عرض المتاجر الجديدة (المسجلة بالرقم)
+        const activeStores = snapshot.val();
+
         Object.keys(activeStores).forEach(phone => {
             const store = activeStores[phone];
-            createStoreCard(store.bizName, phone, "new");
+            // التأكد من أن المتجر يحتوي على اسم قبل العرض
+            if (store.bizName) {
+                createStoreCard(store.bizName, phone, "new");
+            }
         });
+    }, error => {
+        console.error("خطأ في جلب البيانات:", error);
+        container.innerHTML = "فشل في تحميل المتاجر، تأكد من الاتصال.";
+    });
 
-        // 2. عرض المتاجر القديمة (المسجلة بالاسم مباشرة)
-        Object.keys(oldStores).forEach(storeName => {
-            // نتأكد أن المتجر غير مكرر في القائمة الجديدة
-            createStoreCard(storeName, storeName, "old");
-        });
+    // جلب المتاجر القديمة (اختياري إذا كانت لا تزال موجودة)
+    database.ref("storePasswords").once("value", snapshot => {
+        if (snapshot.exists()) {
+            const oldStores = snapshot.val();
+            Object.keys(oldStores).forEach(storeName => {
+                createStoreCard(storeName, storeName, "old");
+            });
+        }
     });
 
     function createStoreCard(displayName, identifier, type) {
+        // نتحقق إذا كان المتجر موجوداً مسبقاً لمنع التكرار
+        const existingCards = Array.from(container.querySelectorAll('.store-card'));
+        if (existingCards.some(c => c.innerText === displayName)) return;
+
         const card = document.createElement("div");
         card.className = "store-card";
         card.innerText = displayName;
         card.onclick = () => {
             localStorage.setItem("selectedStore", displayName);
-            localStorage.setItem("storeType", type); // حفظ نوع المتجر (قديم أم جديد)
-            localStorage.setItem("storeID", identifier); // المعرف (رقم الهاتف أو الاسم)
+            localStorage.setItem("storeType", type);
+            localStorage.setItem("storeID", identifier);
             window.location.href = "store-login.html";
         };
         container.appendChild(card);
