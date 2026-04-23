@@ -1,275 +1,198 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التحكم - متاجر البلاد</title>
-    <style>
-        :root { --gold: #b89b4a; --dark: #1b1e33; --light: #f7f6f2; }
-        body { margin: 0; font-family: "Segoe UI", sans-serif; background: var(--light); padding-bottom: 90px; }
-        header { background: white; padding: 20px; text-align: center; font-size: 22px; font-weight: bold; color: var(--dark); box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .container { padding: 20px; max-width: 600px; margin: auto; }
-        .box { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); margin-bottom: 20px; text-align: right; }
-        .box h3 { color: var(--gold); margin-top: 0; border-bottom: 2px solid var(--light); padding-bottom: 10px; text-align: center; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px; }
-        input, select { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; outline: none; }
-        .flash-sale-card { background: #fff5f5; border: 2px dashed #e74c3c; padding: 15px; border-radius: 15px; margin-bottom: 20px; }
-        .btn-main { background: linear-gradient(45deg, var(--gold), #d4bc7d); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; }
-        .product-edit-item { border: 1px solid #eee; padding: 15px; border-radius: 15px; margin-bottom: 15px; background: #fafafa; display: flex; align-items: center; gap: 10px; }
-        .product-info { flex: 1; text-align: right; }
-        .btn-edit-trigger { background: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; }
-        .btn-delete { background: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; }
-        #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; color: white; flex-direction: column; justify-content: center; align-items: center; }
-        .spinner { border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid var(--gold); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .footer-tabs { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 15px; box-shadow: 0 -2px 15px rgba(0,0,0,0.1); }
-        .tab-btn { background: none; border: none; font-weight: bold; color: #888; cursor: pointer; font-size: 14px; }
-        .tab-btn.active { color: var(--gold); border-bottom: 2px solid var(--gold); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>المتاجر</title>
+
+<!-- خط كوفي جميل -->
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700&display=swap" rel="stylesheet">
+
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Cairo', sans-serif;
+    background: linear-gradient(to bottom,#f7f6f2,#e9e4cf);
+}
+
+/* العنوان */
+h2 {
+    text-align: center;
+    margin-top: 30px;
+    font-size: 26px;
+    color: #1b1e33;
+}
+
+/* شبكة المتاجر */
+.store-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 18px;
+    padding: 30px;
+    max-width: 900px;
+    margin: auto;
+}
+.orders-badge {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #1b1e33;
+    color: #e6d38a;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 1000;
+    border: 2px solid #b89b4a;
+    transition: 0.3s;
+}
+
+.orders-badge:hover {
+    transform: scale(1.1);
+    background: #b89b4a;
+    color: #1b1e33;
+}
+
+/* فقاعة تنبيه حمراء صغيرة */
+.dot {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: #d45d5d;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 2px solid white;
+    display: none; /* ستظهر فقط عند وجود طلبات */
+}
+
+/* بطاقة المتجر */
+.store-card {
+    background: linear-gradient(145deg,#e6d38a,#c9b36a,#b89b4a);
+    color: #1b1e33;
+    padding: 22px 10px;
+    border-radius: 18px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.25);
+    transition: 0.25s;
+}
+
+/* تأثير عند المرور */
+.store-card:hover {
+    transform: translateY(-6px) scale(1.04);
+    box-shadow: 0 12px 22px rgba(0,0,0,0.35);
+}
+</style>
 </head>
+
 <body>
 
-<div id="loader"><div class="spinner"></div><p>جاري المعالجة...</p></div>
-<header id="title">لوحة التحكم</header>
+<h2>اختر المتجر لإضافة المنتجات</h2>
 
-<div class="container">
-    <div class="box" id="add-box">
-        <h3 id="form-mode-title">إضافة منتج جديد</h3>
-        <input type="hidden" id="edit-key">
-        
-        <label>اسم المنتج</label>
-        <input type="text" id="name" placeholder="مثلاً: عسل سدر">
-        
-        <label>السعر العادي</label>
-        <input type="text" id="price" placeholder="مثلاً: 5000">
-
-        <div class="flash-sale-card">
-            <label style="color: #e74c3c; font-weight: bold;">⚡ عرض صاروخي؟</label>
-            <select id="isFlash" onchange="document.getElementById('flash-section').style.display=(this.value=='true'?'block':'none')">
-                <option value="false">لا</option>
-                <option value="true">نعم</option>
-            </select>
-            <div id="flash-section" style="display:none;">
-                <input type="text" id="flashPrice" placeholder="سعر الخصم">
-                <select id="flashHours">
-                    <option value="1">ساعة واحدة</option>
-                    <option value="3">3 ساعات</option>
-                    <option value="24">يوم كامل (24س)</option>
-                </select>
-            </div>
-        </div>
-
-        <label>الحالة</label>
-        <select id="status">
-            <option value="متوفر">متوفر ✅</option>
-            <option value="غير متوفر">غير متوفر ❌</option>
-        </select>
-        
-      <label>التصنيف</label>
-        <select id="category">
-            <option value="">-- اختر التصنيف --</option>
-            <option value="المواد الغذائية">المواد الغذائية</option>
-            <option value="الملابس والأزياء">الملابس والأزياء</option>
-            <option value="الأحذية والشنط">الأحذية والشنط</option>
-            <option value="العطور والبخور">العطور والبخور</option>
-            <option value="مستحضرات التجميل">مستحضرات التجميل</option>
-            <option value="الإلكترونيات">الإلكترونيات</option>
-            <option value="الهواتف وملحقاتها">الهواتف وملحقاتها</option>
-            <option value="الأدوات المنزلية">الأدوات المنزلية</option>
-            <option value="الأثاث والديكور">الأثاث والديكور</option>
-            <option value="الأجهزة الكهربائية">الأجهزة الكهربائية</option>
-            <option value="الألعاب والهدايا">الألعاب والهدايا</option>
-            <option value="مستلزمات الأطفال">مستلزمات الأطفال</option>
-            <option value="الكتب والقرطاسية">الكتب والقرطاسية</option>
-            <option value="المستلزمات الطبية">المستلزمات الطبية</option>
-            <option value="الرياضة واللياقة">الرياضة واللياقة</option>
-            <option value="الساعات والمجوهرات">الساعات والمجوهرات</option>
-            <option value="قطع غيار السيارات">قطع غيار السيارات</option>
-            <option value="إكسسوارات السيارات">إكسسوارات السيارات</option>
-            <option value="أدوات البناء">أدوات البناء</option>
-            <option value="الحرف اليدوية">الحرف اليدوية</option>
-            <option value="الخدمات البرمجية">الخدمات البرمجية</option> 
-           <option value="سيارات">سيارات</option>
-            <option value="أخرى">أخرى</option>
-        </select>
-        
-        <label>صورة المنتج</label>
-        <input type="file" id="imageFile" accept="image/*">
-
-        <button class="btn-main" id="submit-btn" onclick="processProduct()">حفظ ونشر المنتج 🚀</button>
-        <button class="btn-main" id="cancel-btn" style="display:none; background:#888; margin-top:10px;" onclick="resetForm()">إلغاء التعديل</button>
-    </div>
-
-    <div class="box" id="edit-box" style="display:none;">
-        <h3>إدارة منتجاتي</h3>
-        <div id="edit-list">جاري التحميل...</div>
-    </div>
+<div class="store-list" id="store-list"></div>
+<div class="orders-badge" onclick="goToMerchantOrders()" title="طلبات متجري">
+    📦الطلبات 
+    <div id="notif-dot" class="dot"></div>
 </div>
 
-<div class="footer-tabs">
-    <button class="tab-btn active" id="tabAdd" onclick="showSection('add')">➕ إضافة</button>
-    <button class="tab-btn" id="tabEdit" onclick="showSection('edit')">⚙️ الإدارة</button>
-    <button class="tab-btn" style="color:#e74c3c" onclick="logout()">🚪 خروج</button>
-</div>
-
+<!-- Firebase App (core) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<!-- Firebase Realtime Database -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="firebase.js"></script>
 
 <script>
-    const store = localStorage.getItem("selectedStore");
-    document.getElementById("title").innerText = "متجر: " + store;
+window.onload = function(){
+    const container = document.getElementById("store-list");
+    container.innerHTML = "جاري تحميل المتاجر...";
 
-    function showSection(type) {
-        document.getElementById("add-box").style.display = (type === 'add' ? 'block' : 'none');
-        document.getElementById("edit-box").style.display = (type === 'edit' ? 'block' : 'none');
-        if(type === 'edit') loadMyProducts();
-    }
-function checkTextSafety(text) {
-    // قائمة تجريبية للكلمات الممنوعة (يمكنك زيادتها)
-    const forbiddenWords = ["كلمة1", "كلمة2", "سب", "شتيمة"]; 
-    const normalizedText = text.toLowerCase();
-    
-    for (let word of forbiddenWords) {
-        if (normalizedText.includes(word)) {
-            return { safe: false, reason: "الاسم يحتوي على كلمات غير لائقة ❌" };
+    // نراقب المتاجر النشطة بشكل مباشر (Realtime)
+    database.ref("Active_Stores").on("value", snapshot => {
+        container.innerHTML = ""; // تنظيف القائمة
+        
+        if (!snapshot.exists()) {
+            container.innerHTML = "لا توجد متاجر مفعلة حالياً.";
+            return;
         }
-    }
-    return { safe: true };
-}
-async function processProduct() {
-    const name = document.getElementById("name").value.trim();
-    const price = document.getElementById("price").value.trim();
-    const file = document.getElementById("imageFile").files[0];
 
-    const textCheck = checkTextSafety(name);
-    if (!textCheck.safe) return alert(textCheck.reason);
-    if (!name || !price) return alert("الاسم والسعر مطلوبان");
-    
-    document.getElementById("loader").style.display = "flex";
-    document.getElementById("loader").querySelector("p").innerText = "جاري تجهيز الصورة... 🛠️";
+        const activeStores = snapshot.val();
 
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            const img = new Image();
-            img.onload = async () => {
-                const canvas = document.createElement("canvas");
-                const MAX_WIDTH = 600;
-                const scaleSize = MAX_WIDTH / img.width;
-                canvas.width = MAX_WIDTH;
-                canvas.height = img.height * scaleSize;
-                const ctx = canvas.getContext("2d");
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                
-                canvas.toBlob(async (blob) => {
-                    // فحص أمان الصورة (SightEngine)
-                    const safetyData = new FormData();
-                    safetyData.append('media', blob);
-                    safetyData.append('models', 'nudity-2.0');
-                    safetyData.append('api_user', '1038750179');
-                    safetyData.append('api_secret', 'bYq2ManntpCX4uJ6f5x8nHcbYvz2dRYo');
+        Object.keys(activeStores).forEach(phone => {
+            const store = activeStores[phone];
+            // التأكد من أن المتجر يحتوي على اسم قبل العرض
+            if (store.bizName) {
+                createStoreCard(store.bizName, phone, "new");
+            }
+        });
+    }, error => {
+        console.error("خطأ في جلب البيانات:", error);
+        container.innerHTML = "فشل في تحميل المتاجر، تأكد من الاتصال.";
+    });
 
-                    try {
-                        const safetyResponse = await fetch('https://api.sightengine.com/1.0/check.json', { method: 'POST', body: safetyData });
-                        const safetyResult = await safetyResponse.json();
-                        if (safetyResult.status === 'success' && safetyResult.nudity.sexual_activity > 0.5) {
-                            document.getElementById("loader").style.display = "none";
-                            return alert("⚠️ الصورة مرفوضة لاحتوائها على محتوى غير لائق.");
-                        }
-                    } catch (err) { console.log("تجاوز فحص الأمان"); }
+    // جلب المتاجر القديمة (اختياري إذا كانت لا تزال موجودة)
+    database.ref("storePasswords").once("value", snapshot => {
+        if (snapshot.exists()) {
+            const oldStores = snapshot.val();
+            Object.keys(oldStores).forEach(storeName => {
+                createStoreCard(storeName, storeName, "old");
+            });
+        }
+    });
 
-                    // الرفع لـ ImgBB
-                    document.getElementById("loader").querySelector("p").innerText = "جاري النشر... 🚀";
-                    const formData = new FormData();
-                    formData.append("image", blob);
-                    
-                    fetch("https://api.imgbb.com/1/upload?key=aeb82e4e9c181792029180c0c851a869", { method: "POST", body: formData })
-                    .then(r => r.json())
-                    .then(res => {
-                        if(res.success) finalSave(res.data.url);
-                        else finalSave(null);
-                    }).catch(() => finalSave(null));
-                }, "image/jpeg", 0.7);
-            };
-            img.src = e.target.result;
+    function createStoreCard(displayName, identifier, type) {
+        // نتحقق إذا كان المتجر موجوداً مسبقاً لمنع التكرار
+        const existingCards = Array.from(container.querySelectorAll('.store-card'));
+        if (existingCards.some(c => c.innerText === displayName)) return;
+
+        const card = document.createElement("div");
+        card.className = "store-card";
+        card.innerText = displayName;
+        card.onclick = () => {
+            localStorage.setItem("selectedStore", displayName);
+            localStorage.setItem("storeType", type);
+            localStorage.setItem("storeID", identifier);
+            window.location.href = "store-login.html";
         };
-        reader.readAsDataURL(file);
+        container.appendChild(card);
+    }
+}
+function goToMerchantOrders() {
+    // نتحقق أولاً إذا كان التاجر قد اختار متجره ودخل
+    const selectedStore = localStorage.getItem("selectedStore");
+    if(!selectedStore) {
+        alert("يرجى اختيار المتجر أولاً");
     } else {
-        finalSave(null);
+        // نتوجه لملف لوحة التحكم الجديد الذي سنسميه merchant-dashboard.html
+        window.location.href = "merchant-dashboard.html";
     }
 }
 
-// هذه الدالة الآن خارج الدالة السابقة لتعمل بشكل صحيح
-function finalSave(newImageUrl) {
-    const editKey = document.getElementById("edit-key").value;
-    const isFlash = document.getElementById("isFlash").value === 'true';
-    const hours = parseInt(document.getElementById("flashHours").value) || 0;
-    const flashExpiry = isFlash ? Date.now() + (hours * 60 * 60 * 1000) : 0;
+// كود إضافي لجعل النقطة الحمراء تظهر إذا كان هناك طلبات "قيد الانتظار" لمتجره
+function checkNewOrders() {
+    const storeName = localStorage.getItem("selectedStore");
+    if(!storeName) return;
 
-    const data = {
-        name: document.getElementById("name").value.trim(),
-        price: document.getElementById("price").value.trim(),
-        status: document.getElementById("status").value,
-        category: document.getElementById("category").value,
-        isFlash: isFlash,
-        flashPrice: document.getElementById("flashPrice").value || "",
-        flashExpiry: flashExpiry,
-        store: store
-    };
-    
-    if (newImageUrl) data.image = newImageUrl;
-    const ref = editKey ? database.ref("products/" + editKey) : database.ref("products").push();
-    if(!editKey) data.id = Date.now(); 
-
-    ref.update(data).then(() => {
-        document.getElementById("loader").style.display = "none"; // إغلاق اللودر
-        alert("تم الحفظ بنجاح ✅");
-        location.reload();
-    }).catch(() => {
-        document.getElementById("loader").style.display = "none";
-        alert("فشل في قاعدة البيانات");
+    database.ref("Orders").on("value", snap => {
+        const data = snap.val() || {};
+        // فحص إذا كان هناك أي طلب لمتجري وحالته waiting (بانتظار مندوب)
+        const hasNew = Object.values(data).some(ord => ord.store === storeName && ord.status === "waiting");
+        document.getElementById("notif-dot").style.display = hasNew ? "block" : "none";
     });
 }
-    function loadMyProducts() {
-        const list = document.getElementById("edit-list");
-        database.ref("products").orderByChild("store").equalTo(store).once("value", snap => {
-            list.innerHTML = "";
-            snap.forEach(child => {
-                const p = child.val();
-                list.innerHTML += `
-                <div class="product-edit-item">
-                    <img src="${p.image}" style="width:50px; height:50px; border-radius:5px;">
-                    <div class="product-info"><b>${p.name}</b><br><small>${p.price}</small></div>
-                    <button class="btn-edit-trigger" onclick="fillEditForm('${child.key}')">تعديل</button>
-                    <button class="btn-delete" onclick="deleteProduct('${child.key}')">حذف</button>
-                </div>`;
-            });
-        });
-    }
 
-    function fillEditForm(key) {
-        database.ref("products/" + key).once("value", snap => {
-            const p = snap.val();
-            showSection('add');
-            document.getElementById("form-mode-title").innerText = "تعديل المنتج الحالي";
-            document.getElementById("edit-key").value = key;
-            document.getElementById("name").value = p.name;
-            document.getElementById("price").value = p.price;
-            document.getElementById("status").value = p.status;
-            document.getElementById("category").value = p.category;
-            document.getElementById("isFlash").value = p.isFlash ? 'true' : 'false';
-            document.getElementById("flash-section").style.display = p.isFlash ? 'block' : 'none';
-            document.getElementById("flashPrice").value = p.flashPrice || "";
-            document.getElementById("submit-btn").innerText = "تحديث البيانات 💾";
-            document.getElementById("cancel-btn").style.display = "block";
-            window.scrollTo(0, 0);
-        });
-    }
-
-    function resetForm() { location.reload(); }
-    function deleteProduct(k) { if(confirm("حذف؟")) database.ref("products/"+k).remove().then(()=>loadMyProducts()); }
-    function logout() { localStorage.clear(); window.location.href = "stores.html"; }
+// تشغيل الفحص
+checkNewOrders();
 </script>
+
+
 </body>
 </html>
