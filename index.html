@@ -94,16 +94,15 @@ function cleanName(name) {
     return name.trim().replace(/\s+/g, ' ');
 }
 
-// ... (الأكواد العلوية كما هي)
-
+// 1. دالة تسجيل حساب جديد (يروح للانترو)
 function go(){
     const name = cleanName(document.getElementById("name").value);
     const region = document.getElementById("region").value.trim();
     const password = document.getElementById("password").value.trim();
 
-    if(name.length < 10){ alert("يرجى كتابة الاسم الرباعي كاملاً"); return; }
+    if(name.split(' ').length < 3){ alert("يرجى كتابة الاسم الثلاثي أو الرباعي"); return; }
     if(!region){ alert("يرجى كتابة المنطقة"); return; }
-    if(password.length < 4){ alert("كلمة السر يجب أن تكون 4 أرقام أو حروف على الأقل"); return; }
+    if(password.length < 4){ alert("كلمة السر يجب أن تكون 4 أرقام أو حروف"); return; }
 
     document.getElementById("loader").style.display = "block";
 
@@ -112,6 +111,7 @@ function go(){
             alert("هذا الاسم مسجل مسبقاً، استخدم 'تسجيل دخول'");
             document.getElementById("loader").style.display = "none";
         } else {
+            // حفظ البيانات في Firebase
             database.ref("Users/" + name).set({
                 name: name,
                 region: region,
@@ -120,16 +120,19 @@ function go(){
                 wallet: 0,
                 points: 0
             }).then(() => {
+                // حفظ في المتصفح
                 localStorage.setItem("userName", name);
                 localStorage.setItem("userRegion", region);
-                // ✅ السطر المضاف لكي لا يطرده النظام
-                localStorage.setItem("appVersion", "2.0"); 
-                location.href = "intro.html";
+                localStorage.setItem("appVersion", "2.0");
+                
+                // 🚩 التوجيه للانترو لأنه مستخدم جديد
+                location.href = "intro.html"; 
             });
         }
     });
 }
 
+// 2. دالة تسجيل دخول بحساب سابق (يروح للأقسام مباشرة ويستعيد نقاطه)
 function loginOldUser() {
     const name = cleanName(document.getElementById("name").value);
     const password = document.getElementById("password").value.trim();
@@ -140,19 +143,23 @@ function loginOldUser() {
     database.ref("Users/" + name).once("value").then(snap => {
         if(snap.exists()) {
             const d = snap.val();
-            if(d.password === password) {
+            if(String(d.password) === String(password)) {
+                // ✅ استعادة كل البيانات من السيرفر للمتصفح
                 localStorage.setItem("userName", name);
                 localStorage.setItem("userRegion", d.region);
-                localStorage.setItem("introShown", "true");
-                // ✅ السطر المضاف لكي لا يطرده النظام
-                localStorage.setItem("appVersion", "2.0"); 
+                localStorage.setItem("appVersion", "2.0");
+                
+                // وسم بأن الانترو تم رؤيته سابقاً لكي لا يظهر له مرة أخرى
+                localStorage.setItem("introShown", "true"); 
+
+                // 🚩 التوجيه المباشر للأقسام
                 window.location.href = "fields.html";
             } else {
                 alert("كلمة السر خطأ ❌");
                 document.getElementById("loader").style.display = "none";
             }
         } else {
-            alert("الاسم غير موجود");
+            alert("الاسم غير موجود، يرجى إنشاء حساب جديد");
             document.getElementById("loader").style.display = "none";
         }
     });
