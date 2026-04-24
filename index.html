@@ -37,10 +37,38 @@
 <link href="https://fonts.googleapis.com/css2?family=Lateef&display=swap" rel="stylesheet">
 
 <style>
-    body { margin: 0; font-family: "Segoe UI", sans-serif; background: #1c1f33; height: 100vh; display: flex; justify-content: center; align-items: center; color: white; }
-    .box { background: #ffffff; padding: 30px; border-radius: 22px; width: 90%; max-width: 400px; text-align: center; color: #333; }
-    .welcome-line2 { font-family: 'Lateef', cursive; font-size: 38px; color: #bfa14a; font-weight: bold; }
-    input { width:100%; padding:13px; margin-bottom:16px; border-radius:12px; border:1px solid #ddd; box-sizing: border-box; font-size: 15px; }
+   body { 
+    margin: 0; 
+    font-family: 'Segoe UI', sans-serif; 
+    background: radial-gradient(circle, #1b1e33 0%, #0f111a 100%); /* نفس خلفية الانترو */
+    height: 100vh; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+}
+.box { 
+    background: rgba(255, 255, 255, 0.05); /* زجاجي شفاف */
+    backdrop-filter: blur(15px);
+    padding: 30px; 
+    border-radius: 30px; 
+    width: 90%; 
+    max-width: 400px; 
+    text-align: center; 
+    border: 1px solid rgba(184, 155, 74, 0.3); /* إطار ذهبي خفيف */
+    color: white;
+}
+input { 
+    width:100%; 
+    padding:13px; 
+    margin-bottom:16px; 
+    border-radius:12px; 
+    border: 1px solid rgba(255,255,255,0.1); 
+    background: rgba(255,255,255,0.1);
+    color: white;
+    box-sizing: border-box; 
+}
+input::placeholder { color: #aaa; } 
+izing: border-box; font-size: 15px; }
     .btn-main { width:100%; padding:14px; border:none; border-radius:16px; font-size:18px; font-weight:bold; cursor:pointer; background: #b89b4a; color: white; transition: 0.3s; }
     .btn-main:active { transform: scale(0.98); }
     .old-user-link { display: block; margin-top: 15px; font-size: 13px; color: #888; cursor: pointer; text-decoration: underline; }

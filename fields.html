@@ -8,11 +8,74 @@
 
 <style>
     body { margin: 0; font-family: 'Cairo', sans-serif; background-color: #f7f6f2; overflow-x: hidden; }
-    .top-navbar { display: flex; justify-content: space-around; align-items: center; background: linear-gradient(45deg, #c9b36a, #b89b4a); padding: 12px 0; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
-    .nav-link { color: #1b1e33; text-decoration: none; text-align: center; flex: 1; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.3s; opacity: 0.7; position: relative; }
-    .notif-badge { position: absolute; top: 5px; right: 25%; background-color: #d45d5d; color: white; font-size: 10px; padding: 2px 6px; border-radius: 50%; display: none; border: 1px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-    .nav-link.active { opacity: 1; transform: scale(1.1); }
-    #main-frame { width: 100%; height: calc(100vh - 70px); border: none; display: block; }
+
+    /* تطوير شريط التنقل ليكون عائماً قليلاً */
+    .top-navbar { 
+        display: flex; justify-content: space-around; align-items: center; 
+        background: linear-gradient(45deg, #1b1e33, #252943); /* خلفية داكنة فخمة */
+        padding: 10px 0; position: sticky; top: 0; z-index: 1000; 
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3); 
+    }
+
+    .nav-link { 
+        color: #ffffff; text-decoration: none; text-align: center; flex: 1; 
+        font-size: 12px; font-weight: bold; cursor: pointer; 
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* حركة مرنة */
+        opacity: 0.6; position: relative; 
+    }
+
+    /* تأثير ضخم عند مرور الماوس (Hover) أو الإصبع */
+    .nav-link:hover { 
+        opacity: 1; 
+        transform: translateY(-5px) scale(1.1); /* ترتفع للأعلى وتكبر */
+        color: #b89b4a; 
+    }
+
+    /* تأثير "النبض" المستمر للأيقونة النشطة */
+    .nav-link.active { 
+        opacity: 1; 
+        color: #b89b4a; 
+        transform: scale(1.15); 
+    }
+    
+    .nav-link.active span:first-child {
+        display: inline-block;
+        animation: bounce 2s infinite; /* اهتزاز مستمر للأيقونة النشطة */
+    }
+
+    /* تأثير عند الضغط الفعلي (Active Click) */
+    .nav-link:active {
+        transform: scale(0.8); /* تصغر فجأة ثم تكبر لتعطي إحساس الضغط الحقيقي */
+        filter: brightness(1.5);
+    }
+
+    /* زخرفة تحت الأيقونة النشطة */
+    .nav-link.active::after {
+        content: ''; position: absolute; bottom: -10px; left: 25%; width: 50%; height: 3px;
+        background: #b89b4a; border-radius: 10px;
+        box-shadow: 0 0 10px #b89b4a;
+    }
+
+    .notif-badge { 
+        position: absolute; top: -5px; right: 20%; background-color: #e74c3c; 
+        color: white; font-size: 10px; padding: 2px 7px; border-radius: 10px; 
+        border: 2px solid #1b1e33; animation: pulse 1.5s infinite; 
+    }
+
+    #main-frame { width: 100%; height: calc(100vh - 70px); border: none; display: block; background: #f7f6f2; }
+
+    /* الأنيميشن الخاص بالاهتزاز والنبض */
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+        40% {transform: translateY(-7px);}
+        60% {transform: translateY(-4px);}
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
+        70% { transform: scale(1.2); box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+    }
 </style>
 </head>
 <body>
@@ -96,7 +159,7 @@
     }
 };
     // حل مشكلة الارتفاع
-    window.addEventListener('resize', function() {
+    window.addEventListener('reize', function() {
         document.getElementById('main-frame').style.height = (window.innerHeight - 70) + "px";
     });
 </script>

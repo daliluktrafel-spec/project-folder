@@ -29,7 +29,17 @@
     .tabs { display: flex; justify-content: space-around; padding: 12px; position: fixed; bottom: 0; width: 100%; background: white; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); z-index: 1000; box-sizing: border-box; }
     .tab { padding: 10px 15px; border-radius: 12px; border: 1.5px solid #b89b4a; font-weight: bold; cursor: pointer; font-size: 12px; color: #b89b4a; }
     .tab.active { background: linear-gradient(45deg,#c9b36a,#b89b4a); color: white; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+   .card:has(.product-img span) {
+    border: 1px solid #e74c3c;
+    box-shadow: 0 0 15px rgba(231, 76, 60, 0.2);
+    animation: flashGlow 2s infinite alternate;
+}
+
+@keyframes flashGlow {
+    from { box-shadow: 0 0 5px rgba(231, 76, 60, 0.1); }
+    to { box-shadow: 0 0 15px rgba(231, 76, 60, 0.4); }
+}
+ @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
 <body>
@@ -137,38 +147,58 @@ window.onclick = function(event) {
         }
     }
 }
-function loadProducts() {
-    database.ref("products").orderByChild("id").limitToLast(100).once("value", snap => {
-        const data = snap.val() || {};
-        let productsArray = Object.values(data);
+async function loadSmartProducts() {
+    const userInterests = JSON.parse(localStorage.getItem("userInterests") || "{}");
+    
+    // 1. تحديد أكثر قسم يهمه المستخدم
+    let favoriteCategory = Object.keys(userInterests).reduce((a, b) => userInterests[a] > userInterests[b] ? a : b, null);
+
+    let finalProducts = [];
+
+    // 2. طلب المنتجات المفضلة (أول 8 منتجات من قسمه المفضل)
+    let favQuery = database.ref("products").orderByChild("category");
+    if(favoriteCategory) {
+        favQuery = favQuery.equalTo(favoriteCategory).limitToLast(8);
+    } else {
+        favQuery = favQuery.limitToLast(8);
+    }
+
+    // 3. طلب أحدث المنتجات (آخر 15 منتجاً من كل الأقسام)
+    const latestQuery = database.ref("products").orderByChild("id").limitToLast(15);
+
+    try {
+        const [favSnap, latestSnap] = await Promise.all([favQuery.once("value"), latestQuery.once("value")]);
+
+        const favData = Object.values(favSnap.val() || {});
+        const latestData = Object.values(latestSnap.val() || {});
+
+        // 4. دمج البيانات وحذف التكرار باستخدام Map لضمان الـ ID الفريد
+        let combined = [...favData, ...latestData];
+        let uniqueMap = new Map();
+        combined.forEach(p => uniqueMap.set(p.id, p));
         
-        let interests = JSON.parse(localStorage.getItem("userInterests") || "{}");
+        finalProducts = Array.from(uniqueMap.values()).reverse(); // الأحدث فوق
 
-        productsArray.sort((a, b) => {
-            let scoreA = interests[a.category] || 0;
-            let scoreB = interests[b.category] || 0;
-            if (scoreB === scoreA) {
-                return b.id - a.id; 
-            }
-            return scoreB - scoreA; 
-        });
-
-        products = productsArray;
-        renderCategories(); 
+        // 5. التحديث والعرض
+        products = finalProducts;
+        renderCategories();
         renderProducts("all");
+        
+    } catch (error) {
+        console.error("خطأ في جلب البيانات الذكية:", error);
+        // في حال الخطأ، نعود للجلب العادي لكي لا تتعطل المنصة
+        loadProductsLegacy(); 
+    }
+}
 
-        // --- كود فحص القادم من الذكاء الاصطناعي ---
-        const params = new URLSearchParams(window.location.search);
-        const aiQuery = params.get('search');
-        if (aiQuery) {
-            document.getElementById("searchInput").value = aiQuery;
-            setTimeout(() => {
-                localSmartSearch(); 
-            }, 500);
-        }
+function loadProductsLegacy() {
+    database.ref("products").limitToLast(20).once("value", snap => {
+        const data = snap.val() || {};
+        products = Object.values(data).reverse();
+        renderCategories();
+        renderProducts("all");
     });
-} // <--- هذا القوس كان ناقصاً عندك
-
+}
 
 function closeWallet() { document.getElementById("wallet-modal").style.display = "none"; }
 
@@ -336,10 +366,9 @@ function countVisit() {
     }
 }
 window.onload = function() {
-    loadProducts();
+    loadSmartProducts(); // استدعاء الدالة الذكية الجديدة بدلاً من القديمة
     loadMyPoints();
     countVisit();
-    // استدعاء فحص النقاط فوراً
     checkPointsAndAwardWallet(localStorage.getItem("userName"));
 };
 </script>
