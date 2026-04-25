@@ -49,7 +49,9 @@
 <script>
     const storeName = localStorage.getItem("selectedStore");
     const rawIdentifier = localStorage.getItem("storeID");
-    // تنظيف المعرف تماماً من أي مسافات داخلية
+    const storeType = localStorage.getItem("storeType"); // 'new' or 'old'
+    
+    // تنظيف المعرف تماماً
     const identifier = rawIdentifier ? rawIdentifier.replace(/\s+/g, '').trim() : null;
 
     if (!storeName || !identifier) {
@@ -67,33 +69,49 @@
             return;
         }
 
-        // البحث في Active_Stores باستخدام المعرف النظيف
+        // --- المنطق المطور للفحص المزدوج ---
+        
+        // 1. الفحص في النظام الجديد (Active_Stores)
         database.ref(`Active_Stores/${identifier}`).once("value").then(snap => {
             if(snap.exists()){
                 const storeData = snap.val();
-                const realPass = String(storeData.password).trim();
-
-                if(inputPass === realPass) {
-                    // ✅ نجاح الدخول - تخزين البيانات اللازمة للداشبورد
-                    localStorage.setItem("storeLoggedIn", "true");
-                    localStorage.setItem("selectedStore", storeName);
-                    
-                    errorMsg.style.color = "green";
-                    errorMsg.innerText = "✅ تم التحقق.. جاري الدخول";
-                    
-                    setTimeout(() => {
-                        window.location.href = "dashboard.html";
-                    }, 500);
+                if(String(inputPass) === String(storeData.password).trim()) {
+                    loginSuccess();
                 } else {
                     errorMsg.innerText = "❌ كلمة السر خاطئة!";
                 }
-            } else {
-                errorMsg.innerText = "❌ المتجر غير موجود أو غير مفعل";
+            } 
+            // 2. إذا لم يوجد في الجديد، نبحث في النظام القديم (storePasswords)
+            else {
+                database.ref(`storePasswords/${storeName}`).once("value").then(oldSnap => {
+                    if(oldSnap.exists()){
+                        if(String(inputPass) === String(oldSnap.val()).trim()) {
+                            loginSuccess();
+                        } else {
+                            errorMsg.innerText = "❌ كلمة السر خاطئة!";
+                        }
+                    } else {
+                        errorMsg.innerText = "❌ المتجر غير موجود في أي من الأنظمة";
+                    }
+                });
             }
         }).catch(err => {
             errorMsg.innerText = "🌐 خطأ في الاتصال بقاعدة البيانات";
         });
     };
+
+    function loginSuccess() {
+        const errorMsg = document.getElementById("error-msg");
+        localStorage.setItem("storeLoggedIn", "true");
+        localStorage.setItem("selectedStore", storeName);
+        
+        errorMsg.style.color = "green";
+        errorMsg.innerText = "✅ تم التحقق.. جاري الدخول";
+        
+        setTimeout(() => {
+            window.location.href = "dashboard.html";
+        }, 500);
+    }
 </script>
 </body>
 </html>

@@ -37,7 +37,30 @@
         font-size: 14px;
         margin-bottom: 8px;
     }
+/* تحسين شكل البطاقة عند المرور بالماوس */
+.notif-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(184, 155, 74, 0.15);
+    background-color: #fffdf9;
+}
 
+/* إضافة أيقونة سهم تشير لإمكانية التوسع */
+.notif-title::after {
+    content: ' ▾';
+    font-size: 12px;
+    color: #b89b4a;
+    transition: 0.3s;
+}
+
+.notif-card.active .notif-title::after {
+    content: ' ▴';
+}
+
+/* تمييز الأخبار الهامة (اختياري) */
+.notif-card:first-child {
+    background: linear-gradient(to left, #ffffff, #fffdf0);
+    border-right-width: 8px; /* جعل أول إشعار يبرز أكثر */
+}
     .notif-title {
         font-weight: bold;
         font-size: 17px;
