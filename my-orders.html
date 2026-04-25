@@ -2,28 +2,50 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>مشترياتي | متاجر البلاد</title>
+    <title>طلباتي | متاجر البلاد</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #b89b4a; --dark: #1b1e33; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
-        .order-card { 
-            background: white; border-radius: 15px; padding: 15px; margin-bottom: 12px; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); cursor: pointer; border-right: 5px solid #ddd;
-        }
-        .status-badge { padding: 4px 10px; border-radius: 10px; font-size: 11px; font-weight: bold; float: left; }
-        .pending { background: #fff3cd; color: #856404; border-right-color: #ffeeba; }
-        .picked { background: #d1ecf1; color: #0c5460; border-right-color: #bee5eb; }
-        .delivered { background: #d4edda; color: #155724; border-right-color: #27ae60 !important; }
-        .click-hint { text-align: center; font-size: 11px; color: var(--gold); margin-top: 10px; font-weight: bold; }
+        :root { --gold: #b89b4a; --dark: #1b1e33; --light: #f7f6f2; }
+        body { margin: 0; font-family: 'Cairo', sans-serif; background: var(--light); color: var(--dark); padding-bottom: 30px; }
+        
+        .header { background: var(--dark); color: var(--gold); padding: 20px; text-align: center; font-size: 20px; font-weight: bold; border-bottom: 3px solid var(--gold); position: sticky; top: 0; z-index: 100; }
+        .back-btn { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: var(--gold); color: var(--dark); border: none; padding: 5px 12px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+        .container { padding: 15px; max-width: 600px; margin: auto; }
+
+        .order-card { background: white; border-radius: 20px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-right: 5px solid #ccc; transition: 0.3s; }
+        .order-card.waiting { border-right-color: #f1c40f; } /* انتظار */
+        .order-card.picked { border-right-color: #3498db; } /* مع المندوب */
+        .order-card.delivered { border-right-color: #27ae60; } /* تم التوصيل */
+
+        .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .order-id { font-weight: bold; font-size: 13px; color: #888; }
+        .order-status { font-size: 12px; padding: 4px 10px; border-radius: 50px; font-weight: bold; }
+
+        .status-waiting { background: #fff9e6; color: #d4a017; }
+        .status-picked { background: #eef2ff; color: #3f51b5; }
+        .status-delivered { background: #e8f5e9; color: #2e7d32; }
+
+        .product-info { display: flex; gap: 12px; align-items: center; }
+        .product-img { width: 60px; height: 60px; border-radius: 12px; object-fit: cover; background: #eee; }
+        .product-details b { display: block; font-size: 15px; margin-bottom: 4px; }
+        .product-details span { font-size: 13px; color: var(--gold); font-weight: bold; }
+
+        .driver-info { margin-top: 12px; padding-top: 10px; border-top: 1px dashed #eee; font-size: 12px; display: flex; justify-content: space-between; color: #666; }
+        
+        .track-btn { width: 100%; margin-top: 12px; padding: 10px; border: none; border-radius: 12px; background: var(--dark); color: white; font-family: 'Cairo'; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<h3 style="text-align: center; color: var(--dark);">📦 سجل طلباتي</h3>
+<div class="header">
+    <button class="back-btn" onclick="window.history.back()">⬅</button>
+    سجل طلباتي
+</div>
 
-<div id="orders-list">
-    <div style="text-align:center; padding:50px; color:#999;">جاري تحميل طلباتك...</div>
+<div class="container" id="orders-list">
+    <div style="text-align:center; padding:50px; color:#aaa;">جاري جلب طلباتك...</div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -31,48 +53,72 @@
 <script src="firebase.js"></script>
 
 <script>
-    const myName = localStorage.getItem("userName");
+    const userName = localStorage.getItem("userName");
+
+    if(!userName) {
+        window.location.href = "index.html";
+    }
 
     function loadOrders() {
-        if(!myName) { window.location.href="index.html"; return; }
-
-        database.ref("Orders").orderByChild("customer").equalTo(myName).on("value", snap => {
-            const listDiv = document.getElementById("orders-list");
-            listDiv.innerHTML = "";
-            const data = snap.val();
-
-            if(!data) {
-                listDiv.innerHTML = "<div style='text-align:center; padding:50px; color:#999;'>لا توجد طلبات سابقة 🛒</div>";
+        // البحث عن الطلبات التي تخص هذا الزبون فقط
+        database.ref("Orders").orderByChild("customer").equalTo(userName).on("value", snap => {
+            const list = document.getElementById("orders-list");
+            list.innerHTML = "";
+            
+            if(!snap.exists()) {
+                list.innerHTML = `<div style="text-align:center; padding:100px 20px; color:#aaa;">
+                    <h2 style="margin:0;">📭 لا توجد طلبات</h2>
+                    <p>ابدأ رحلة التسوق الآن واطلب أول منتج لك!</p>
+                </div>`;
                 return;
             }
 
-            Object.keys(data).reverse().forEach(id => {
-                const ord = data[id];
-                let sClass = "pending";
-                let sText = "قيد الانتظار";
+            // ترتيب الطلبات من الأحدث للأقدم
+            let ordersArray = [];
+            snap.forEach(child => {
+                ordersArray.push({ key: child.key, ...child.val() });
+            });
+            ordersArray.reverse();
 
-                if(ord.status === "picked") { sClass = "picked"; sText = "جاري التوصيل 🚚"; }
-                if(ord.status === "delivered") { sClass = "delivered"; sText = "تم التسليم ✅"; }
-
+            ordersArray.forEach(ord => {
                 const card = document.createElement("div");
-                card.className = `order-card ${sClass}`;
+                card.className = `order-card ${ord.status}`;
                 
-                // هنا التوجيه للملف الذي أرسلته أنت
-                card.onclick = () => { window.location.href = `track-order.html?orderId=${id}`; };
+                let statusLabel = "في انتظار القبول";
+                let statusClass = "status-waiting";
                 
+                if(ord.status === "picked") { statusLabel = "جاري التوصيل"; statusClass = "status-picked"; }
+                if(ord.status === "delivered") { statusLabel = "تم التوصيل بنجاح"; statusClass = "status-delivered"; }
+
                 card.innerHTML = `
-                    <span class="status-badge ${sClass}">${sText}</span>
-                    <div class="order-info">
-                        <b>${ord.pName}</b><br>
-                        <small>السعر: ${ord.price} ريال</small>
+                    <div class="order-header">
+                        <span class="order-id">#${ord.key.substring(0, 8)}</span>
+                        <span class="order-status ${statusClass}">${statusLabel}</span>
                     </div>
-                    <div class="click-hint">اضغط للتتبع والدردشة مع المندوب 💬</div>
+                    <div class="product-info">
+                        <img src="${ord.pImage || 'no-image.png'}" class="product-img">
+                        <div class="product-details">
+                            <b>${ord.pName}</b>
+                            <span>${ord.price} ر.ي</span>
+                        </div>
+                    </div>
+                    <div class="driver-info">
+                        <span>المندوب: <b>${ord.driverName || 'لم يحدد بعد'}</b></span>
+                        <span>التاريخ: ${new Date(ord.time).toLocaleDateString('ar-YE')}</span>
+                    </div>
+                    ${ord.status !== 'delivered' ? `<button class="track-btn" onclick="trackOrder('${ord.key}')">تتبع الطلب مباشرة 📍</button>` : ''}
                 `;
-                listDiv.appendChild(card);
+                list.appendChild(card);
             });
         });
     }
-    loadOrders();
+
+    function trackOrder(id) {
+        window.location.href = `track-order.html?orderId=${id}`;
+    }
+
+    window.onload = loadOrders;
 </script>
+
 </body>
 </html>
