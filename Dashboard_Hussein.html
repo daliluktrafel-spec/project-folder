@@ -247,16 +247,19 @@ function loadStats() {
     }
 
     function approveStore(key) {
-        db.ref("Pending_Stores/" + key).once("value", snap => {
-            const data = snap.val();
-            const pass = "ALB-" + Math.floor(1000 + Math.random()*9000);
-            db.ref("Active_Stores/" + data.ownerPhone).set({...data, password: pass, status: "active"})
-              .then(() => {
-                  db.ref("Pending_Stores/" + key).remove();
-                  alert("تم التفعيل! كلمة السر: " + pass);
-              });
-        });
-    }
+    db.ref("Pending_Stores/" + key).once("value", snap => {
+        const data = snap.val();
+        const pass = "ALB-" + Math.floor(1000 + Math.random()*9000);
+        // تنظيف رقم الهاتف من المسافات قبل استخدامه كـ Key
+        const cleanPhone = data.ownerPhone.replace(/\s+/g, '').trim();
+        
+        db.ref("Active_Stores/" + cleanPhone).set({...data, password: pass, status: "active"})
+          .then(() => {
+              db.ref("Pending_Stores/" + key).remove();
+              alert("تم التفعيل! كلمة السر: " + pass);
+          });
+    });
+}
 
     // 3. النقاط
     function loadPointsData() {

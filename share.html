@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>شارك واربح | متاجر البلاد</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #b89b4a; --dark: #1b1e33; --light: #f7f6f2; }
+        body { margin: 0; font-family: 'Cairo', sans-serif; background: var(--light); text-align: center; padding: 20px; }
+        
+        .gift-icon { font-size: 80px; margin: 20px 0; animation: bounce 2s infinite; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+
+        .card { background: white; border-radius: 25px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 2px solid var(--gold); }
+        h1 { color: var(--dark); font-size: 24px; margin-bottom: 10px; }
+        p { color: #666; font-size: 16px; line-height: 1.6; }
+
+        .reward-badge { background: #fff9e6; color: var(--gold); padding: 10px 20px; border-radius: 50px; font-weight: bold; display: inline-block; margin: 20px 0; border: 1px solid var(--gold); }
+
+        .btn-share { background: #25D366; color: white; border: none; padding: 15px 40px; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 20px; }
+        .btn-copy { background: var(--dark); color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; margin-top: 10px; font-family: 'Cairo'; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="gift-icon">🎁</div>
+
+<div class="card">
+    <h1>اكسب 100 نقطة مجانية!</h1>
+    <p>اجعل أصدقاءك يتسوقون بذكاء. شارك الرابط معهم، ومع كل صديق يسجل في المنصة، ستحصل أنت وهو على مكافأة فورية!</p>
+    
+    <div class="reward-badge">💰 جائزتك: 100 نقطة ذهبية</div>
+
+    <button class="btn-share" onclick="shareOnWhatsApp()">
+        <span>🟢 شارك عبر واتساب</span>
+    </button>
+   
+</div>
+
+<script>
+    const userName = localStorage.getItem("userName") || "مستخدم";
+const appLink = "https://www.beladshop.com"; // رابطك الرسمي الفخم
+
+function shareOnWhatsApp() {
+    // الرابط الآن نظيف ومباشر للدومين
+    const text = `🌟 هل سمعت عن منصة "متاجر البلاد"؟\nكل متاجر سيئون في جوالك مع عروض يومية وجوائز نقدية!\n\nسجل من خلال رابطي لتربح 50 نقطة مجانية فوراً:\n${appLink}?ref=${encodeURIComponent(userName)}`;
+    
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+}
+</script>
+
+</body>
+</html>
