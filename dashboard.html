@@ -140,37 +140,52 @@ const IK_ENDPOINT = 'https://ik.imagekit.io/beladshop';
     if (!name || !price) return alert("الاسم والسعر مطلوبان");
     
     document.getElementById("loader").style.display = "flex";
-    document.getElementById("loader").querySelector("p").innerText = "جاري تحسين ورفع المنتج... 🚀";
+    document.getElementById("loader").querySelector("p").innerText = "جاري معالجة الصورة بسرعة... ⚡";
 
     if (file) {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("fileName", Date.now() + "_" + name + ".jpg");
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = async function() {
+                // --- الخطوة السحرية: تصغير الصورة في جهاز التاجر قبل الرفع ---
+                const canvas = document.createElement("canvas");
+                const MAX_WIDTH = 600; // حجم كافي جداً للمتاجر
+                const scaleSize = MAX_WIDTH / img.width;
+                canvas.width = MAX_WIDTH;
+                canvas.height = img.height * scaleSize;
 
-        try {
-            // الرفع المباشر باستخدام الـ Private Key لتجاوز كل إعدادات الموقع
-            const response = await fetch('https://upload.imagekit.io/api/v1/files/upload', {
-                method: 'POST',
-                headers: {
-                    "Authorization": "Basic " + btoa(IK_PRIVATE_KEY + ":")
-                },
-                body: formData
-            });
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-            const result = await response.json();
+                // تحويل الصورة لـ Blob (ملف خفيف جداً) بدلاً من الصورة الضخمة
+                canvas.toBlob(async (blob) => {
+                    const formData = new FormData();
+                    formData.append("file", blob);
+                    formData.append("fileName", Date.now() + "_" + name + ".jpg");
 
-            if (result.url) {
-                // سحر سيئون: تصغير الصورة لـ 400 بكسل تلقائياً للسرعة
-                const optimizedUrl = result.url + "?tr=w-400,q-70";
-                finalSave(optimizedUrl);
-            } else {
-                throw new Error("فشل الرفع");
-            }
-        } catch (err) {
-            console.error(err);
-            document.getElementById("loader").style.display = "none";
-            alert("❌ فشل الرفع التلقائي. جرب إنترنت الجوال أو تأكد من المفاتيح.");
-        }
+                    try {
+                        const response = await fetch('https://upload.imagekit.io/api/v1/files/upload', {
+                            method: 'POST',
+                            headers: {
+                                "Authorization": "Basic " + btoa(IK_PRIVATE_KEY + ":")
+                            },
+                            body: formData
+                        });
+
+                        const result = await response.json();
+                        if (result.url) {
+                            // إضافة ?tr=w-400 لضمان السرعة عند الزبائن أيضاً
+                            finalSave(result.url + "?tr=w-400,q-70");
+                        } else { throw new Error(); }
+                    } catch (err) {
+                        document.getElementById("loader").style.display = "none";
+                        alert("❌ فشل الرفع، تأكد من جودة الإنترنت.");
+                    }
+                }, "image/jpeg", 0.7); // ضغط الجودة لـ 70%
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
     } else {
         finalSave(null); 
     }
