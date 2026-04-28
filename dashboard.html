@@ -141,38 +141,38 @@ async function processProduct() {
     if (!name || !price) return alert("الاسم والسعر مطلوبان");
     
     document.getElementById("loader").style.display = "flex";
-    document.getElementById("loader").querySelector("p").innerText = "جاري رفع المنتج... 🚀";
+    document.getElementById("loader").querySelector("p").innerText = "جاري معالجة الطلب... 🚀";
 
-    // إذا اختار التاجر صورة جديدة
     if (file) {
         const formData = new FormData();
         formData.append("image", file);
 
         try {
-            // الرفع لـ ImgBB (تأكد من استخدام مفتاح صالح)
-            const res = await fetch(`https://api.imgbb.com/1/upload?key=aeb82e4e9c181792029180c0c851a869`, {
+            // محاولة الرفع لـ ImgBB
+            const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, {
                 method: "POST",
                 body: formData
             });
             const result = await res.json();
             
             if (result.success) {
-                finalSave(result.data.url); // نرسل الرابط الناتج للحفظ في Firebase
+                finalSave(result.data.url); // نجح الرفع
             } else {
-                throw new Error("فشل الرفع");
+                throw new Error("فشل سيرفر الرفع");
             }
         } catch (err) {
+            console.log("خطأ في الشبكة/الحجب:", err);
             document.getElementById("loader").style.display = "none";
-            alert("❌ فشل رفع الصورة. حاول مرة أخرى أو تأكد من الإنترنت.");
+            
+            // الخطة البديلة: سؤال المستخدم عند فشل الاتصال
+            if (confirm("⚠️ فشل الاتصال بسيرفر الصور (قد يكون محجوباً). هل تريد نشر المنتج بدون صورة حالياً؟")) {
+                document.getElementById("loader").style.display = "flex";
+                finalSave("https://via.placeholder.com/300?text=No+Image"); 
+            }
         }
     } else {
-        // إذا لم يختر صورة (حالة التعديل بدون تغيير الصورة)
-        if(editKey) {
-            finalSave(null); 
-        } else {
-            document.getElementById("loader").style.display = "none";
-            alert("يرجى اختيار صورة للمنتج");
-        }
+        // إذا لم يتم اختيار ملف من الأصل، يتم الحفظ مباشرة
+        finalSave(null); 
     }
 }
     async function checkImageSafety(blob) {
@@ -259,4 +259,4 @@ async function processProduct() {
     function logout() { localStorage.clear(); window.location.href = "stores.html"; }
 </script>
 </body>
-</html>
+</html
