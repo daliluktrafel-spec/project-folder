@@ -117,115 +117,76 @@
 <script src="firebase.js"></script>
 
 <script>
-  const store = localStorage.getItem("selectedStore");
+    // --- إعدادات القائد حسين للرفع الذكي ---
+    const IMGBB_KEY = 'aeb82e4e9c181792029180c0c851a869'; // مفتاح ImgBB المعتمد
+    const SIGHTENGINE_USER = '1038750179';
+    const SIGHTENGINE_SECRET = 'bYq2ManntpCX4uJ6f5x8nHcbYvz2dRYo';
+
+    const store = localStorage.getItem("selectedStore");
     document.getElementById("title").innerText = "متجر: " + store;
 
-    // --- إعدادات الرفع الجديدة ---
-    const FREEIMAGE_KEY = '6d207e02198a847aa98d0a2a901485a5';
     function showSection(type) {
         document.getElementById("add-box").style.display = (type === 'add' ? 'block' : 'none');
         document.getElementById("edit-box").style.display = (type === 'edit' ? 'block' : 'none');
         if(type === 'edit') loadMyProducts();
     }
 
-    function checkTextSafety(text) {
-        const forbiddenWords = ["كلمة1", "كلمة2", "سب", "شتيمة"]; 
-        const normalizedText = text.toLowerCase();
-        for (let word of forbiddenWords) {
-            if (normalizedText.includes(word)) {
-                return { safe: false, reason: "الاسم يحتوي على كلمات غير لائقة ❌" };
-            }
-        }
-        return { safe: true };
-    }
-
-  async function processProduct() {
+    // استبدل دالة processProduct بهذه الدالة المختصرة والقوية
+async function processProduct() {
     const name = document.getElementById("name").value.trim();
     const price = document.getElementById("price").value.trim();
     const file = document.getElementById("imageFile").files[0];
+    const editKey = document.getElementById("edit-key").value;
 
-    // 1. التحقق من المدخلات
-    if (!checkTextSafety(name).safe) return alert(checkTextSafety(name).reason);
     if (!name || !price) return alert("الاسم والسعر مطلوبان");
     
     document.getElementById("loader").style.display = "flex";
-    document.getElementById("loader").querySelector("p").innerText = "جاري معالجة الصورة... 🛠️";
+    document.getElementById("loader").querySelector("p").innerText = "جاري رفع المنتج... 🚀";
 
+    // إذا اختار التاجر صورة جديدة
     if (file) {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            const img = new Image();
-            img.onload = async () => {
-                // 2. ضغط الصورة
-                const canvas = document.createElement("canvas");
-                const MAX_WIDTH = 800;
-                const scaleSize = MAX_WIDTH / img.width;
-                canvas.width = MAX_WIDTH;
-                canvas.height = img.height * scaleSize;
-                const ctx = canvas.getContext("2d");
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                
-                canvas.toBlob(async (blob) => {
-                    // 3. فحص الأمان
-                    const isSafe = await checkImageSafety(blob);
-                    if (!isSafe) {
-                        document.getElementById("loader").style.display = "none";
-                        return alert("⚠️ الصورة مرفوضة: محتوى غير لائق.");
-                    }
+        const formData = new FormData();
+        formData.append("image", file);
 
-                    // 4. الرفع باستخدام البروكسي لتجاوز CORS
-                    document.getElementById("loader").querySelector("p").innerText = "جاري الرفع عبر البروكسي... 🚀";
-                    const base64Image = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
-
-                    const formData = new FormData();
-                    formData.append("source", base64Image);
-                    formData.append("action", "upload");
-
-                    // إعداد رابط البروكسي لضمان القبول على Vercel
-                    const proxyUrl = "https://corsproxy.io/?";
-                    const apiUrl = `https://freeimage.host/api/1/upload?key=${FREEIMAGE_KEY}&format=json`;
-
-                    try {
-                        const res = await fetch(proxyUrl + encodeURIComponent(apiUrl), {
-                            method: "POST",
-                            body: formData
-                        });
-                        
-                        const result = await res.json();
-                        
-                        if (result.status_code === 200) {
-                            finalSave(result.image.url);
-                        } else {
-                            throw new Error("فشل في استجابة السيرفر");
-                        }
-                    } catch (err) {
-                        document.getElementById("loader").style.display = "none";
-                        console.error("Upload Error:", err);
-                        alert("❌ فشل الرفع عبر البروكسي. جرب الرفع مرة أخرى أو تأكد من جودة الإنترنت.");
-                    }
-                }, "image/jpeg", 0.7);
-            };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
+        try {
+            // الرفع لـ ImgBB (تأكد من استخدام مفتاح صالح)
+            const res = await fetch(`https://api.imgbb.com/1/upload?key=aeb82e4e9c181792029180c0c851a869`, {
+                method: "POST",
+                body: formData
+            });
+            const result = await res.json();
+            
+            if (result.success) {
+                finalSave(result.data.url); // نرسل الرابط الناتج للحفظ في Firebase
+            } else {
+                throw new Error("فشل الرفع");
+            }
+        } catch (err) {
+            document.getElementById("loader").style.display = "none";
+            alert("❌ فشل رفع الصورة. حاول مرة أخرى أو تأكد من الإنترنت.");
+        }
     } else {
-        finalSave(null);
+        // إذا لم يختر صورة (حالة التعديل بدون تغيير الصورة)
+        if(editKey) {
+            finalSave(null); 
+        } else {
+            document.getElementById("loader").style.display = "none";
+            alert("يرجى اختيار صورة للمنتج");
+        }
     }
 }
-   async function checkImageSafety(blob) {
-    const safetyData = new FormData();
-    safetyData.append('media', blob);
-    safetyData.append('models', 'nudity-2.0');
-    safetyData.append('api_user', '1038750179');
-    safetyData.append('api_secret', 'bYq2ManntpCX4uJ6f5x8nHcbYvz2dRYo');
-    try {
-        const res = await fetch('https://api.sightengine.com/1.0/check.json', { method: 'POST', body: safetyData });
-        const data = await res.json();
-        return !(data.status === 'success' && data.nudity.sexual_activity > 0.5);
-    } catch (err) { 
-        return true; // في حال تعطل الفحص نسمح بالمرور لضمان استمرار العمل
+    async function checkImageSafety(blob) {
+        const safetyData = new FormData();
+        safetyData.append('media', blob);
+        safetyData.append('models', 'nudity-2.0');
+        safetyData.append('api_user', SIGHTENGINE_USER);
+        safetyData.append('api_secret', SIGHTENGINE_SECRET);
+        try {
+            const res = await fetch('https://api.sightengine.com/1.0/check.json', { method: 'POST', body: safetyData });
+            const data = await res.json();
+            return !(data.status === 'success' && data.nudity.sexual_activity > 0.5);
+        } catch (err) { return true; }
     }
-}
 
     function finalSave(newImageUrl) {
         const editKey = document.getElementById("edit-key").value;
@@ -250,14 +211,13 @@
 
         ref.update(data).then(() => {
             document.getElementById("loader").style.display = "none";
-            alert("تم الحفظ بنجاح في متاجر البلاد ✅");
+            alert("تم النشر بنجاح في متاجر البلاد ✅");
             location.reload();
         }).catch(() => {
             document.getElementById("loader").style.display = "none";
-            alert("فشل في قاعدة البيانات");
+            alert("خطأ في قاعدة البيانات");
         });
     }
-
     function loadMyProducts() {
         const list = document.getElementById("edit-list");
         database.ref("products").orderByChild("store").equalTo(store).once("value", snap => {
