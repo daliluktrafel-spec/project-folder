@@ -314,7 +314,7 @@ function showSection(id, el){
 
 function localSmartSearch() {
     const input = document.getElementById("searchInput").value.trim();
-    if (!input) { loadProducts(); return; }
+    if (!input) { loadSmartProducts(); return; }
     const resultIds = aiSafeSearch(products, input);
     const resultsSet = new Set(resultIds.map(String));
     renderProducts("all", p => resultsSet.has(String(p.id)));
