@@ -51,10 +51,9 @@
     const rawIdentifier = localStorage.getItem("storeID");
     const storeType = localStorage.getItem("storeType"); // 'new' or 'old'
     
-    // تنظيف المعرف (رقم الهاتف أو الاسم)
-    const identifier = rawIdentifier ? rawIdentifier.replace(/\s+/g, '').trim() : null;
+    // تنظيف المعرف من أي مسافات أو رموز غير مرئية
+    const identifier = rawIdentifier ? rawIdentifier.replace(/[\s\u2066\u2067\u2068\u2069]/g, '').trim() : null;
 
-    // إذا لم يتم اختيار متجر، العودة لصفحة المتاجر
     if (!storeName || !identifier) {
         window.location.href = "stores.html";
     }
@@ -70,52 +69,55 @@
             return;
         }
 
-        errorMsg.innerText = "⏳ جاري التحقق...";
-
-        // --- المنطق الذكي بناءً على نوع المتجر المخزن ---
+        errorMsg.innerText = "⏳ جاري التحقق من الهوية...";
 
         if (storeType === "new") {
-            // فحص في النظام الجديد باستخدام الرقم (Active_Stores)
-            database.ref(`Active_Stores/${identifier}`).once("value").then(snap => {
+            // جلب كل المتاجر والبحث بداخلها يدوياً لتجنب مشاكل المسافات في قاعدة البيانات
+            database.ref(`Active_Stores`).once("value").then(snap => {
+                let foundStore = null;
                 if(snap.exists()){
-                    const storeData = snap.val();
-                    if(String(inputPass) === String(storeData.password).trim()) {
-                        loginSuccess();
+                    snap.forEach(child => {
+                        // تنظيف المفتاح الحالي في القاعدة من المسافات للمقارنة
+                        let cleanKey = child.key.replace(/[\s\u2066\u2067\u2068\u2069]/g, '').trim();
+                        if(cleanKey === identifier) {
+                            foundStore = child.val();
+                        }
+                    });
+
+                    if(foundStore) {
+                        if(String(inputPass) === String(foundStore.password).trim()) {
+                            loginSuccess();
+                        } else {
+                            errorMsg.innerText = "❌ كلمة السر خاطئة!";
+                        }
                     } else {
-                        errorMsg.innerText = "❌ كلمة السر خاطئة للنظام الجديد";
+                        errorMsg.innerText = "❌ لم يتم العثور على بيانات المتجر";
                     }
-                } else {
-                    errorMsg.innerText = "❌ لم نجد بيانات لهذا الرقم في النظام الجديد";
                 }
             });
         } 
         else {
-            // فحص في النظام القديم باستخدام الاسم (storePasswords)
+            // النظام القديم (storePasswords)
             database.ref(`storePasswords/${storeName}`).once("value").then(oldSnap => {
                 if(oldSnap.exists()){
                     if(String(inputPass) === String(oldSnap.val()).trim()) {
                         loginSuccess();
                     } else {
-                        errorMsg.innerText = "❌ كلمة السر خاطئة للنظام القديم";
+                        errorMsg.innerText = "❌ كلمة السر خاطئة!";
                     }
                 } else {
-                    errorMsg.innerText = "❌ لم نجد كلمة سر لهذا المتجر في النظام القديم";
+                    errorMsg.innerText = "❌ المتجر غير مسجل في النظام القديم";
                 }
             });
         }
     };
 
     function loginSuccess() {
-        const errorMsg = document.getElementById("error-msg");
         localStorage.setItem("storeLoggedIn", "true");
         localStorage.setItem("selectedStore", storeName);
-        
-        errorMsg.style.color = "green";
-        errorMsg.innerText = "✅ تم التحقق.. جاري الدخول";
-        
-        setTimeout(() => {
-            window.location.href = "dashboard.html";
-        }, 500);
+        document.getElementById("error-msg").style.color = "green";
+        document.getElementById("error-msg").innerText = "✅ تم التحقق.. جاري الدخول";
+        setTimeout(() => { window.location.href = "dashboard.html"; }, 500);
     }
 </script>
 </body>
