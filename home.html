@@ -154,56 +154,72 @@ window.onclick = function(event) {
         }
     }
 }
+// --- الدالة الجديدة لجلب كل المنتجات بدون استثناء ---
 async function loadSmartProducts() {
-    const userInterests = JSON.parse(localStorage.getItem("userInterests") || "{}");
-    
-    // 1. تحديد أكثر قسم يهمه المستخدم
-    let favoriteCategory = Object.keys(userInterests).reduce((a, b) => userInterests[a] > userInterests[b] ? a : b, null);
-
-    let finalProducts = [];
-
-    // 2. طلب المنتجات المفضلة (أول 8 منتجات من قسمه المفضل)
-    let favQuery = database.ref("products").orderByChild("category");
-    if(favoriteCategory) {
-        favQuery = favQuery.equalTo(favoriteCategory).limitToLast(8);
-    } else {
-        favQuery = favQuery.limitToLast(8);
-    }
-
-    // 3. طلب أحدث المنتجات (آخر 15 منتجاً من كل الأقسام)
-    const latestQuery = database.ref("products").orderByChild("id").limitToLast(15);
+    // إظهار رسالة تحميل بسيطة (اختياري)
+    console.log("جاري جلب كافة المنتجات...");
 
     try {
-        const [favSnap, latestSnap] = await Promise.all([favQuery.once("value"), latestQuery.once("value")]);
-
-        const favData = Object.values(favSnap.val() || {});
-        const latestData = Object.values(latestSnap.val() || {});
-
-        // 4. دمج البيانات وحذف التكرار باستخدام Map لضمان الـ ID الفريد
-        let combined = [...favData, ...latestData];
-        let uniqueMap = new Map();
-        combined.forEach(p => uniqueMap.set(p.id, p));
+        // جلب مرجع المنتجات بالكامل بدون Limit
+        const productsRef = database.ref("products");
         
-        finalProducts = Array.from(uniqueMap.values()).reverse(); // الأحدث فوق
+        productsRef.on("value", (snapshot) => {
+            const data = snapshot.val() || {};
+            
+            // تحويل البيانات من Object إلى Array
+            let allProducts = Object.keys(data).map(key => {
+                return {
+                    firebaseKey: key, // مفتاح الفايربيس الأصلي
+                    ...data[key]
+                };
+            });
 
-        // 5. التحديث والعرض
-        products = finalProducts;
-        renderCategories();
-        renderProducts("all");
-        
+            // ترتيب المنتجات: الأحدث (الذي أضيف أخيراً) يظهر أولاً
+            // نعتمد على id (Date.now) أو updatedAt
+            allProducts.sort((a, b) => (b.updatedAt || b.id) - (a.updatedAt || a.id));
+
+            // تخزينها في المصفوفة العالمية لكي يعمل البحث والتصنيفات عليها
+            products = allProducts;
+
+            // تحديث الواجهة
+            renderCategories(); // لتحديث قائمة الأقسام بناءً على كل المنتجات الموجودة
+            renderProducts("all"); // عرض كل المنتجات في قسم "الكل"
+            
+            console.log(`تم تحميل ${products.length} منتج بنجاح.`);
+        });
     } catch (error) {
-        console.error("خطأ في جلب البيانات الذكية:", error);
-        // في حال الخطأ، نعود للجلب العادي لكي لا تتعطل المنصة
-        loadProductsLegacy(); 
+        console.error("خطأ في جلب البيانات:", error);
+        alert("عذراً، حدث خطأ أثناء تحميل المنتجات.");
     }
 }
 
-function loadProductsLegacy() {
-    database.ref("products").limitToLast(20).once("value", snap => {
-        const data = snap.val() || {};
-        products = Object.values(data).reverse();
-        renderCategories();
+// دالة التصنيفات المحسنة (لتشمل كل الأقسام الموجودة في المنتجات المجلوبة)
+function renderCategories() {
+    const categoriesDiv = document.getElementById("categories");
+    categoriesDiv.innerHTML = "";
+    
+    // زر "الكل"
+    const allBtn = document.createElement("div");
+    allBtn.className = "category-btn";
+    allBtn.innerText = "🏠 الكل";
+    allBtn.onclick = () => {
+        showSection('all');
         renderProducts("all");
+    };
+    categoriesDiv.appendChild(allBtn);
+
+    // استخراج كافة الأقسام الفريدة من مصفوفة المنتجات الكاملة
+    const uniqueCategories = [...new Set(products.map(p => p.category).filter(Boolean))];
+    
+    uniqueCategories.forEach(cat => {
+        const btn = document.createElement("div");
+        btn.className = "category-btn";
+        btn.innerText = cat;
+        btn.onclick = () => {
+            showSection('all');
+            renderProducts("all", p => p.category === cat);
+        };
+        categoriesDiv.appendChild(btn);
     });
 }
 
