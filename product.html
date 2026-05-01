@@ -64,7 +64,7 @@
 
     <div class="btn-group" id="main-btn-group">
         <button class="btn-main btn-wa" id="order-wa">🟢 طلب مباشر عبر واتساب</button>
-        <button class="btn-main btn-delivery" id="order-delivery-btn" onclick="sendOrderToDriver()">🛵 طلب عبر مندوب مقابل + 1000</button>
+        <button class="btn-main btn-delivery" id="order-delivery-btn" onclick="sendOrderWithGPS ()">🛵 طلب عبر مندوب مقابل + 1000</button>
         <button class="btn-main btn-back" onclick="window.history.back()">رجوع للخلف</button>
     </div>
 
@@ -179,6 +179,50 @@ document.getElementById("order-wa").onclick = () => {
     const msg = `حياكم الله، أريد شراء: ${currentProduct.name}\nالسعر: ${currentProduct.price}\nالمنطقة: ${userRegion}`;
     window.open(`https://wa.me/967774257557?text=${encodeURIComponent(msg)}`, '_blank');
 };
+
+// دالة لجلب موقع الزبون قبل إرسال الطلب
+function sendOrderWithGPS() {
+    const options = {
+        enableHighAccuracy: true, // تفعيل الدقة الخرافية (إجبار الـ GPS)
+        timeout: 10000,           // الانتظار لمدة 10 ثوانٍ كحد أقصى
+        maximumAge: 0             // عدم استخدام موقع قديم مخزن في الذاكرة
+    };
+
+    if (navigator.geolocation) {
+        alert("يرجى الموافقة على تحديد الموقع بدقة لضمان وصول المندوب لباب بيتك 📍");
+        
+        navigator.geolocation.getCurrentPosition((position) => {
+            const gpsLocation = position.coords.latitude + "," + position.coords.longitude;
+            console.log("تم تحديد الموقع بدقة: ", gpsLocation);
+            executeOrder(gpsLocation); // إرسال الطلب مع الموقع الدقيق
+        }, (error) => {
+            alert("لم نتمكن من جلب الموقع بدقة، سيتم الاعتماد على اسم المنطقة");
+            executeOrder(""); 
+        }, options); // إرسال الإعدادات المطور هنا
+    } else {
+        executeOrder("");
+    }
+}
+
+// تعديل الدالة الأصلية لتقبل الموقع
+function executeOrder(gpsData) {
+    const orderID = "ORD-" + Date.now();
+    const orderData = {
+        id: orderID,
+        customer: userName,
+        pName: currentProduct.name,
+        price: parseInt(currentProduct.price.replace(/\D/g,'')) - discountValue,
+        gps: gpsData, // هنا الإحداثيات (خط الطول والعرض)
+        region: userRegion,
+        store: currentProduct.store,
+        status: "waiting",
+        timestamp: Date.now()
+    };
+    
+    database.ref("Orders/" + orderID).set(orderData).then(() => {
+        location.href = `track-order.html?orderId=${orderID}`;
+    });
+}
 
 // 6. المفضلة
 function initFavorite() {
