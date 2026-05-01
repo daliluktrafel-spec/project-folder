@@ -131,37 +131,40 @@
             }
         });
     }
+window.onload = function() {
+        checkNewNews();
 
-    // 4. التشغيل عند فتح الصفحة (دمج كل الوظائف)
-    window.onload = function() {
-    checkNewNews();
-
-    // فحص إذا فاز بـ 500 ريال مؤخراً
-    if (localStorage.getItem("won500") === "true") {
-        const msg = document.createElement("div");
-        msg.style = "position:fixed; top:80px; left:5%; width:90%; background:#d45d5d; color:white; padding:15px; border-radius:15px; z-index:10000; text-align:center; font-weight:bold; box-shadow:0 5px 15px rgba(0,0,0,0.3);";
-        msg.innerHTML = "🎁 مبروك! لديك مكافأة 500 ر.ي بانتظار موافقة الإشراف لاستخدامها في مشترياتك";
-        document.body.appendChild(msg);
-        
-        setTimeout(() => { 
-            msg.style.display = "none"; 
-            localStorage.removeItem("won500"); // حذفها لكي لا تظهر دائماً
-        }, 5000);
-    }
-
-    // منطق العجلة كل 24 ساعة
-    const lastSpin = localStorage.getItem("lastSpinTime");
-    const now = Date.now();
-    if (localStorage.getItem("introShown") === "true") {
-        if (!lastSpin || (now - lastSpin >= 86400000)) {
-            setTimeout(() => { window.location.href = "lucky-wheel.html"; }, 5000);
+        // فحص إذا فاز بـ 500 ريال
+        if (localStorage.getItem("won500") === "true") {
+            const msg = document.createElement("div");
+            msg.style = "position:fixed; top:80px; left:5%; width:90%; background:#d45d5d; color:white; padding:15px; border-radius:15px; z-index:10000; text-align:center; font-weight:bold; box-shadow:0 5px 15px rgba(0,0,0,0.3);";
+            msg.innerHTML = "🎁 مبروك! لديك مكافأة 500 ر.ي بانتظار موافقة الإشراف لاستخدامها في مشترياتك";
+            document.body.appendChild(msg);
+            
+            setTimeout(() => { 
+                msg.style.display = "none"; 
+                localStorage.removeItem("won500");
+            }, 5000);
         }
-    }
-};
-    // حل مشكلة الارتفاع
-    window.addEventListener('reize', function() {
-        document.getElementById('main-frame').style.height = (window.innerHeight - 70) + "px";
-    });
+
+        // منطق العجلة 48 ساعة
+        const lastSpin = localStorage.getItem("lastSpinTime");
+        const now = Date.now();
+        const fortyEightHours = 172800000;
+
+        if (localStorage.getItem("introShown") === "true") {
+            if (!lastSpin || (now - lastSpin >= fortyEightHours)) {
+                setTimeout(() => { 
+                    window.location.href = "lucky-wheel.html"; 
+                }, 5000);
+            }
+        }
+    }; // تأكد من وجود هذه الفاصلة المنقوطة والقوس
+    // 4. التشغيل عند فتح الصفحة (دمج كل الوظائف)
+        // حل مشكلة الارتفاع
+   window.addEventListener('resize', function() { // تم تصحيح reize إلى resize
+    document.getElementById('main-frame').style.height = (window.innerHeight - 70) + "px";
+});
 </script>
 </body>
 </html>

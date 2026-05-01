@@ -48,17 +48,19 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="firebase.js"></script>
-
-    <script>
-        const canvas = document.getElementById('wheel');
+<script>
+  const canvas = document.getElementById('wheel');
         const ctx = canvas.getContext('2d');
+
+        // مصفوفة الجوائز مع إضافة خاصية weight (الوزن)
+        // الأوزان الكبيرة = فرصة ظهور عالية | الأوزان الصغيرة = فرصة ظهور نادرة
         const prizes = [
-            { text: "10 نقاط", color: "#1b1e33", type: "points", val: 10 },
-            { text: "حظ أوفر", color: "#b89b4a", type: "fail", val: 0 },
-            { text: "20 نقطة", color: "#1b1e33", type: "points", val: 20 },
-            { text: "500 ريال", color: "#dec470", type: "cash", val: 500 },
-            { text: "5 نقاط", color: "#1b1e33", type: "points", val: 5 },
-            { text: "توصيل مجاني", color: "#b89b4a", type: "extra", val: 0 }
+            { text: "10 نقاط", color: "#1b1e33", type: "points", val: 10, weight: 40 },
+            { text: "حظ أوفر", color: "#b89b4a", type: "fail", val: 0, weight: 30 },
+            { text: "20 نقطة", color: "#1b1e33", type: "points", val: 20, weight: 20 },
+            { text: "500 ريال", color: "#dec470", type: "cash", val: 500, weight: 2 }, // نادرة جداً
+            { text: "5 نقاط", color: "#1b1e33", type: "points", val: 5, weight: 7 },
+            { text: "توصيل مجاني", color: "#b89b4a", type: "extra", val: 0, weight: 1 } // أندر جائزة
         ];
 
         const numPrizes = prizes.length;
@@ -87,25 +89,39 @@
         }
         draw();
 
+        // دالة اختيار الجائزة بناءً على الاحتمالات
+        function getWeightedPrizeIndex() {
+            const totalWeight = prizes.reduce((sum, p) => sum + p.weight, 0);
+            let random = Math.random() * totalWeight;
+            
+            for (let i = 0; i < prizes.length; i++) {
+                if (random < prizes[i].weight) return i;
+                random -= prizes[i].weight;
+            }
+            return 0;
+        }
+
         function startSpin() {
-            // التحقق من الوقت (كل 24 ساعة)
+            // التحقق من الوقت (كل 48 ساعة)
             const last = localStorage.getItem("lastSpinTime");
-            if(last && (Date.now() - last < 86400000)) {
-                alert("لقد جربت حظك اليوم، عد إلينا غداً يا بطل! ✨");
+            const fortyEightHours = 172800000; // 48 * 60 * 60 * 1000
+
+            if(last && (Date.now() - last < fortyEightHours)) {
+                const timeLeft = Math.ceil((fortyEightHours - (Date.now() - last)) / 3600000);
+                alert(`لقد جربت حظك فعلاً! عد إلينا بعد ${timeLeft} ساعة يا بطل! ✨`);
                 return;
             }
 
             const btn = document.getElementById('spin-btn');
             btn.disabled = true;
 
-            // اختيار عشوائي حقيقي
-            const selectedIndex = Math.floor(Math.random() * numPrizes);
+            // اختيار الفائز بناءً على الوزن (الاحتمال)
+            const selectedIndex = getWeightedPrizeIndex();
             
-            // حساب الزاوية بدقة (لكي يتوقف السهم بمنتصف الجائزة)
             const degreesPerPrize = 360 / numPrizes;
-            // 270 هي تعديل مكان البداية ليتوافق مع السهم العلوي
+            // حساب زاوية الوقوف ليكون السهم في منتصف القسم المختار
             const stopAngle = (360 - (selectedIndex * degreesPerPrize)) - (degreesPerPrize / 2);
-            const totalRotation = (360 * 10) + stopAngle; // 10 دورات كاملة ثم الوقوف
+            const totalRotation = (360 * 10) + stopAngle;
 
             canvas.style.transform = `rotate(${totalRotation}deg)`;
 
@@ -113,35 +129,32 @@
         }
 
         function finalize(prize) {
-            const user = localStorage.getItem("userName");
+            const user = localStorage.getItem("userName") || "متسوق";
             localStorage.setItem("lastSpinTime", Date.now());
 
             let desc = "حظاً أوفر في المرة القادمة!";
 
-            // المنطق البرمجي للجوائز
             if (prize.type === "points") {
                 database.ref("Users/" + user + "/points").transaction(p => (p || 0) + prize.val);
                 desc = `تمت إضافة ${prize.val} نقطة لرصيدك بنجاح! ✅`;
             } 
             else if (prize.type === "cash") {
-                // ✅ إضافة 500 ريال للمحفظة فوراً
                 database.ref("Users/" + user + "/wallet").transaction(w => (w || 0) + prize.val);
-                desc = "مبروووك! تمت إضافة 500 ريال لمحفظتك الآن! 💰";
+                desc = "مبروووك! أنت محظوظ جداً! تمت إضافة 500 ريال لمحفظتك الآن! 💰";
             }
             else if (prize.type === "extra") {
-                desc = "تواصل مع الإدارة للحصول على قسيمة التوصيل! 🛵";
+                desc = "يا لك من محظوظ! تواصل مع الإدارة الآن للحصول على قسيمة التوصيل المجاني! 🛵";
             }
 
-            // إرسال سجل للإدارة
+            // إرسال إشعار للإدارة لمتابعة الجوائز النادرة
             database.ref("Admin_Notifications/LuckyWheel").push({
-                user: user, prize: prize.text, time: Date.now()
+                user: user, prize: prize.text, time: Date.now(), urgent: (prize.type === "cash" || prize.type === "extra")
             });
 
             document.getElementById('prize-name').innerText = "ربحت: " + prize.text;
             document.getElementById('prize-desc').innerText = desc;
             document.getElementById('win-msg').style.display = "flex";
         }
-
         function exit() { window.location.replace("fields.html"); }
     </script>
 </body>
