@@ -1,96 +1,92 @@
 /* =====================================================
-    🔥 AI SMART ARABIC SEARCH ENGINE (PRO VERSION)
+    🔥 AI SMART ARABIC SEARCH ENGINE (ULTRA STRICT)
+    تطوير القائد حسين - نسخة الدقة المطلقة
    ===================================================== */
 
-// 1) تنظيف النص العربي
+// 1) قائمة الكلمات التسويقية (تمت إضافة "خراف" و "خرافيه" لضمان الحماية)
+const stopWords = ["خرافي", "خرافيه", "خراف", "روعه", "عرض", "جديد", "مميز", "اصلي", "ماركه", "طقم", "جدا"];
+
 function normalizeArabic(text) {
     if (!text) return "";
     return text.toLowerCase()
-        .replace(/[إأآ]/g, "ا").replace(/ى/g, "ي").replace(/ؤ/g, "و")
-        .replace(/ئ/g, "ي").replace(/ة/g, "ه").replace(/ـ/g, "")
-        .replace(/[^\u0621-\u064A0-9 ]/g, "").replace(/\s+/g, " ").trim();
+        .replace(/[إأآ]/g, "ا")
+        .replace(/ى/g, "ي")
+        .replace(/ؤ/g, "و")
+        .replace(/ئ/g, "ي")
+        .replace(/ة/g, "ه")
+        .replace(/ـ/g, "")
+        .replace(/\bال/g, "") 
+        .replace(/[^\u0621-\u064A0-9 ]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
 }
 
-// 2) توليد اشتقاقات الكلمة (ال، ات، هـ)
-function expandWord(word) {
+// دالة جديدة لفحص الكلمات المستبعدة بشكل أدق
+function isStopWord(word) {
+    const normalized = normalizeArabic(word);
+    // الفحص هنا يشمل الكلمة الأصلية وأي اشتقاق تسويقي لها
+    return stopWords.some(sw => normalized === sw || normalized.startsWith(sw));
+}
+
+function getSynonyms(word) {
     const w = normalizeArabic(word);
-    const forms = new Set();
-    if (!w) return [];
-    forms.add(w);
-    if (w.startsWith("ال")) forms.add(w.slice(2));
-    if (w.endsWith("ات")) forms.add(w.slice(0, -2));
-    if (w.endsWith("ه")) forms.add(w.slice(0, -1));
-    forms.add("ال" + w); forms.add(w + "ه"); forms.add(w + "ات");
-    return Array.from(forms);
-}
-
-// 3) الربط مع الفهرس الخارجي (dictionary)
-function getSmartKeywords(word) {
-    let variants = new Set(expandWord(word));
-    
-    // البحث في القاموس المعرف في ملف dictionary.js
-    if (typeof dictionary !== 'undefined') {
-        // فحص الكلمة الأصلية وفحص اشتقاقاتها داخل القاموس
-        const checkWords = Array.from(variants);
-        checkWords.forEach(cw => {
-            if (dictionary[cw]) {
-                dictionary[cw].forEach(synonym => {
-                    expandWord(synonym).forEach(e => variants.add(e));
-                });
-            }
-        });
+    const variants = new Set();
+    variants.add(w);
+    if (typeof dictionary !== 'undefined' && dictionary[w]) {
+        dictionary[w].forEach(syn => variants.add(normalizeArabic(syn)));
     }
     return Array.from(variants);
 }
 
-// 4) محرك تقييم المنتجات (ترتيب النتائج)
-function scoreProduct(product, searchWords) {
-    let score = 0;
-    const name = normalizeArabic(product.name || "");
-    const cat = normalizeArabic(product.category || "");
-    const store = normalizeArabic(product.store || "");
+function productContainsWord(product, word) {
+    const pName = normalizeArabic(product.name);
+    const pCat = normalizeArabic(product.category);
+    const pStore = normalizeArabic(product.store);
+    const synonyms = getSynonyms(word);
 
-    searchWords.forEach(word => {
-        const variants = getSmartKeywords(word);
-        variants.forEach(v => {
-            if (name.includes(v)) score += 10;     // الاسم له أعلى أولوية
-            if (cat.includes(v)) score += 5;      // التصنيف ثانياً
-            if (store.includes(v)) score += 3;    // المتجر ثالثاً
-        });
-    });
-    return score;
+    return synonyms.some(syn => 
+        pName.includes(syn) || 
+        pCat.includes(syn) || 
+        pStore.includes(syn)
+    );
 }
 
-// 5) الدالة الرئيسية للبحث (التي يتم مناداتها في الهوم)
 function aiSafeSearch(allProducts, input) {
     if (!input || input.trim() === "") return allProducts.map(p => p.id);
+
+    // تقسيم جملة البحث
+    const allSearchWords = input.split(/\s+/).filter(w => w.length > 1);
     
-    const searchWords = normalizeArabic(input).split(" ");
+    // فلترة صارمة: استبعاد أي كلمة تسويقية أو مشتقاتها
+    const searchWords = allSearchWords.filter(word => !isStopWord(word));
     
-    const scoredResults = allProducts.map(p => ({
-        id: p.id,
-        score: scoreProduct(p, searchWords)
-    }));
+    // إذا كان البحث كله كلمات تسويقية (مثل "عرض جديد خراف")، سنضطر لاستخدامها 
+    const finalWordsToUse = searchWords.length > 0 ? searchWords : allSearchWords;
+    const totalWords = finalWordsToUse.length;
 
-    // فلترة المنتجات التي حصلت على نقاط (أي وجدنا فيها الكلمة أو مرادفها)
-    // ثم ترتيبها من الأعلى نقاطاً إلى الأقل
-    return scoredResults
-        .filter(r => r.score > 0)
-        .sort((a, b) => b.score - a.score)
-        .map(r => r.id);
-}
+    let finalResults = [];
 
-// 6) نظام الاقتراحات التلقائية أثناء الكتابة
-function getSuggestions(input, allProducts) {
-    if (!input || input.length < 2) return [];
-    const word = normalizeArabic(input).split(" ").pop();
-    const suggestions = new Set();
+    // البحث الصارم: matchCount يجب أن يكون مساوياً لعدد الكلمات الأساسية
+    // حذفنا تماماً مستويات البحث الضعيفة (المستوى 3 وما دونه)
+    let minMatch = totalWords; 
 
-    allProducts.forEach(p => {
-        const text = normalizeArabic((p.name || "") + " " + (p.category || ""));
-        text.split(" ").forEach(w => {
-            if (w.startsWith(word) && w.length > 2) suggestions.add(w);
+    for (let matchCount = totalWords; matchCount >= minMatch; matchCount--) {
+        let currentMatches = allProducts.filter(product => {
+            let foundCount = 0;
+            finalWordsToUse.forEach(word => {
+                if (productContainsWord(product, word)) {
+                    foundCount++;
+                }
+            });
+            return foundCount === matchCount;
         });
-    });
-    return Array.from(suggestions).slice(0, 5);
+
+        if (currentMatches.length > 0) {
+            currentMatches.sort((a, b) => (b.updatedAt || b.id) - (a.updatedAt || a.id));
+            finalResults = finalResults.concat(currentMatches.map(p => p.id));
+            break; 
+        }
+    }
+
+    return finalResults;
 }
