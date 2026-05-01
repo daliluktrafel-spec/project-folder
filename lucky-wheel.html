@@ -128,25 +128,28 @@
             setTimeout(() => finalize(prizes[selectedIndex]), 6500);
         }
 
-        function finalize(prize) {
+function finalize(prize) {
             const user = localStorage.getItem("userName") || "متسوق";
             localStorage.setItem("lastSpinTime", Date.now());
 
             let desc = "حظاً أوفر في المرة القادمة!";
+            const userRef = database.ref("Users/" + user);
 
             if (prize.type === "points") {
-                database.ref("Users/" + user + "/points").transaction(p => (p || 0) + prize.val);
+                // تحديث النقاط مع ضمان عدم الضياع
+                userRef.child("points").transaction(p => (p || 0) + prize.val);
                 desc = `تمت إضافة ${prize.val} نقطة لرصيدك بنجاح! ✅`;
             } 
             else if (prize.type === "cash") {
-                database.ref("Users/" + user + "/wallet").transaction(w => (w || 0) + prize.val);
+                // تحديث المحفظة فوراً
+                userRef.child("wallet").transaction(w => (w || 0) + prize.val);
                 desc = "مبروووك! أنت محظوظ جداً! تمت إضافة 500 ريال لمحفظتك الآن! 💰";
             }
             else if (prize.type === "extra") {
                 desc = "يا لك من محظوظ! تواصل مع الإدارة الآن للحصول على قسيمة التوصيل المجاني! 🛵";
             }
 
-            // إرسال إشعار للإدارة لمتابعة الجوائز النادرة
+            // إرسال إشعار للإدارة
             database.ref("Admin_Notifications/LuckyWheel").push({
                 user: user, prize: prize.text, time: Date.now(), urgent: (prize.type === "cash" || prize.type === "extra")
             });
@@ -154,6 +157,9 @@
             document.getElementById('prize-name').innerText = "ربحت: " + prize.text;
             document.getElementById('prize-desc').innerText = desc;
             document.getElementById('win-msg').style.display = "flex";
+            
+            // إضافة اهتزاز بسيط عند الفوز
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
         }
         function exit() { window.location.replace("fields.html"); }
     </script>
