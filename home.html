@@ -345,7 +345,7 @@ function showSection(id, el){
 }
 
 let searchTimer; // مؤقت لانتظار توقف الكتابة
-let processingTimer; // مؤقت الـ 3 ثواني الخاصة بالتحميل
+let processingTimer; // مؤقت التحميل (صار ثانية واحدة)
 
 function localSmartSearch() {
     const inputField = document.getElementById("searchInput");
@@ -353,43 +353,44 @@ function localSmartSearch() {
     const loader = document.getElementById("search-loader");
     const container = document.getElementById("all");
 
-    // 1. تنظيف كل المؤقتات السابقة (عشان ما يشتغل البحث وهو لسه يكتب)
+    // 1. تنظيف المؤقتات السابقة لمنع التداخل أثناء الكتابة
     clearTimeout(searchTimer);
     clearTimeout(processingTimer);
-    loader.style.display = "none"; // إخفاء اللودر مؤقتاً
+    loader.style.display = "none"; 
 
-    // 2. إذا مسح المستخدم الكلام تماماً، نعيد كل المنتجات فوراً وبدون تأخير
+    // 2. العودة الفورية للمنتجات عند مسح خانة البحث
     if (input === "") {
         renderProducts("all");
         return;
     }
 
-    // 3. ننتظر نصف ثانية (500ms) بعد آخر حرف كتبه (عشان نتأكد إنه خلص كتابة)
+    // 3. الانتظار قليلاً بعد توقف المستخدم عن الكتابة (Debounce)
     searchTimer = setTimeout(() => {
         
-        // الآن ظهرت علامة التحميل لأن المستخدم توقف عن الكتابة
+        // إظهار شاشة التحميل
         loader.style.display = "flex";
 
-        // 4. نبدأ عد الـ 3 ثواني "الخرافية" للبحث الذكي
+        // 4. تشغيل البحث الذكي بعد ثانية واحدة فقط (1000ms)
         processingTimer = setTimeout(() => {
             const resultIds = aiSafeSearch(products, input);
             const resultsSet = new Set(resultIds.map(String));
 
-            loader.style.display = "none"; // إخفاء التحميل
+            loader.style.display = "none"; 
 
-            // 5. إظهار النتائج مع الحركة (الانيميشن)
+            // 5. تحديث الحاوية مع حركة الظهور (Animation)
             container.innerHTML = "";
             container.classList.remove("new-page-anim");
-            void container.offsetWidth; // إعادة ضبط الانيميشن
+            void container.offsetWidth; // ريست للانيميشن
             container.classList.add("new-page-anim");
 
             renderProducts("all", p => resultsSet.has(String(p.id)));
             
+            // التمرير السلس للأعلى
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
-        }, 3000); // مدة التحميل التي طلبتها
+        }, 1000); // تم تعديل الوقت هنا من 3000 إلى 1000
 
-    }, 500); // مدة انتظار المستخدم حتى يرفع يده عن الكتابة
+    }, 400); // تقليل وقت انتظار الكتابة لزيادة الاستجابة
 }
 
 function renderCategories() {
