@@ -1,6 +1,23 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+<!-- رابط ملف المانيفست -->
+<link rel="manifest" href="manifest.json">
+<!-- لدعم هواتف الآيفون -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="apple-touch-icon" href="icon-512.png">
+
+<script>
+  // تسجيل ملف الخدمة برمجياً
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('التطبيق جاهز للعمل أوفلاين ✅'))
+        .catch(err => console.log('فشل تسجيل الـ SW', err));
+    });
+  }
+</script>
     <meta charset="UTF-8">
     <title>لوحة المندوب الذكية | متاجر البلاد</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -211,9 +228,13 @@ const filteredOrders = ordersArray.filter(ord =>
         }
 
         function smartOpenMaps(region, gps) {
-            let url = gps ? `https://www.google.com/maps/search/?api=1&query=${gps}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(region)}`;
-            window.open(url, '_blank');
-        }
+    // إذا وجد إحداثيات GPS يفتحها فوراً، وإذا لم يجد يبحث باسم المنطقة
+    let url = gps ? 
+        `https://www.google.com/maps/search/?api=1&query=${gps}` : 
+        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(region)}`;
+    
+    window.open(url, '_blank');
+}
 
         function goToChat(orderId) {
             window.location.href = "driver-chat.html?orderId=" + orderId;
