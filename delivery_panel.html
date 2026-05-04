@@ -159,12 +159,12 @@ const filteredOrders = ordersArray.filter(ord =>
 </div>
                             ${isWaiting ? 
                                 `<button class="btn btn-accept" onclick="acceptOrder('${ord.id}')">✅ قبول الطلب (خطف)</button>` : 
-                                (!isDelivered ? `
-                                    <button class="btn btn-maps" onclick="smartOpenMaps('${ord.region}', '${ord.gps || ''}')">📍 موقع البيت (GPS)</button>
-                                    <button class="btn btn-chat" onclick="goToChat('${ord.id}')">💬 دردشة مع الزبون</button>
-                                    <button class="btn btn-finish" onclick="finishOrder('${ord.id}')">🏁 تم التوصيل</button>
-                                ` : `<p style="text-align:center; color:var(--green); font-weight:bold; margin-top:15px;">تمت المهمة بنجاح ✨</p>`)
-                            }
+
+(!isDelivered ? `
+    <button class="btn btn-maps" onclick="smartOpenMaps('${ord.region}', '${ord.gps || ''}', '${ord.googleMapsLink || ''}')">📍 موقع البيت بدقة (GPS)</button>
+    <button class="btn btn-chat" onclick="goToChat('${ord.id}')">💬 دردشة مع الزبون</button>
+    <button class="btn btn-finish" onclick="finishOrder('${ord.id}')">🏁 تم التوصيل</button>
+` : `<p style="text-align:center; color:var(--green); font-weight:bold; margin-top:15px;">تمت المهمة بنجاح ✨</p>`)                            }
                         </div>
                     `;
                 });
@@ -227,13 +227,16 @@ const filteredOrders = ordersArray.filter(ord =>
             });
         }
 
-        function smartOpenMaps(region, gps) {
-    // إذا وجد إحداثيات GPS يفتحها فوراً، وإذا لم يجد يبحث باسم المنطقة
-    let url = gps ? 
-        `https://www.google.com/maps/search/?api=1&query=${gps}` : 
-        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(region)}`;
-    
-    window.open(url, '_blank');
+       function smartOpenMaps(region, gps, googleMapsLink) {
+    // إذا كان الزبون أرسل لوكيشن دقيق (رابط جاهز)، نستخدمه فوراً
+    if (googleMapsLink && googleMapsLink !== "") {
+        window.open(googleMapsLink, '_blank');
+    } 
+    // إذا لم يتوفر لوكيشن، نبحث باسم المنطقة التي حددها الزبون
+    else {
+        let url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(region)}`;
+        window.open(url, '_blank');
+    }
 }
 
         function goToChat(orderId) {

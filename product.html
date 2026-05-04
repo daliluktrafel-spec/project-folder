@@ -204,15 +204,20 @@ function sendOrderWithGPS() {
     }
 }
 
-// تعديل الدالة الأصلية لتقبل الموقع
 function executeOrder(gpsData) {
     const orderID = "ORD-" + Date.now();
+    
+    // إنشاء رابط جوجل ماب جاهز للمندوب
+    const googleMapsLink = gpsData ? `https://www.google.com/maps?q=${gpsData}` : "";
+
     const orderData = {
         id: orderID,
         customer: userName,
         pName: currentProduct.name,
         price: parseInt(currentProduct.price.replace(/\D/g,'')) - discountValue,
-        gps: gpsData, // هنا الإحداثيات (خط الطول والعرض)
+        originalPrice: parseInt(currentProduct.price.replace(/\D/g,'')),
+        gps: gpsData, 
+        googleMapsLink: googleMapsLink, // هذا الرابط هو السر في سهولة الاستخدام للمندوب
         region: userRegion,
         store: currentProduct.store,
         status: "waiting",
