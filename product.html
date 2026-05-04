@@ -183,27 +183,41 @@ document.getElementById("order-wa").onclick = () => {
 // دالة لجلب موقع الزبون قبل إرسال الطلب
 function sendOrderWithGPS() {
     const options = {
-        enableHighAccuracy: true, // تفعيل الدقة الخرافية (إجبار الـ GPS)
-        timeout: 10000,           // الانتظار لمدة 10 ثوانٍ كحد أقصى
-        maximumAge: 0             // عدم استخدام موقع قديم مخزن في الذاكرة
+        enableHighAccuracy: true,
+        timeout: 15000, // زدنا الوقت لـ 15 ثانية ليعطي الـ GPS فرصة للالتقاط
+        maximumAge: 0
     };
 
+    alert("جاري الاتصال بالأقمار الصناعية لتحديد موقعك بدقة.. يرجى الانتظار ثوانٍ 🛰️");
+
     if (navigator.geolocation) {
-        alert("يرجى الموافقة على تحديد الموقع بدقة لضمان وصول المندوب لباب بيتك 📍");
-        
-        navigator.geolocation.getCurrentPosition((position) => {
-            const gpsLocation = position.coords.latitude + "," + position.coords.longitude;
-            console.log("تم تحديد الموقع بدقة: ", gpsLocation);
-            executeOrder(gpsLocation); // إرسال الطلب مع الموقع الدقيق
-        }, (error) => {
-            alert("لم نتمكن من جلب الموقع بدقة، سيتم الاعتماد على اسم المنطقة");
-            executeOrder(""); 
-        }, options); // إرسال الإعدادات المطور هنا
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const gpsLocation = position.coords.latitude + "," + position.coords.longitude;
+                console.log("✅ تم جلب الموقع بدقة:", gpsLocation);
+                executeOrder(gpsLocation);
+            },
+            (error) => {
+                console.error("Geolocation Error:", error);
+                // محاولة ثانية بدقة أقل إذا فشلت الدقة العالية (عشان ما يرفض الطلب تماماً)
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        const lowGps = pos.coords.latitude + "," + pos.coords.longitude;
+                        executeOrder(lowGps);
+                    },
+                    () => {
+                        alert("⚠️ لم نتمكن من جلب الموقع بدقة بسبب إعدادات الخصوصية في هاتفك، سيتم الاعتماد على اسم المنطقة.");
+                        executeOrder(""); 
+                    },
+                    { enableHighAccuracy: false, timeout: 5000 }
+                );
+            }, 
+            options
+        );
     } else {
         executeOrder("");
     }
 }
-
 function executeOrder(gpsData) {
     const orderID = "ORD-" + Date.now();
     
