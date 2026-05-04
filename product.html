@@ -181,42 +181,57 @@ document.getElementById("order-wa").onclick = () => {
 };
 
 // دالة لجلب موقع الزبون قبل إرسال الطلب
-function sendOrderWithGPS() {
+async function sendOrderWithGPS() {
+    // 1. إظهار رسالة تنبيه للزبون بأسلوب منصة البلاد
+    const confirmGPS = confirm("📍 لضمان وصول المندوب لباب بيتك بدقة، هل تسمح لنا بتحديد موقعك؟");
+    
+    if (!confirmGPS) {
+        // إذا رفض الزبون من البداية، نرسل الطلب بدون موقع
+        executeOrder("");
+        return;
+    }
+
     const options = {
         enableHighAccuracy: true,
-        timeout: 15000, // زدنا الوقت لـ 15 ثانية ليعطي الـ GPS فرصة للالتقاط
+        timeout: 10000,
         maximumAge: 0
     };
-
-    alert("جاري الاتصال بالأقمار الصناعية لتحديد موقعك بدقة.. يرجى الانتظار ثوانٍ 🛰️");
 
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 const gpsLocation = position.coords.latitude + "," + position.coords.longitude;
-                console.log("✅ تم جلب الموقع بدقة:", gpsLocation);
+                console.log("✅ تم جلب الموقع بنجاح");
                 executeOrder(gpsLocation);
             },
             (error) => {
-                console.error("Geolocation Error:", error);
-                // محاولة ثانية بدقة أقل إذا فشلت الدقة العالية (عشان ما يرفض الطلب تماماً)
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                        const lowGps = pos.coords.latitude + "," + pos.coords.longitude;
-                        executeOrder(lowGps);
-                    },
-                    () => {
-                        alert("⚠️ لم نتمكن من جلب الموقع بدقة بسبب إعدادات الخصوصية في هاتفك، سيتم الاعتماد على اسم المنطقة.");
-                        executeOrder(""); 
-                    },
-                    { enableHighAccuracy: false, timeout: 5000 }
-                );
-            }, 
+                // معالجة الخطأ إذا رفض الزبون من رسالة المتصفح
+                handleLocationError(error);
+            },
             options
         );
     } else {
+        alert("متصفحك لا يدعم تحديد الموقع، سيتم الاعتماد على اسم المنطقة.");
         executeOrder("");
     }
+}
+
+function handleLocationError(error) {
+    switch(error.code) {
+        case error.PERMISSION_DENIED:
+            alert("⚠️ لقد قمت برفض الوصول للموقع. يرجى الضغط على أيقونة القفل (🔒) بجانب رابط الموقع في الأعلى واختيار 'السماح' (Allow) للموقع الجغرافي لكي نتمكن من خدمتك بدقة.");
+            break;
+        case error.POSITION_UNAVAILABLE:
+            alert("📍 معلومات الموقع غير متوفرة حالياً.");
+            break;
+        case error.TIMEOUT:
+            alert("⌛ استغرق طلب الموقع وقتاً طويلاً، جرب مرة أخرى.");
+            break;
+        default:
+            alert("حدث خطأ غير معروف في تحديد الموقع.");
+            break;
+    }
+    executeOrder(""); // نرسل الطلب بأي حال لكي لا تخسر البيعة
 }
 function executeOrder(gpsData) {
     const orderID = "ORD-" + Date.now();
