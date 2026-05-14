@@ -1,19 +1,18 @@
-// firebase.js
-
+// firebase.js - إعدادات الحساب الجديد الموحدة
 const firebaseConfig = {
-  apiKey: "AIzaSyAMEoUTIMAS0mh06_SxrM2T_efDxEmEoxg",
-  authDomain: "wafaseiyunshop.firebaseapp.com",
-  databaseURL: "https://wafaseiyunshop-default-rtdb.firebaseio.com",
-  projectId: "wafaseiyunshop",
-  storageBucket: "wafaseiyunshop.firebasestorage.app",
-  messagingSenderId: "101115796279",
-  appId: "1:101115796279:web:3753efad2a443c9b6098b2"
+  apiKey: "AIzaSyB2WultJ82Hx7zH-2czVYlWvBPhP0_L6Qk",
+  authDomain: "wafaseiyunshop-5a5b2.firebaseapp.com",
+  databaseURL: "https://wafaseiyunshop-5a5b2-default-rtdb.firebaseio.com",
+  projectId: "wafaseiyunshop-5a5b2",
+  storageBucket: "wafaseiyunshop-5a5b2.firebasestorage.app",
+  messagingSenderId: "493649894963",
+  appId: "1:493649894963:web:7e22905a96e37432fc4d46",
+  measurementId: "G-5V1T0D80VR"
 };
 
-// منع التكرار عند تحميل الصفحة عدة مرات
 if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp(firebaseConfig);
 }
 
-// متاح لكل الصفحات
 window.database = firebase.database();
+window.auth = firebase.auth();

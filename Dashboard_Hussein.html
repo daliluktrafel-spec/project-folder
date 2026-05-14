@@ -165,13 +165,10 @@
 </div>
 
 <script>
-    // --- إعدادات Firebase ---
-    const firebaseConfig = {
-        apiKey: "AIzaSyAMEoUTIMAS0mh06_SxrM2T_efDxEmEoxg",
-        databaseURL: "https://wafaseiyunshop-default-rtdb.firebaseio.com"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="firebase.js"></script> <script>
+    const db = window.database; // استخدام قاعدة البيانات الموحدة
 
     // --- نظام الدخول ---
     function checkPass() {

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>المفضلة | متاجر البلاد</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #b89b4a; --dark: #1b1e33; --light: #f7f6f2; }
+        body { margin: 0; font-family: 'Cairo', sans-serif; background: var(--light); color: var(--dark); padding-bottom: 20px; }
+        
+        .header { background: var(--dark); color: var(--gold); padding: 20px; text-align: center; font-size: 20px; font-weight: bold; border-bottom: 3px solid var(--gold); position: sticky; top: 0; z-index: 100; }
+        .back-btn { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: var(--gold); color: var(--dark); border: none; padding: 5px 12px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+        .container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 15px; max-width: 600px; margin: auto; }
+
+        .card { background: white; border-radius: 20px; padding: 10px; text-align: center; box-shadow: 0 8px 18px rgba(0,0,0,0.05); cursor: pointer; position: relative; }
+        .product-img { width: 100%; aspect-ratio: 1/1; border-radius: 15px; object-fit: cover; background: #f9f9f9; }
+        .product-name { font-weight: bold; font-size: 13px; margin: 8px 0; height: 35px; overflow: hidden; }
+        .product-price { color: var(--gold); font-weight: bold; font-size: 14px; }
+        
+        .remove-btn { background: #fee; color: #e74c3c; border: none; padding: 8px; width: 100%; border-radius: 10px; margin-top: 10px; font-weight: bold; font-size: 12px; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <button class="back-btn" onclick="location.href='fields.html'">🏠 العودة</button>
+    قائمة مفضلاتي
+</div>
+
+<div class="container" id="fav-list">
+    </div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="firebase.js"></script>
+
+<script>
+    let favoriteIds = JSON.parse(localStorage.getItem("favorites") || "[]");
+
+    function loadFavorites() {
+        const list = document.getElementById("fav-list");
+        list.innerHTML = "";
+
+        if (favoriteIds.length === 0) {
+            list.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:100px 20px; color:#aaa;">
+                <h2>⭐ القائمة فارغة</h2>
+                <p>أضف المنتجات التي تعجبك لتجدها هنا دائماً.</p>
+            </div>`;
+            return;
+        }
+
+        // جلب المنتجات من Firebase بناءً على المعرفات المخزنة محلياً
+        database.ref("products").once("value", snap => {
+            const allProducts = snap.val() || {};
+            let count = 0;
+
+            Object.values(allProducts).forEach(p => {
+                if (favoriteIds.includes(String(p.id))) {
+                    count++;
+                    const card = document.createElement("div");
+                    card.className = "card";
+                    card.innerHTML = `
+                        <img src="${p.image || 'no-image.png'}" class="product-img" onclick="goToProduct('${p.id}')">
+                        <div class="product-name">${p.name}</div>
+                        <div class="product-price">${p.price} ر.ي</div>
+                        <button class="remove-btn" onclick="removeFromFav('${p.id}')">❌ إزالة</button>
+                    `;
+                    list.appendChild(card);
+                }
+            });
+        });
+    }
+
+    function goToProduct(id) {
+        window.location.href = `product.html?productId=${id}`;
+    }
+
+    function removeFromFav(id) {
+        favoriteIds = favoriteIds.filter(favId => favId !== String(id));
+        localStorage.setItem("favorites", JSON.stringify(favoriteIds));
+        loadFavorites(); // إعادة تحميل الصفحة
+    }
+
+    window.onload = loadFavorites;
+</script>
+
+</body>
+</html>

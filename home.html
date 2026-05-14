@@ -7,77 +7,100 @@
 <style>
     :root { --gold: #b89b4a; --dark: #1b1e33; --light: #f7f6f2; --white: #ffffff; }
     body { margin: 0; font-family: "Segoe UI", Tahoma, sans-serif; background: linear-gradient(to bottom, #f7f6f2 0%, #2c2f4a 25%, #1b1e33 75%, #f7f6f2 100%); color: #2b2b2b; padding-bottom: 80px; overflow-x: hidden; }
+
     .header { background: linear-gradient(45deg,#c9b36a,#b89b4a,#e6d38a); padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.2); gap: 10px; }
     .categories { display: flex; gap: 8px; overflow-x: auto; flex: 1; scrollbar-width: none; }
-    .categories::-webkit-scrollbar { display: none; }
     .category-btn { flex: 0 0 auto; background: white; border: none; border-radius: 12px; padding: 8px 16px; font-weight: bold; font-size: 13px; color: #1b1e33; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-   /* تنسيق بطاقات المتاجر داخل الصفحة الرئيسية */
-#stores .store-card-home {
-    background: linear-gradient(145deg, #e6d38a, #c9b36a, #b89b4a);
-    color: #1b1e33;
-    padding: 25px 15px;
-    border-radius: 20px;
-    text-align: center;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 6px 15px rgba(0,0,0,0.2);
-    transition: 0.3s;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-}
 
-#stores .store-card-home:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-}
-
-#stores .store-icon {
-    font-size: 30px;
-}
- .user-menu-container { position: relative; display: inline-block; }
+    /* القائمة المنسدلة */
+    .user-menu-container { position: relative; display: inline-block; }
     .user-btn { background: #1b1e33; color: #e6d38a; padding: 8px 12px; border-radius: 12px; font-size: 13px; font-weight: bold; cursor: pointer; border: 1px solid var(--gold); display: flex; align-items: center; gap: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
     .dropdown-content { display: none; position: absolute; left: 0; top: 110%; background: white; min-width: 190px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); z-index: 10000; overflow: hidden; border: 1px solid #eee; }
-    .dropdown-content div { color: #333; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; cursor: pointer; transition: 0.2s; border-bottom: 1px solid #f1f1f1; font-weight: bold; }
-    .dropdown-content div:hover { background: #f7f6f2; color: var(--gold); }
+    .dropdown-content div { color: #333; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f1f1f1; font-weight: bold; }
     .show { display: block !important; animation: fadeIn 0.3s ease; }
+
+    /* البحث - الروبوت على اليمين */
     .search-container { padding: 20px 15px; text-align: center; width: 100%; box-sizing: border-box; }
     .search-input { width: 100%; max-width: 600px; padding: 15px; border-radius: 15px; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.1); font-size: 16px; outline: none; }
-    .container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 15px; }
-    .card { background: white; border-radius: 20px; padding: 10px; text-align: center; box-shadow: 0 8px 18px rgba(0,0,0,0.1); cursor: pointer; display: flex; flex-direction: column; gap: 6px; position: relative; }
-    .product-img { width: 100%; aspect-ratio: 1 / 1; border-radius: 15px; background-size: cover; background-position: center; background-color: #f9f9f9; }
-    .product-name { font-weight: bold; font-size: 13px; height: 35px; overflow: hidden; }
-    .product-price { color: var(--gold); font-weight: bold; font-size: 14px; }
-    .product-store { color: #888; font-size: 11px; }
-    .fav-btn { border: none; background: #f2f2f2; padding: 8px; border-radius: 10px; margin-top: 5px; font-size: 11px; font-weight: bold; cursor: pointer; }
+    #ai-trigger { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 24px; }
+
+    /* --- توحيد الكرت بالملي --- */
+    .container { 
+        display: grid; 
+        grid-template-columns: repeat(2, 1fr); /* عمودين متساويين تماماً */
+        gap: 12px; 
+        padding: 12px; 
+        align-items: stretch; /* يضمن تمدد الكروت لآخر الصف */
+    }
+
+    @media (min-width: 1024px) {
+        .container { grid-template-columns: repeat(4, 1fr); } /* 4 كروت في اللابتوب */
+    }
+
+    .card { 
+        background: white; 
+        border-radius: 20px; 
+        padding: 10px; 
+        text-align: center; 
+        box-shadow: 0 8px 18px rgba(0,0,0,0.1); 
+        cursor: pointer; 
+        display: flex; 
+        flex-direction: column; /* ترتيب العناصر طولياً */
+        position: relative;
+        box-sizing: border-box;
+        height: 100%; /* لضمان تساوي الطول مع الجار */
+    }
+
+    .product-img { 
+        width: 100%; 
+        aspect-ratio: 1 / 1; /* صورة مربعة إجبارياً */
+        border-radius: 15px; 
+        background-size: cover; 
+        background-position: center; 
+        background-color: #f9f9f9;
+        flex-shrink: 0; /* يمنع انضغاط الصورة */
+    }
+
+    .product-name { 
+        font-weight: bold; 
+        font-size: 13px; 
+        height: 38px; /* توحيد ارتفاع منطقة الاسم */
+        line-height: 1.4;
+        overflow: hidden; 
+        margin-top: 8px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    .product-price { color: var(--gold); font-weight: bold; font-size: 14px; margin: 5px 0; }
+    .product-store { color: #888; font-size: 11px; margin-bottom: 8px; }
+
+    /* الزر ينزل لآخر الكرت مهما كان النص قصير */
+    .fav-btn { 
+        border: none; 
+        background: #f2f2f2; 
+        padding: 8px; 
+        border-radius: 10px; 
+        font-size: 11px; 
+        font-weight: bold; 
+        cursor: pointer;
+        margin-top: auto; 
+    }
+
+    /* المتاجر الذهبية */
+    #stores .store-card-home {
+        background: linear-gradient(145deg, #e6d38a, #c9b36a, #b89b4a);
+        color: #1b1e33; padding: 25px 15px; border-radius: 20px; text-align: center;
+        font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+        display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; height: 100%;
+    }
+
     .tabs { display: flex; justify-content: space-around; padding: 12px; position: fixed; bottom: 0; width: 100%; background: white; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); z-index: 1000; box-sizing: border-box; }
     .tab { padding: 10px 15px; border-radius: 12px; border: 1.5px solid #b89b4a; font-weight: bold; cursor: pointer; font-size: 12px; color: #b89b4a; }
     .tab.active { background: linear-gradient(45deg,#c9b36a,#b89b4a); color: white; }
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    
-    /* حركة ظهور المنتجات كصفحة جديدة */
-    .new-page-anim {
-        animation: slideUp 0.5s ease-out forwards;
-    }
 
-    @keyframes slideUp {
-        from { opacity: 0; transform: translateY(30px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-   .card:has(.product-img span) {
-    border: 1px solid #e74c3c;
-    box-shadow: 0 0 15px rgba(231, 76, 60, 0.2);
-    animation: flashGlow 2s infinite alternate;
-}
-
-@keyframes flashGlow {
-    from { box-shadow: 0 0 5px rgba(231, 76, 60, 0.1); }
-    to { box-shadow: 0 0 15px rgba(231, 76, 60, 0.4); }
-}
- @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
 <body>
@@ -200,17 +223,14 @@ window.onclick = function(event) {
 let lastKey = null; // لتخزين مفتاح آخر منتج تم جلبة
 let isLoaderActive = false;
 
+// 1. جلب 50 منتج بدلاً من 20
 async function loadSmartProducts() {
     if (isLoaderActive) return;
     isLoaderActive = true;
-    console.log("جاري جلب المنتجات بتدفق ذكي...");
-
-    // جلب أول 20 منتج فقط مرتبة حسب المعرف (ID)
-    let query = database.ref("products").orderByChild("id").limitToLast(20);
-
-    // إذا لم تكن هذه المرة الأولى، ابدأ من بعد آخر منتج جلبناه
+    
+    let query = database.ref("products").orderByChild("id").limitToLast(50);
     if (lastKey) {
-        query = database.ref("products").orderByChild("id").endAt(lastKey - 1).limitToLast(20);
+        query = database.ref("products").orderByChild("id").endAt(lastKey - 1).limitToLast(50);
     }
 
     query.once("value", (snapshot) => {
@@ -219,71 +239,83 @@ async function loadSmartProducts() {
             firebaseKey: key,
             ...data[key]
         }));
-
-        // ترتيب الأحدث أولاً
         newProducts.sort((a, b) => (b.updatedAt || b.id) - (a.updatedAt || a.id));
 
         if (newProducts.length > 0) {
-            // حفظ أصغر ID ليكون نقطة البداية للمرة القادمة
             lastKey = Math.min(...newProducts.map(p => p.id));
-            
-            // إضافة المنتجات الجديدة للمصفوفة العالمية
             products = products.concat(newProducts);
-            
             renderCategories();
             renderProducts("all");
-            
-            // إظهار زر "عرض المزيد" إذا كان هناك المزيد
             checkShowMoreButton(newProducts.length);
         }
         isLoaderActive = false;
     });
 }
 
-// دالة لإضافة زر "عرض المزيد" في أسفل الحاوية
+// 2. تحديث زر "عرض المزيد" ليعمل مع الـ 50
 function checkShowMoreButton(count) {
     let btn = document.getElementById("load-more-btn");
-    if (!btn && count >= 20) {
-        btn = document.createElement("button");
-        btn.id = "load-more-btn";
-        btn.innerText = "عرض المزيد من المنتجات ⬇️";
-        btn.style = "width:90%; margin:20px 5%; padding:15px; background:var(--gold); color:white; border:none; border-radius:15px; font-weight:bold; cursor:pointer;";
-        btn.onclick = loadSmartProducts;
-        document.body.appendChild(btn);
-    } else if (count < 20 && btn) {
-        btn.remove(); // إخفاء الزر إذا انتهت المنتجات
+    if (count >= 50) {
+        if (!btn) {
+            btn = document.createElement("button");
+            btn.id = "load-more-btn";
+            btn.innerText = "عرض المزيد من المنتجات ⬇️";
+            btn.className = "load-more-style"; // أضف التنسيق في CSS أو ستايل مباشر
+            btn.style = "width:90%; margin:20px 5%; padding:15px; background:var(--gold); color:white; border:none; border-radius:15px; font-weight:bold; cursor:pointer;";
+            btn.onclick = loadSmartProducts;
+            document.body.appendChild(btn);
+        }
+    } else if (btn) {
+        btn.remove();
     }
 }
-// دالة التصنيفات المحسنة (لتشمل كل الأقسام الموجودة في المنتجات المجلوبة)
+
+// 3. عرض كافة المنتجات عند اختيار تصنيف أو "متوفر"
+function showSection(id, el){
+    ["favorites","all","available","stores"].forEach(s => { 
+        let t = document.getElementById(s); if(t) t.style.display = "none"; 
+    });
+    document.getElementById(id).style.display = "grid";
+    
+    if (el) { 
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active")); 
+        el.classList.add("active"); 
+    }
+
+    // إخفاء زر "المزيد" في غير قسم "الكل" لضمان عرض كامل النتائج المفلترة
+    const moreBtn = document.getElementById("load-more-btn");
+    if(moreBtn) moreBtn.style.display = (id === "all") ? "block" : "none";
+
+    if(id === "all") renderProducts("all");
+    else if(id === "favorites") renderProducts("favorites", p => favorites.includes(String(p.id)));
+    else if(id === "available") renderProducts("available", p => !normalizeText(p.status).includes("غير متوفر"));
+    else if(id === "stores") renderStores();
+}
+
+// 4. دالة التصنيفات لعرض كل منتجات التصنيف المجلوبة
 function renderCategories() {
-    const categoriesDiv = document.getElementById("categories");
+    const categoriesDiv = document.getElementById("categories"); 
     categoriesDiv.innerHTML = "";
     
-    // زر "الكل"
-    const allBtn = document.createElement("div");
-    allBtn.className = "category-btn";
-    allBtn.innerText = "🏠 الكل";
-    allBtn.onclick = () => {
-        showSection('all');
-        renderProducts("all");
-    };
+    const allBtn = document.createElement("div"); 
+    allBtn.className = "category-btn"; 
+    allBtn.innerText = "🏠 الكل"; 
+    allBtn.onclick = () => showSection('all'); 
     categoriesDiv.appendChild(allBtn);
 
-    // استخراج كافة الأقسام الفريدة من مصفوفة المنتجات الكاملة
     const uniqueCategories = [...new Set(products.map(p => p.category).filter(Boolean))];
-    
     uniqueCategories.forEach(cat => {
-        const btn = document.createElement("div");
-        btn.className = "category-btn";
+        const btn = document.createElement("div"); 
+        btn.className = "category-btn"; 
         btn.innerText = cat;
-        btn.onclick = () => {
-            showSection('all');
-            renderProducts("all", p => p.category === cat);
+        btn.onclick = () => { 
+            showSection('all'); 
+            renderProducts("all", p => p.category === cat); 
+            if(document.getElementById("load-more-btn")) document.getElementById("load-more-btn").style.display = "none";
         };
         categoriesDiv.appendChild(btn);
     });
 }
-
 function closeWallet() { document.getElementById("wallet-modal").style.display = "none"; }
 
 function renderProducts(containerId, filter = () => true){

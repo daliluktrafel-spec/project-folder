@@ -37,30 +37,24 @@
         font-size: 14px;
         margin-bottom: 8px;
     }
-/* تحسين شكل البطاقة عند المرور بالماوس */
-.notif-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(184, 155, 74, 0.15);
-    background-color: #fffdf9;
-}
 
-/* إضافة أيقونة سهم تشير لإمكانية التوسع */
-.notif-title::after {
-    content: ' ▾';
-    font-size: 12px;
-    color: #b89b4a;
-    transition: 0.3s;
-}
+    .notif-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(184, 155, 74, 0.15);
+        background-color: #fffdf9;
+    }
 
-.notif-card.active .notif-title::after {
-    content: ' ▴';
-}
+    .notif-title::after {
+        content: ' ▾';
+        font-size: 12px;
+        color: #b89b4a;
+        transition: 0.3s;
+    }
 
-/* تمييز الأخبار الهامة (اختياري) */
-.notif-card:first-child {
-    background: linear-gradient(to left, #ffffff, #fffdf0);
-    border-right-width: 8px; /* جعل أول إشعار يبرز أكثر */
-}
+    .notif-card.active .notif-title::after {
+        content: ' ▴';
+    }
+
     .notif-title {
         font-weight: bold;
         font-size: 17px;
@@ -76,7 +70,7 @@
         font-size: 14px;
         color: #555;
         line-height: 1.6;
-        display: none; /* مخفي افتراضياً ويظهر عند النقر */
+        display: none;
         margin-top: 10px;
         padding-top: 10px;
         border-top: 1px solid #eee;
@@ -106,24 +100,18 @@
     <div id="loader" class="loader">جاري تحميل آخر الأخبار...</div>
     <div id="notifications-list"></div>
 
+    <!-- ربط المكتبات بنمط Compat -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-    <script>
-        // إعدادات Firebase الخاصة بك
-        const firebaseConfig = {
-            apiKey: "AIzaSyAMEoUTIMAS0mh06_SxrM2T_efDxEmEoxg",
-            authDomain: "wafaseiyunshop.firebaseapp.com",
-            databaseURL: "https://wafaseiyunshop-default-rtdb.firebaseio.com",
-            projectId: "wafaseiyunshop",
-            storageBucket: "wafaseiyunshop.firebasestorage.app",
-            messagingSenderId: "101115796279",
-            appId: "1:101115796279:web:3753efad2a443c9b6098b2"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+    <!-- الربط بملف الإعدادات الموحد -->
+    <script src="firebase.js"></script>
 
-        // جلب الإشعارات من فرع "news" في قاعدة البيانات
+    <script>
+        // استخدام المرجع الموحد من ملف firebase.js
+        const database = window.database;
+
+        // جلب الإشعارات من فرع "news"
         database.ref("news").on("value", (snapshot) => {
             const list = document.getElementById("notifications-list");
             const loader = document.getElementById("loader");
@@ -136,10 +124,10 @@
                 return;
             }
 
-            // تحويل البيانات لصفوف وعرضها من الأحدث للأقدم
-            const newsItems = Object.values(data).reverse();
+            // تحويل الكائن إلى مصفوفة وعكسها ليظهر الأحدث أولاً
+            const newsItems = Object.entries(data).reverse();
 
-            newsItems.forEach(item => {
+            newsItems.forEach(([id, item]) => {
                 const card = document.createElement("div");
                 card.className = "notif-card";
                 card.onclick = () => card.classList.toggle("active");
