@@ -65,7 +65,7 @@
     <div class="btn-group" id="main-btn-group">
         <button class="btn-main btn-wa" id="order-wa">🟢 طلب مباشر عبر واتساب</button>
         <button class="btn-main btn-delivery" id="order-delivery-btn" onclick="sendOrderWithGPS ()">🛵 طلب عبر مندوب مقابل + 1000</button>
-        <button class="btn-main btn-back" onclick="window.history.back()">رجوع للخلف</button>
+        <button class="btn-main btn-back" onclick="goBackToSameScroll()">رجوع للخلف</button>
     </div>
 
     <div class="related-section">
@@ -310,11 +310,21 @@ function loadRelatedProducts(currentP) {
         const list = document.getElementById("related-list");
         list.innerHTML = "";
         related.forEach(rp => {
-            list.innerHTML += `<div onclick="location.href='product.html?productId=${rp.id}'" style="min-width:120px; background:white; padding:10px; border-radius:10px; text-align:center; font-size:12px; box-shadow:0 2px 5px rgba(0,0,0,0.1);">
+            list.innerHTML += `<div onclick="sessionStorage.removeItem('scrollPosition'); location.href='product.html?productId=${rp.id}'" style="min-width:120px; background:white; padding:10px; border-radius:10px; text-align:center; font-size:12px; box-shadow:0 2px 5px rgba(0,0,0,0.1);">
                 <img src="${rp.image}" style="width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:5px;"><br><b>${rp.name}</b><br><span style="color:var(--gold)">${rp.price}</span>
             </div>`;
         });
     });
+}
+// دالة الرجوع الذكية التي تضمن تفعيل موضع التمرير المحفوظ في الصفحة الرئيسية
+function goBackToSameScroll() {
+    if (sessionStorage.getItem("scrollPosition")) {
+        // العودة عبر تاريخ المتصفح تضمن تفعيل كود الـ Scroll بسلاسة
+        window.history.back();
+    } else {
+        // fallback في حال الدخول المباشر للمنتج
+        window.location.href = "index.html"; 
+    }
 }
 </script>
 </body>
