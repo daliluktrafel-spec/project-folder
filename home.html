@@ -220,77 +220,44 @@ window.onclick = function(event) {
         }
     }
 }
-let lastKey = null; // لتخزين مفتاح آخر منتج تم جلبة
+//  ضع هذا مكانه تماماً:
 let isLoaderActive = false;
 
-// 1. جلب 50 منتج بدلاً من 20
 async function loadSmartProducts() {
     if (isLoaderActive) return;
     isLoaderActive = true;
     
-    let query = database.ref("products").orderByChild("id").limitToLast(50);
-    if (lastKey) {
-        query = database.ref("products").orderByChild("id").endAt(lastKey - 1).limitToLast(50);
-    }
-
-    query.once("value", (snapshot) => {
+    database.ref("products").once("value", (snapshot) => {
         const data = snapshot.val() || {};
-        let newProducts = Object.keys(data).map(key => ({
+        products = Object.keys(data).map(key => ({
             firebaseKey: key,
             ...data[key]
         }));
-        newProducts.sort((a, b) => (b.updatedAt || b.id) - (a.updatedAt || a.id));
+        
+        products.sort((a, b) => (b.updatedAt || b.id) - (a.updatedAt || a.id));
 
-        if (newProducts.length > 0) {
-            lastKey = Math.min(...newProducts.map(p => p.id));
-            products = products.concat(newProducts);
+        if (products.length > 0) {
             renderCategories();
             renderProducts("all");
-            checkShowMoreButton(newProducts.length);
+            
+            // إعادة الزبون إلى نفس موضع التمرير الذي كان واقفاً عنده
+            const savedScroll = sessionStorage.getItem("scrollPosition");
+            if (savedScroll) {
+                setTimeout(() => {
+                    window.scrollTo({ top: parseInt(savedScroll), behavior: 'auto' });
+                    sessionStorage.removeItem("scrollPosition"); // تنظيف الذاكرة بعد الاسترجاع
+                }, 100); // تأخير بسيط جداً لضمان رندر العناصر في المتصفح
+            }
         }
         isLoaderActive = false;
     });
 }
 
-// 2. تحديث زر "عرض المزيد" ليعمل مع الـ 50
-function checkShowMoreButton(count) {
-    let btn = document.getElementById("load-more-btn");
-    if (count >= 50) {
-        if (!btn) {
-            btn = document.createElement("button");
-            btn.id = "load-more-btn";
-            btn.innerText = "عرض المزيد من المنتجات ⬇️";
-            btn.className = "load-more-style"; // أضف التنسيق في CSS أو ستايل مباشر
-            btn.style = "width:90%; margin:20px 5%; padding:15px; background:var(--gold); color:white; border:none; border-radius:15px; font-weight:bold; cursor:pointer;";
-            btn.onclick = loadSmartProducts;
-            document.body.appendChild(btn);
-        }
-    } else if (btn) {
-        btn.remove();
-    }
-}
+
+
 
 // 3. عرض كافة المنتجات عند اختيار تصنيف أو "متوفر"
-function showSection(id, el){
-    ["favorites","all","available","stores"].forEach(s => { 
-        let t = document.getElementById(s); if(t) t.style.display = "none"; 
-    });
-    document.getElementById(id).style.display = "grid";
-    
-    if (el) { 
-        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active")); 
-        el.classList.add("active"); 
-    }
 
-    // إخفاء زر "المزيد" في غير قسم "الكل" لضمان عرض كامل النتائج المفلترة
-    const moreBtn = document.getElementById("load-more-btn");
-    if(moreBtn) moreBtn.style.display = (id === "all") ? "block" : "none";
-
-    if(id === "all") renderProducts("all");
-    else if(id === "favorites") renderProducts("favorites", p => favorites.includes(String(p.id)));
-    else if(id === "available") renderProducts("available", p => !normalizeText(p.status).includes("غير متوفر"));
-    else if(id === "stores") renderStores();
-}
 
 // 4. دالة التصنيفات لعرض كل منتجات التصنيف المجلوبة
 function renderCategories() {
@@ -311,7 +278,6 @@ function renderCategories() {
         btn.onclick = () => { 
             showSection('all'); 
             renderProducts("all", p => p.category === cat); 
-            if(document.getElementById("load-more-btn")) document.getElementById("load-more-btn").style.display = "none";
         };
         categoriesDiv.appendChild(btn);
     });
@@ -347,7 +313,9 @@ function renderProducts(containerId, filter = () => true){
         
         d.onclick = (e) => { 
             if(e.target.tagName !== 'BUTTON') {
-                boostInterest(p.category, 1); 
+                boostInterest(p.category, 1);
+                // حفظ الموضع الحالي للتمرير قبل الانتقال لصفحة المنتج
+                sessionStorage.setItem("scrollPosition", window.scrollY);
                 location.href = `product.html?productId=${p.id}`; 
             }
         };
@@ -522,24 +490,17 @@ function localSmartSearch() {
 
             renderProducts("all", p => resultsSet.has(String(p.id)));
             
-            // التمرير السلس للأعلى
+           // تصفير الموضع المحفوظ لأنها نتائج بحث جديدة تماماً
+            sessionStorage.removeItem("scrollPosition");
             window.scrollTo({ top: 0, behavior: 'smooth' });
+            
 
         }, 1000); // تم تعديل الوقت هنا من 3000 إلى 1000
 
     }, 400); // تقليل وقت انتظار الكتابة لزيادة الاستجابة
 }
 
-function renderCategories() {
-    const categoriesDiv = document.getElementById("categories"); categoriesDiv.innerHTML = "";
-    const allBtn = document.createElement("div"); allBtn.className = "category-btn"; allBtn.innerText = "🏠 الكل"; allBtn.onclick = () => showSection('all'); categoriesDiv.appendChild(allBtn);
-    const uniqueCategories = [...new Set(products.map(p => p.category).filter(Boolean))];
-    uniqueCategories.forEach(cat => {
-        const btn = document.createElement("div"); btn.className = "category-btn"; btn.innerText = cat;
-        btn.onclick = () => { showSection('all'); renderProducts("all", p => p.category === cat); };
-        categoriesDiv.appendChild(btn);
-    });
-}
+
 
 function openAddProduct(){ window.location.href = "stores.html"; }
 document.getElementById("current-region-display").innerText = localStorage.getItem("userRegion") || "حدد منطقتك";
